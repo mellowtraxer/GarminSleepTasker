@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Garmin Sleep for Tasker</string>
+    <string name="tasker_action">Garmin-Schlaf auslesen</string>
+    <string name="permission_rationale">Health-Connect-Zugriff wird benötigt, um Garmin-Schlafdaten auszulesen.</string>
+    <string name="start_ms">Start (ms)</string><string name="start_ms_desc">Startzeit der Garmin-Schlafsession in Unix-Millisekunden</string>
+    <string name="end_ms">Ende (ms)</string><string name="end_ms_desc">Endzeit der Garmin-Schlafsession in Unix-Millisekunden</string>
+    <string name="total_min">Gesamt (min)</string><string name="total_min_desc">Gesamtdauer der Schlafsession</string>
+    <string name="light_min">Leichtschlaf (min)</string><string name="light_min_desc">Summierter Leichtschlaf</string>
+    <string name="deep_min">Tiefschlaf (min)</string><string name="deep_min_desc">Summierter Tiefschlaf</string>
+    <string name="rem_min">REM (min)</string><string name="rem_min_desc">Summierter REM-Schlaf</string>
+    <string name="awake_min">Wach (min)</string><string name="awake_min_desc">Summierte Wachzeit innerhalb der Schlafsession</string>
+    <string name="sleeping_min">Schlaf unbekannt (min)</string><string name="sleeping_min_desc">Schlafzeit ohne genaue Phase</string>
+    <string name="avg_hr">Ø Puls</string><string name="avg_hr_desc">Durchschnittlicher Herzschlag während der Schlafsession</string>
+    <string name="avg_spo2">Ø SpO2</string><string name="avg_spo2_desc">Durchschnittliche Sauerstoffsättigung während der Schlafsession</string>
+    <string name="avg_resp">Ø Atmung</string><string name="avg_resp_desc">Durchschnittliche Atemfrequenz während der Schlafsession</string>
+    <string name="source">Quelle</string><string name="source_desc">Paketname der ausgewählten Datenquelle</string>
+    <string name="calendar_text">Kalendertext</string><string name="calendar_text_desc">Fertig formatierte Beschreibung für den Kalendereintrag</string>
+</resources>
