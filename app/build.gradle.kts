@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "de.ricci.garminsleep"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "de.ricci.garminsleep"
