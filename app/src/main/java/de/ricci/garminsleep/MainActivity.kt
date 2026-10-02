@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     override fun onDestroy() { super.onDestroy(); cancel() }
 }
 
-class HealthPermissionRationaleActivity : Activity() {
+class HealthPermissionRationaleActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(TextView(this).apply { textSize=18f; setPadding(48,80,48,48); text="Garmin Sleep for Tasker liest nur die von dir freigegebenen Health-Connect-Daten, um Schlafdauer, Schlafphasen und zugehörige Messwerte für deine eigene Tasker-Automation auszuwerten. Es werden keine Daten hochgeladen." })
