@@ -1,6 +1,6 @@
 package de.ricci.garminsleep
 
-import android.app.Activity
+import androidx.activity.ComponentActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
@@ -12,7 +12,7 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
 import kotlinx.coroutines.*
 
-class MainActivity : Activity(), CoroutineScope by MainScope() {
+class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var status: TextView
     private val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class),
