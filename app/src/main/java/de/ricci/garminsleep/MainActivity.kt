@@ -436,12 +436,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
             addView(legend("Leicht",stageLight)); addView(legend("Tief",stageDeep)); addView(legend("REM",stageRem)); addView(legend("Wach",stageAwake))
         })
-        sleepCard.addView(TextView(this).apply {
-            val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
-            val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
-            val remPct = (s.remMin * 100 / sleepOnly).toInt()
-            text = "SCHLAFARCHITEKTUR\nTief  $deepPct %     ·     REM  $remPct %"
-            textSize = 13f; setTextColor(Color.rgb(200,195,230)); setPadding(0, dp(4), 0, dp(10))
+        val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
+        val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
+        val remPct = (s.remMin * 100 / sleepOnly).toInt()
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(74,57,126); setCardBackgroundColor(Color.rgb(19,15,39))
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
+                addView(TextView(this@MainActivity).apply { text="SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="$deepPct%\nTIEF"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageDeep); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
+                addView(TextView(this@MainActivity).apply { text="$remPct%\nREM"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
+            })
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(7),0,dp(7)) }
         })
         sleepCard.addView(TextView(this).apply {
             text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(10),0,dp(2))
@@ -474,7 +480,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     text="✦"; textSize=20f; setTextColor(accent2); layoutParams=LinearLayout.LayoutParams(dp(34),LinearLayout.LayoutParams.WRAP_CONTENT)
                 })
                 addView(TextView(this@MainActivity).apply {
-                    text=if (quality >= 90) "Starke Nacht · sehr hohe Schlafeffizienz" else if (quality >= 80) "Gute Nacht · solide Schlafeffizienz" else "Unruhigere Nacht · Erholung im Blick behalten"
+                    text=if (quality >= 90) "Hohe Schlafeffizienz · $quality%" else if (quality >= 80) "Solide Schlafeffizienz · $quality%" else "Schlafeffizienz · $quality%"
                     textSize=13f; setTextColor(Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
                 })
             })
