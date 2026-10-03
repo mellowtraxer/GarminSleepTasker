@@ -217,30 +217,34 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showHistoryPlaceholder() {
-        val d = resources.displayMetrics.density
-        fun dp(v: Int) = (v * d).toInt()
-        actionsTitle.visibility = View.GONE
-        actionsBox.visibility = View.GONE
-        pageTitle.text = "Verlauf"
-        pageSubtitle.text = "Deine Nächte im Vergleich"
-        sleepCard.removeAllViews()
-        sleepCard.background = GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            intArrayOf(Color.rgb(29,20,61), Color.rgb(16,17,45), Color.rgb(7,32,43))
-        ).apply { cornerRadius = dp(24).toFloat() }
-        sleepCard.addView(TextView(this).apply {
-            text = "Diese Woche"; textSize = 22f; setTypeface(typeface, Typeface.BOLD)
-        })
-        sleepCard.addView(TextView(this).apply {
-            text = "  Mo     Di     Mi     Do     Fr     Sa     So\n  ▃      ▅      ▆      ▂      ▇      ▆      ▅"
-            textSize = 21f; letterSpacing = .03f; setPadding(0,24,0,18)
-        })
-        sleepCard.addView(TextView(this).apply {
-            text = "Ø Schlafdauer   7 h 42 min\n\nTrends für Schlafdauer, Tiefschlaf, REM, SpO₂, Atmung und HRV werden hier aus deinen gespeicherten Nächten aufgebaut."
-            textSize = 16f; setPadding(0,8,0,18)
-        })
+        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
+        pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte im Vergleich"
+        sleepCard.removeAllViews(); sleepCard.background=null
+        fun night(day:String,duration:String,time:String,segments:IntArray)=MaterialCardView(this).apply {
+            radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(40,48,78); setCardBackgroundColor(Color.rgb(12,16,31))
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    addView(TextView(this@MainActivity).apply { text=day; textSize=14f; setTextColor(Color.rgb(214,218,238)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                    addView(TextView(this@MainActivity).apply { text=duration; textSize=16f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                })
+                addView(TextView(this@MainActivity).apply { text=time; textSize=11f; setTextColor(Color.rgb(126,135,167)); setPadding(0,dp(2),0,dp(8)) })
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    val tones=intArrayOf(stageLight,stageDeep,stageRem,stageAwake)
+                    segments.forEachIndexed { i,w -> addView(View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(3).toFloat(); setColor(tones[i%4]) }; layoutParams=LinearLayout.LayoutParams(0,dp(8),w.toFloat()).apply { setMargins(0,0,dp(2),0) } }) }
+                })
+            })
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(9)) }
+        }
+        sleepCard.addView(TextView(this).apply { text="LETZTE NÄCHTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); setPadding(0,0,0,dp(10)) })
+        sleepCard.addView(night("Heute · So, 4. Okt.","8 h 50 min","00:29 – 09:19",intArrayOf(53,18,20,9)))
+        sleepCard.addView(night("Gestern · Sa, 3. Okt.","7 h 42 min","23:58 – 07:40",intArrayOf(48,22,23,7)))
+        sleepCard.addView(night("Fr, 2. Okt.","8 h 11 min","00:12 – 08:23",intArrayOf(51,19,21,9)))
+        sleepCard.addView(night("Do, 1. Okt.","6 h 58 min","01:03 – 07:58",intArrayOf(56,16,19,9)))
     }
-
     private fun showCalendarPlaceholder() {
         actionsTitle.visibility = View.GONE
         actionsBox.visibility = View.GONE
