@@ -57,7 +57,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private val permissionLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { refresh() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        DynamicColors.applyToActivityIfAvailable(this)
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val d = resources.displayMetrics.density
@@ -102,23 +101,31 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setCardBackgroundColor(Color.rgb(10,18,31)); strokeColor=Color.rgb(30,102,122); addView(status)
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
+        pageTitle.setTextColor(Color.WHITE)
+        pageSubtitle.setTextColor(Color.rgb(151,158,190))
+        status.setTextColor(Color.rgb(166,238,244))
+        actionsTitle.setTextColor(Color.WHITE)
         val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(32))
-            addView(pageTitle); addView(pageSubtitle); addView(statusCard); addView(sleepShell); addView(nav); addView(actionsTitle); addView(actionsBox)
+            orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(24))
+            addView(pageTitle); addView(pageSubtitle); addView(statusCard); addView(sleepShell); addView(actionsTitle); addView(actionsBox)
         }
         val scroll = ScrollView(this).apply {
             isFillViewport=true; clipToPadding=false; setBackgroundColor(nightBg); addView(box)
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
-        fun tintTree(v: View) {
-            if (v is TextView) v.setTextColor(Color.rgb(242,239,255))
-            if (v is ViewGroup) for (i in 0 until v.childCount) tintTree(v.getChildAt(i))
+        val navShell = MaterialCardView(this).apply {
+            radius=dp(28).toFloat(); cardElevation=dp(10).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(48,54,91)
+            setCardBackgroundColor(Color.rgb(10,12,25)); addView(nav)
+            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(78)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
-        tintTree(box)
-        ViewCompat.setOnApplyWindowInsetsListener(scroll) { v, insets ->
+        val root = LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL; setBackgroundColor(nightBg); addView(scroll); addView(navShell)
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             v.setPadding(0,bars.top,0,bars.bottom); insets
         }
-        setContentView(scroll)
+        setContentView(root)
         refresh()
         testRead()
     }
