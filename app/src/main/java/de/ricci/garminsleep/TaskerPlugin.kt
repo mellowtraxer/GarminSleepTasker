@@ -27,6 +27,9 @@ class GarminSleepOutput(
     @get:TaskerOutputVariable("avg_hr", labelResIdName="avg_hr", htmlLabelResIdName="avg_hr_desc") val avgHr: Double?,
     @get:TaskerOutputVariable("avg_spo2", labelResIdName="avg_spo2", htmlLabelResIdName="avg_spo2_desc") val avgSpo2: Double?,
     @get:TaskerOutputVariable("avg_resp", labelResIdName="avg_resp", htmlLabelResIdName="avg_resp_desc") val avgResp: Double?,
+    @get:TaskerOutputVariable("min_spo2", labelResIdName="avg_spo2", htmlLabelResIdName="avg_spo2_desc") val minSpo2: Double?,
+    @get:TaskerOutputVariable("min_resp", labelResIdName="avg_resp", htmlLabelResIdName="avg_resp_desc") val minResp: Double?,
+    @get:TaskerOutputVariable("avg_hrv", labelResIdName="avg_hr", htmlLabelResIdName="avg_hr_desc") val avgHrv: Double?,
     @get:TaskerOutputVariable("source", labelResIdName="source", htmlLabelResIdName="source_desc") val source: String?,
     @get:TaskerOutputVariable("calendar_text", labelResIdName="calendar_text", htmlLabelResIdName="calendar_text_desc") val calendarText: String?
 )
@@ -34,7 +37,7 @@ class GarminSleepOutput(
 class GarminSleepRunner : TaskerPluginRunnerActionNoInput<GarminSleepOutput>() {
     override fun run(context: Context, input: TaskerInput<Unit>): TaskerPluginResult<GarminSleepOutput> = runBlocking {
         val s = SleepReader(context).latestGarminSleep()
-        TaskerPluginResultSucess(GarminSleepOutput(s.startMs,s.endMs,s.totalMin,s.lightMin,s.deepMin,s.remMin,s.awakeMin,s.sleepingMin,s.avgHr,s.avgSpo2,s.avgResp,s.source,s.calendarText))
+        TaskerPluginResultSucess(GarminSleepOutput(s.startMs,s.endMs,s.totalMin,s.lightMin,s.deepMin,s.remMin,s.awakeMin,s.sleepingMin,s.avgHr,s.avgSpo2,s.avgResp,s.minSpo2,s.minResp,s.avgHrv,s.source,s.calendarText))
     }
 }
 

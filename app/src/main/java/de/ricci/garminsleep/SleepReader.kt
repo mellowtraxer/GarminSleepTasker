@@ -17,6 +17,7 @@ data class SleepSummary(
     val lightMin: Long, val deepMin: Long, val remMin: Long,
     val awakeMin: Long, val sleepingMin: Long,
     val avgHr: Double?, val avgSpo2: Double?, val avgResp: Double?,
+    val minSpo2: Double?, val minResp: Double?, val avgHrv: Double?,
     val source: String, val calendarText: String
 )
 
@@ -54,13 +55,24 @@ class SleepReader(private val context: Context) {
         val total = Duration.between(sleep.startTime, sleep.endTime).toMinutes()
 
         val hr = averageHeartRate(sleep.startTime, sleep.endTime)
-        val spo2 = averageSpo2(sleep.startTime, sleep.endTime)
-        val resp = averageRespiratoryRate(sleep.startTime, sleep.endTime)
-        val text = makeCalendarText(sleep.startTime, sleep.endTime, total, light, deep, rem, awake, sleeping, hr, spo2, resp)
+        // Garmin does not currently export overnight SpO2/respiration to Health
+        // Connect. Prefer HC if present, otherwise enrich from Garmin Connect
+        // when the user has linked the account inside this app.
+        val hcSpo2 = averageSpo2(sleep.startTime, sleep.endTime)
+        val hcResp = averageRespiratoryRate(sleep.startTime, sleep.endTime)
+        val sleepDate = sleep.endTime.atZone(ZoneId.systemDefault()).toLocalDate()
+        val garmin = runCatching { GarminConnectClient(context).nightMetrics(sleepDate) }.getOrNull()
+        val spo2 = hcSpo2 ?: garmin?.avgSpo2
+        val resp = hcResp ?: garmin?.avgResp
+        val minSpo2 = garmin?.minSpo2
+        val minResp = garmin?.minResp
+        val avgHrv = garmin?.avgHrv
+        val text = makeCalendarText(sleep.startTime, sleep.endTime, total, light, deep, rem, awake, sleeping, hr, spo2, resp, minSpo2, minResp, avgHrv)
 
         return SleepSummary(
             sleep.startTime.toEpochMilli(), sleep.endTime.toEpochMilli(), total,
             light, deep, rem, awake, sleeping, hr, spo2, resp,
+            minSpo2, minResp, avgHrv,
             sleep.metadata.dataOrigin.packageName, text
         )
     }
@@ -86,7 +98,7 @@ class SleepReader(private val context: Context) {
     private fun fmtMin(min: Long) = "${min / 60} h ${min % 60} min"
     private fun n(v: Double?, suffix: String) = v?.let { String.format(java.util.Locale.GERMANY, "%.1f %s", it, suffix) } ?: "nicht verfügbar"
 
-    private fun makeCalendarText(start: Instant, end: Instant, total: Long, light: Long, deep: Long, rem: Long, awake: Long, sleeping: Long, hr: Double?, spo2: Double?, resp: Double?): String {
+    private fun makeCalendarText(start: Instant, end: Instant, total: Long, light: Long, deep: Long, rem: Long, awake: Long, sleeping: Long, hr: Double?, spo2: Double?, resp: Double?, minSpo2: Double?, minResp: Double?, avgHrv: Double?): String {
         val tf = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
         return buildString {
             appendLine("⌚ Garmin Schlaf")
@@ -99,7 +111,10 @@ class SleepReader(private val context: Context) {
             if (sleeping > 0) appendLine("😴 Nicht klassifiziert: ${fmtMin(sleeping)}")
             appendLine("❤️ Ø Puls: ${n(hr, "bpm")}")
             appendLine("🩸 Ø SpO₂: ${n(spo2, "%")}")
-            append("🫁 Ø Atmung: ${n(resp, "/min")}")
+            if (minSpo2 != null) appendLine("🩸 Min. SpO₂: ${n(minSpo2, "%")}")
+            appendLine("🫁 Ø Atmung: ${n(resp, "/min")}")
+            if (minResp != null) appendLine("🫁 Min. Atmung: ${n(minResp, "/min")}")
+            if (avgHrv != null) append("💓 Ø HRV: ${n(avgHrv, "ms")}")
         }
     }
 }
