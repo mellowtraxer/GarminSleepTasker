@@ -284,14 +284,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0) }
         fun setting(icon:String, title:String, sub:String, color:Int) {
+            val fill = Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView(MaterialCardView(this).apply {
-                radius=dp(20).toFloat(); cardElevation=0f; setCardBackgroundColor(Color.rgb(18,21,43))
-                strokeWidth=dp(1); strokeColor=Color.rgb(49,56,91)
+                radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(fill)
+                strokeWidth=dp(1); strokeColor=color
                 layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(0,dp(5),0,dp(5))}
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
-                    addView(TextView(this@MainActivity).apply { text=icon; textSize=25f; setTextColor(color); layoutParams=LinearLayout.LayoutParams(dp(44),LinearLayout.LayoutParams.WRAP_CONTENT) })
-                    addView(TextView(this@MainActivity).apply { text="$title\n$sub"; textSize=15f; setTextColor(Color.WHITE); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                    addView(TextView(this@MainActivity).apply {
+                        text=icon; textSize=23f; gravity=android.view.Gravity.CENTER; setTextColor(color); setPadding(dp(6),dp(6),dp(6),dp(6))
+                        background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(Color.argb(42,Color.red(color),Color.green(color),Color.blue(color))) }
+                        layoutParams=LinearLayout.LayoutParams(dp(48),dp(48)).apply { setMargins(0,0,dp(12),0) }
+                    })
+                    addView(LinearLayout(this@MainActivity).apply {
+                        orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
+                        addView(TextView(this@MainActivity).apply { text=title; textSize=15f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                        addView(TextView(this@MainActivity).apply { text=sub; textSize=12f; setTextColor(Color.rgb(166,172,202)); setPadding(0,dp(3),0,0) })
+                    })
                     addView(TextView(this@MainActivity).apply { text="›"; textSize=28f; setTextColor(color) })
                 })
             })
@@ -302,6 +311,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("✦","Darstellung","OLED Night · SleepSync",accent)
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight)
         sleepCard.addView(settingsGrid)
+        actionsTitle.text="WERKZEUGE"; actionsTitle.setTextColor(stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
+        listOf(0,1,2,3,4).forEach { i ->
+            val b=actionsBox.getChildAt(i) as? MaterialButton ?: return@forEach
+            b.cornerRadius=dp(18); b.setTextColor(Color.rgb(220,224,244))
+            b.backgroundTintList=ColorStateList.valueOf(Color.rgb(14,17,34)); b.strokeWidth=dp(1); b.strokeColor=ColorStateList.valueOf(Color.rgb(48,55,89))
+        }
     }
 
     private fun sleepStageStrip(s: SleepSummary): LinearLayout {
