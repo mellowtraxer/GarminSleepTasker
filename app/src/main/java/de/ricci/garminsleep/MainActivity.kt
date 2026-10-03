@@ -239,10 +239,33 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
     }
 
-    private fun sleepStageBar(s: SleepSummary): String {
-        val parts = listOf(s.lightMin, s.deepMin, s.remMin, s.awakeMin)
-        val total = parts.sum().coerceAtLeast(1)
-        return parts.joinToString(" ") { m -> "▰".repeat(((m * 18 / total).toInt()).coerceAtLeast(1)) }
+    private fun sleepStageStrip(s: SleepSummary): LinearLayout {
+        val d = resources.displayMetrics.density
+        fun dp(v: Int) = (v * d).toInt()
+        val values = listOf(
+            s.lightMin to stageLight,
+            s.deepMin to stageDeep,
+            s.remMin to stageRem,
+            s.awakeMin to stageAwake
+        )
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            background = GradientDrawable().apply {
+                cornerRadius = dp(10).toFloat()
+                setColor(Color.rgb(43, 37, 72))
+            }
+            values.forEach { (minutes, color) ->
+                addView(View(this@MainActivity).apply {
+                    background = GradientDrawable().apply {
+                        cornerRadius = dp(8).toFloat()
+                        setColor(color)
+                    }
+                    layoutParams = LinearLayout.LayoutParams(
+                        0, dp(16), minutes.coerceAtLeast(1).toFloat()
+                    ).apply { setMargins(dp(1), 0, dp(1), 0) }
+                })
+            }
+        }
     }
 
     private fun metricCard(icon: String, label: String, value: String): MaterialCardView {
