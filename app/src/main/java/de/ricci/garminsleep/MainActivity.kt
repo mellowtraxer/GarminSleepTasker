@@ -6,7 +6,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.EditText
 import android.text.InputType
-import androidx.appcompat.app.AlertDialog
+import android.app.AlertDialog
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.health.connect.client.HealthConnectClient
