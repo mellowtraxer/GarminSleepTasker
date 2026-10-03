@@ -36,6 +36,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var pageTitle: TextView
     private lateinit var pageSubtitle: TextView
     private lateinit var contentHost: LinearLayout
+    private lateinit var actionsTitle: TextView
+    private lateinit var actionsBox: LinearLayout
     private var lastSummary: SleepSummary? = null
     private val nightBg = Color.rgb(5, 6, 14)
     private val cardBg = Color.rgb(15, 17, 34)
@@ -85,7 +87,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(tab("▣\nKalender") { showCalendarPlaceholder() })
             addView(tab("⚙\nEinstellungen") { showSettings() })
         }
-        val section = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
+        actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
         val grant = button("Health Connect · Berechtigungen") { permissionLauncher.launch(permissions) }
         val link = button("Garmin Connect · Verbinden") { showGarminLogin() }
         val unlink = button("Garmin Connect · Trennen") { garminClient.logout(); refresh() }
@@ -95,10 +97,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             radius=dp(22).toFloat(); cardElevation=0f; strokeWidth=dp(1)
             setCardBackgroundColor(Color.rgb(20,18,40)); strokeColor=Color.rgb(55,50,88); addView(status)
         }
-        val actions = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
+        actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(32))
-            addView(pageTitle); addView(pageSubtitle); addView(statusCard); addView(sleepShell); addView(nav); addView(section); addView(actions)
+            addView(pageTitle); addView(pageSubtitle); addView(statusCard); addView(sleepShell); addView(nav); addView(actionsTitle); addView(actionsBox)
         }
         val scroll = ScrollView(this).apply {
             isFillViewport=true; clipToPadding=false; setBackgroundColor(nightBg); addView(box)
