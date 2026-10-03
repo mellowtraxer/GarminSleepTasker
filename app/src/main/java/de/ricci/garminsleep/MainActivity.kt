@@ -2,6 +2,8 @@ package de.ricci.garminsleep
 
 import androidx.activity.ComponentActivity
 import android.os.Bundle
+import android.content.pm.PackageManager
+import java.security.MessageDigest
 import android.graphics.Typeface
 import android.view.View
 import android.view.ViewGroup
@@ -54,8 +56,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val link = button("Garmin Connect · Verbinden") { showGarminLogin() }
         val unlink = button("Garmin Connect · Trennen") { garminClient.logout(); refresh() }
         val test = button("Schlafdaten neu laden") { testRead() }
+        val sig = button("App-Signatur anzeigen") { showAppSignature() }
         val statusCard = MaterialCardView(this).apply { radius=dp(24).toFloat(); cardElevation=0f; strokeWidth=dp(1); addView(status) }
-        val actions = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test) }
+        val actions = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(32))
             addView(header); addView(sub); addView(statusCard); addView(sleepShell); addView(section); addView(actions)
@@ -79,6 +82,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         status.text = "$gc   ·   $hc"
     }
 
+
+    private fun showAppSignature() {
+        val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val cert = info.signingInfo?.apkContentsSigners?.firstOrNull()?.toByteArray()
+        val sha = cert?.let { MessageDigest.getInstance("SHA-256").digest(it).joinToString("") { b -> "%02x".format(b) } } ?: "unbekannt"
+        AlertDialog.Builder(this)
+            .setTitle("Installierte App-Signatur")
+            .setMessage("Paket: $packageName\nVersion: ${info.longVersionCode}\nSHA-256:\n$sha")
+            .setPositiveButton("OK", null)
+            .show()
+    }
 
     private fun showGarminLogin() {
         val email = EditText(this).apply { hint = "Garmin E-Mail"; inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS }
