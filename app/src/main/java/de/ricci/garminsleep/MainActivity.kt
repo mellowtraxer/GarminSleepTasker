@@ -75,12 +75,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val nav = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER; setPadding(dp(6),dp(7),dp(6),dp(7))
             val tabs = mutableListOf<MaterialButton>()
-            fun activate(active: MaterialButton) = tabs.forEach { b ->
+            fun activate(active: MaterialButton) = tabs.forEachIndexed { index,b ->
                 val on = b === active
-                b.setTextColor(if(on) accent2 else Color.rgb(137,145,177))
-                b.backgroundTintList=ColorStateList.valueOf(if(on) Color.rgb(11,42,55) else Color.TRANSPARENT)
+                val tone = intArrayOf(accent2,stageRem,stageAwake,accent)[index]
+                b.setTextColor(if(on) tone else Color.rgb(120,128,158))
+                b.backgroundTintList=ColorStateList.valueOf(if(on) Color.argb(48,Color.red(tone),Color.green(tone),Color.blue(tone)) else Color.TRANSPARENT)
                 b.strokeWidth=if(on) dp(1) else 0
-                b.strokeColor=ColorStateList.valueOf(Color.rgb(26,129,153))
+                b.strokeColor=ColorStateList.valueOf(tone)
+                b.alpha=if(on) 1f else .72f
             }
             fun tab(label: String, action: () -> Unit): MaterialButton = MaterialButton(this@MainActivity).apply {
                 text=label; isAllCaps=false; textSize=10f; cornerRadius=dp(18); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
@@ -90,7 +92,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val home=tab("◉\nÜbersicht"){showOverview()}; addView(home)
             addView(tab("▥\nVerlauf"){showHistoryPlaceholder()})
             addView(tab("▦\nKalender"){showCalendarPlaceholder()})
-            addView(tab("⚙\nSettings"){showSettings()})
+            addView(tab("✦\nSettings"){showSettings()})
             post { activate(home) }
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
@@ -117,8 +119,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
-            radius=dp(28).toFloat(); cardElevation=dp(10).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(48,54,91)
-            setCardBackgroundColor(Color.rgb(10,12,25)); addView(nav)
+            radius=dp(30).toFloat(); cardElevation=dp(12).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(59,66,108)
+            setCardBackgroundColor(Color.rgb(8,10,22)); addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(78)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
