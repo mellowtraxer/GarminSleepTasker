@@ -217,6 +217,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showHistoryPlaceholder() {
+        val d = resources.displayMetrics.density
+        fun dp(v: Int) = (v * d).toInt()
         actionsTitle.visibility = View.GONE
         actionsBox.visibility = View.GONE
         pageTitle.text = "Verlauf"
