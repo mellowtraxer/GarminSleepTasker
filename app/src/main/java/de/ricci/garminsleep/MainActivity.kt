@@ -37,10 +37,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var pageSubtitle: TextView
     private lateinit var contentHost: LinearLayout
     private var lastSummary: SleepSummary? = null
-    private val nightBg = Color.rgb(10, 10, 22)
-    private val cardBg = Color.rgb(24, 20, 48)
-    private val accent = Color.rgb(124, 92, 255)
-    private val accent2 = Color.rgb(63, 211, 198)
+    private val nightBg = Color.rgb(5, 6, 14)
+    private val cardBg = Color.rgb(15, 17, 34)
+    private val accent = Color.rgb(139, 92, 246)
+    private val accent2 = Color.rgb(34, 211, 238)
     private val stageLight = Color.rgb(99, 190, 255)
     private val stageDeep = Color.rgb(95, 75, 220)
     private val stageRem = Color.rgb(183, 99, 255)
@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageSubtitle = TextView(this).apply { text = "Dein Schlaf. Klar, automatisch, im Kalender."; textSize = 15f; alpha = .7f; setPadding(0,dp(4),0,dp(16)) }
         val sleepShell = MaterialCardView(this).apply {
             radius=dp(28).toFloat(); cardElevation=0f; strokeWidth=dp(1)
-            setCardBackgroundColor(cardBg); strokeColor = Color.rgb(65,55,105); addView(sleepCard)
+            setCardBackgroundColor(cardBg); strokeColor = Color.rgb(44,49,82); addView(sleepCard)
         }
         val nav = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -193,12 +193,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showOverview() {
+        actionsTitle.visibility = View.GONE
+        actionsBox.visibility = View.GONE
         pageTitle.text = "SleepSync"
         pageSubtitle.text = "Deine letzte Nacht auf einen Blick"
         lastSummary?.let { renderDashboard(it) }
     }
 
     private fun showHistoryPlaceholder() {
+        actionsTitle.visibility = View.GONE
+        actionsBox.visibility = View.GONE
         pageTitle.text = "Verlauf"
         pageSubtitle.text = "Deine Nächte im Vergleich"
         sleepCard.removeAllViews()
@@ -216,6 +220,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showCalendarPlaceholder() {
+        actionsTitle.visibility = View.GONE
+        actionsBox.visibility = View.GONE
         pageTitle.text = "Kalender"
         pageSubtitle.text = "Automatisch dokumentiert"
         sleepCard.removeAllViews()
@@ -230,6 +236,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showSettings() {
+        actionsTitle.visibility = View.VISIBLE
+        actionsBox.visibility = View.VISIBLE
         pageTitle.text = "Einstellungen"
         pageSubtitle.text = "Verbindungen, Automatik & Darstellung"
         sleepCard.removeAllViews()
@@ -279,7 +287,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         return MaterialCardView(this).apply {
             radius = dp(20).toFloat(); cardElevation = 0f; strokeWidth = dp(1)
-            setCardBackgroundColor(Color.rgb(31, 26, 61)); strokeColor = Color.rgb(69, 58, 117)
+            setCardBackgroundColor(Color.rgb(18, 21, 43)); strokeColor = Color.rgb(54, 60, 100)
             layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
             addView(body)
         }
@@ -301,7 +309,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             textSize = 14f; alpha = .7f
         })
         sleepCard.addView(TextView(this).apply {
-            text = "🌙  ${fmt(s.totalMin)}"; textSize = 38f; setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(3), 0, dp(10))
+            text = "☾  ${fmt(s.totalMin)}"; textSize = 42f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(5), 0, dp(12))
         })
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(TextView(this).apply {
@@ -320,7 +328,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             max = 100; progress = quality; progressTintList = ColorStateList.valueOf(accent2)
-            progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(54,46,88))
+            progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(30,34,58))
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(8)).apply { setMargins(0,0,0,dp(12)) }
         })
         val stages = GridLayout(this).apply {
