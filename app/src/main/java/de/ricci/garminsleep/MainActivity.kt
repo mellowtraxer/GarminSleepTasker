@@ -22,6 +22,7 @@ import android.widget.TextView
 import android.widget.GridLayout
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.content.res.ColorStateList
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -35,6 +36,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var pageSubtitle: TextView
     private lateinit var contentHost: LinearLayout
     private var lastSummary: SleepSummary? = null
+    private val nightBg = Color.rgb(10, 10, 22)
+    private val cardBg = Color.rgb(24, 20, 48)
+    private val accent = Color.rgb(124, 92, 255)
+    private val accent2 = Color.rgb(63, 211, 198)
     private val garminClient by lazy { GarminConnectClient(this) }
     private val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class),
@@ -57,7 +62,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18)) }
         pageTitle = TextView(this).apply { text = "SleepSync"; textSize = 30f; setTypeface(typeface, Typeface.BOLD) }
         pageSubtitle = TextView(this).apply { text = "Dein Schlaf. Klar, automatisch, im Kalender."; textSize = 15f; alpha = .7f; setPadding(0,dp(4),0,dp(16)) }
-        val sleepShell = MaterialCardView(this).apply { radius=dp(24).toFloat(); cardElevation=0f; strokeWidth=dp(1); addView(sleepCard) }
+        val sleepShell = MaterialCardView(this).apply {
+            radius=dp(28).toFloat(); cardElevation=0f; strokeWidth=dp(1)
+            setCardBackgroundColor(cardBg); strokeColor = Color.rgb(65,55,105); addView(sleepCard)
+        }
         val nav = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = android.view.Gravity.CENTER
@@ -78,13 +86,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val unlink = button("Garmin Connect · Trennen") { garminClient.logout(); refresh() }
         val test = button("Schlafdaten neu laden") { testRead() }
         val sig = button("App-Signatur anzeigen") { showAppSignature() }
-        val statusCard = MaterialCardView(this).apply { radius=dp(24).toFloat(); cardElevation=0f; strokeWidth=dp(1); addView(status) }
+        val statusCard = MaterialCardView(this).apply {
+            radius=dp(22).toFloat(); cardElevation=0f; strokeWidth=dp(1)
+            setCardBackgroundColor(Color.rgb(20,18,40)); strokeColor=Color.rgb(55,50,88); addView(status)
+        }
         val actions = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(32))
             addView(pageTitle); addView(pageSubtitle); addView(statusCard); addView(sleepShell); addView(nav); addView(section); addView(actions)
         }
-        val scroll = ScrollView(this).apply { isFillViewport=true; clipToPadding=false; addView(box) }
+        val scroll = ScrollView(this).apply {
+            isFillViewport=true; clipToPadding=false; setBackgroundColor(nightBg); addView(box)
+        }
+        fun tintTree(v: View) {
+            if (v is TextView) v.setTextColor(Color.rgb(242,239,255))
+            if (v is ViewGroup) for (i in 0 until v.childCount) tintTree(v.getChildAt(i))
+        }
+        tintTree(box)
         ViewCompat.setOnApplyWindowInsetsListener(scroll) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             v.setPadding(0,bars.top,0,bars.bottom); insets
@@ -232,7 +250,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(TextView(this@MainActivity).apply { text = value; textSize = 18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(6),0,0) })
         }
         return MaterialCardView(this).apply {
-            radius = dp(18).toFloat(); cardElevation = 0f; strokeWidth = dp(1)
+            radius = dp(20).toFloat(); cardElevation = 0f; strokeWidth = dp(1)
+            setCardBackgroundColor(Color.rgb(31, 26, 61)); strokeColor = Color.rgb(69, 58, 117)
             layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
             addView(body)
         }
@@ -257,7 +276,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             text = "🌙  ${fmt(s.totalMin)}"; textSize = 38f; setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(3), 0, dp(10))
         })
         sleepCard.addView(TextView(this).apply {
-            text = sleepStageBar(s); textSize = 22f; letterSpacing = .08f; setPadding(0, dp(4), 0, dp(2))
+            text = sleepStageBar(s); textSize = 24f; letterSpacing = .08f; setTextColor(accent2); setPadding(0, dp(4), 0, dp(2))
         })
         val stages = GridLayout(this).apply {
             columnCount = 2
