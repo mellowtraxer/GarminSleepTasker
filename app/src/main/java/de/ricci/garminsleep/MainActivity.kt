@@ -413,14 +413,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
             background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(49,24,91),Color.rgb(22,24,67),Color.rgb(7,47,59))).apply { cornerRadius=dp(28).toFloat(); setStroke(dp(1),Color.rgb(93,72,169)) }
-            addView(TextView(this@MainActivity).apply {
-                text = "☾  ${fmt(s.totalMin)}"; textSize = 42f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD)
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
+                addView(TextView(this@MainActivity).apply { text="GESAMTSCHLAF"; textSize=10f; letterSpacing=.14f; setTextColor(Color.rgb(184,174,224)); setTypeface(typeface,Typeface.BOLD) })
+                addView(TextView(this@MainActivity).apply { text=fmt(s.totalMin); textSize=42f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(2),0,0) })
+                addView(TextView(this@MainActivity).apply { text="☾  Schlafzeit"; textSize=12f; setTextColor(Color.rgb(151,210,225)); setPadding(0,dp(2),0,0) })
             })
             addView(TextView(this@MainActivity).apply {
-                text = "$quality%\nEFFIZIENZ"; gravity = android.view.Gravity.CENTER; textSize = 11f; setTypeface(typeface, Typeface.BOLD)
-                setTextColor(accent2); setPadding(dp(13),dp(9),dp(13),dp(9))
-                background = GradientDrawable().apply { cornerRadius=dp(20).toFloat(); setColor(Color.rgb(7,35,47)); setStroke(dp(1),Color.rgb(22,155,181)) }
+                text = "$quality%\nEFFIZIENZ"; gravity = android.view.Gravity.CENTER; textSize = 12f; setTypeface(typeface, Typeface.BOLD)
+                setTextColor(Color.WHITE); setPadding(dp(14),dp(12),dp(14),dp(12))
+                background = GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(22,94,120),Color.rgb(77,45,145))).apply { cornerRadius=dp(22).toFloat(); setStroke(dp(1),Color.rgb(83,205,229)) }
             })
         })
         sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(18),0,dp(8)) })
