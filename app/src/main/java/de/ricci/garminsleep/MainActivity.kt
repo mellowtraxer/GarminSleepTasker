@@ -48,10 +48,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         status = TextView(this).apply { textSize = 14f; setPadding(dp(18),dp(14),dp(18),dp(14)) }
         sleepCard = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18)) }
-        val header = TextView(this).apply { text = "Garmin Sleep"; textSize = 30f; setTypeface(typeface, Typeface.BOLD) }
-        val sub = TextView(this).apply { text = "Deine letzte Nacht auf einen Blick"; textSize = 15f; alpha = .7f; setPadding(0,dp(4),0,dp(16)) }
+        val header = TextView(this).apply { text = "SleepSync"; textSize = 30f; setTypeface(typeface, Typeface.BOLD) }
+        val sub = TextView(this).apply { text = "Dein Schlaf. Klar, automatisch, im Kalender."; textSize = 15f; alpha = .7f; setPadding(0,dp(4),0,dp(16)) }
         val sleepShell = MaterialCardView(this).apply { radius=dp(24).toFloat(); cardElevation=0f; strokeWidth=dp(1); addView(sleepCard) }
-        val section = TextView(this).apply { text="Einstellungen & Diagnose"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
+        val nav = TextView(this).apply {
+            text = "⌂  Übersicht        ◫  Verlauf        ▣  Kalender        ⚙  Einstellungen"
+            textSize = 13f; alpha = .78f; gravity = android.view.Gravity.CENTER
+            setPadding(dp(4), dp(18), dp(4), dp(4))
+        }
+        val section = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
         val grant = button("Health Connect · Berechtigungen") { permissionLauncher.launch(permissions) }
         val link = button("Garmin Connect · Verbinden") { showGarminLogin() }
         val unlink = button("Garmin Connect · Trennen") { garminClient.logout(); refresh() }
@@ -61,7 +66,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val actions = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(32))
-            addView(header); addView(sub); addView(statusCard); addView(sleepShell); addView(section); addView(actions)
+            addView(header); addView(sub); addView(statusCard); addView(sleepShell); addView(nav); addView(section); addView(actions)
         }
         val scroll = ScrollView(this).apply { isFillViewport=true; clipToPadding=false; addView(box) }
         ViewCompat.setOnApplyWindowInsetsListener(scroll) { v, insets ->
@@ -148,6 +153,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
+    private fun sleepStageBar(s: SleepSummary): String {
+        val parts = listOf(s.lightMin, s.deepMin, s.remMin, s.awakeMin)
+        val total = parts.sum().coerceAtLeast(1)
+        return parts.joinToString(" ") { m -> "▰".repeat(((m * 18 / total).toInt()).coerceAtLeast(1)) }
+    }
+
     private fun renderDashboard(s: SleepSummary) {
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
@@ -163,7 +174,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             textSize = 14f; alpha = .7f
         })
         sleepCard.addView(TextView(this).apply {
-            text = fmt(s.totalMin); textSize = 34f; setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(3), 0, dp(10))
+            text = "🌙  ${fmt(s.totalMin)}"; textSize = 38f; setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(3), 0, dp(10))
+        })
+        sleepCard.addView(TextView(this).apply {
+            text = sleepStageBar(s); textSize = 22f; letterSpacing = .08f; setPadding(0, dp(4), 0, dp(2))
         })
         sleepCard.addView(row("🌙", "Schlafphasen", "Leicht ${fmt(s.lightMin)}  ·  Tief ${fmt(s.deepMin)}  ·  REM ${fmt(s.remMin)}  ·  Wach ${fmt(s.awakeMin)}"))
         sleepCard.addView(row("❤️", "Puls", num(s.avgHr, "bpm")))
