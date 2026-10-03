@@ -17,11 +17,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "de.ricci.garminsleep.v11test"
+        applicationId = "de.ricci.sleepsync.dev"
         minSdk = 28
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.2.6-v1.1-test"
+        versionCode = 1
+        versionName = "0.1.0-v2-dev"
     }
 
     compileOptions {
