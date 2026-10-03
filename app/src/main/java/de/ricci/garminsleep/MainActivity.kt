@@ -17,6 +17,7 @@ import kotlinx.coroutines.*
 
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var status: TextView
+    private val garminClient by lazy { GarminConnectClient(this) }
     private val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         status = TextView(this).apply { textSize = 17f; setPadding(32,32,32,32) }
         val grant = Button(this).apply { text = "Health-Connect-Berechtigungen"; setOnClickListener { permissionLauncher.launch(permissions) } }
         val link = Button(this).apply { text = "Garmin Connect verbinden"; setOnClickListener { showGarminLogin() } }
-        val unlink = Button(this).apply { text = "Garmin Connect trennen"; setOnClickListener { GarminConnectClient(this@MainActivity).logout(); refresh() } }
+        val unlink = Button(this).apply { text = "Garmin Connect trennen"; setOnClickListener { garminClient.logout(); refresh() } }
         val test = Button(this).apply { text = "Garmin-Schlaf testen"; setOnClickListener { testRead() } }
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(24,48,24,24); addView(grant); addView(link); addView(unlink); addView(test); addView(status) }
         setContentView(ScrollView(this).apply { addView(box) })
@@ -42,7 +43,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         if (sdk != HealthConnectClient.SDK_AVAILABLE) { status.text = "Health Connect ist auf diesem Gerät nicht verfügbar."; return@launch }
         val granted = HealthConnectClient.getOrCreate(this@MainActivity).permissionController.getGrantedPermissions()
         val hc = if (granted.containsAll(permissions)) "✅ Health Connect bereit." else "⚠️ Bitte Health-Connect-Berechtigungen erteilen."
-        val gc = if (GarminConnectClient(this@MainActivity).isLinked()) "✅ Garmin Connect verbunden." else "ℹ️ Garmin Connect noch nicht verbunden."
+        val gc = if (garminClient.isLinked()) "✅ Garmin Connect verbunden." else "ℹ️ Garmin Connect noch nicht verbunden."
         status.text = "$hc\n$gc"
     }
 
@@ -59,7 +60,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             .setPositiveButton("Verbinden") { _, _ ->
                 launch {
                     status.text = "Verbinde mit Garmin Connect…"
-                    val result = withContext(Dispatchers.IO) { GarminConnectClient(this@MainActivity).login(email.text.toString().trim(), password.text.toString()) }
+                    val result = withContext(Dispatchers.IO) { garminClient.login(email.text.toString().trim(), password.text.toString()) }
                     handleLoginResult(result)
                 }
             }.show()
@@ -83,7 +84,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             .setPositiveButton("Bestätigen") { _, _ ->
                 launch {
                     status.text = "Prüfe Garmin-Code…"
-                    val result = withContext(Dispatchers.IO) { GarminConnectClient(this@MainActivity).verifyMfa(code.text.toString()) }
+                    val result = withContext(Dispatchers.IO) { garminClient.verifyMfa(code.text.toString()) }
                     handleLoginResult(result)
                 }
             }.show()
