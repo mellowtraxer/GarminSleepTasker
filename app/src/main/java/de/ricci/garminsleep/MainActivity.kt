@@ -222,6 +222,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageTitle.text = "Verlauf"
         pageSubtitle.text = "Deine Nächte im Vergleich"
         sleepCard.removeAllViews()
+        sleepCard.background = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            intArrayOf(Color.rgb(29,20,61), Color.rgb(16,17,45), Color.rgb(7,32,43))
+        ).apply { cornerRadius = dp(24).toFloat() }
         sleepCard.addView(TextView(this).apply {
             text = "Diese Woche"; textSize = 22f; setTypeface(typeface, Typeface.BOLD)
         })
@@ -322,6 +326,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             "Atmung" -> Color.rgb(80,225,184); "HRV" -> Color.rgb(213,96,255)
             else -> accent
         }
+        val fill = when (label) {
+            "Leicht" -> Color.rgb(10,32,48); "Tief" -> Color.rgb(22,20,56); "REM" -> Color.rgb(42,18,58); "Wach" -> Color.rgb(54,31,16)
+            "Puls" -> Color.rgb(54,18,31); "SpO₂" -> Color.rgb(9,37,49)
+            "Atmung" -> Color.rgb(10,42,34); "HRV" -> Color.rgb(45,17,55)
+            else -> Color.rgb(15,18,38)
+        }
         val body = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(15), dp(14), dp(15), dp(14))
             addView(TextView(this@MainActivity).apply {
@@ -337,7 +347,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         return MaterialCardView(this).apply {
             radius = dp(21).toFloat(); cardElevation = dp(2).toFloat(); strokeWidth = dp(1); strokeColor = tone
-            setCardBackgroundColor(Color.rgb(15,18,38))
+            setCardBackgroundColor(fill)
             layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
             addView(body)
         }
@@ -391,6 +401,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             text = "SCHLAFARCHITEKTUR\nTief  $deepPct %     ·     REM  $remPct %"
             textSize = 13f; setTextColor(Color.rgb(200,195,230)); setPadding(0, dp(4), 0, dp(10))
         })
+        sleepCard.addView(TextView(this).apply {
+            text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(10),0,dp(2))
+        })
         val stages = GridLayout(this).apply {
             columnCount = 2
             setPadding(0, dp(6), 0, dp(8))
@@ -400,6 +413,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("👀","Wach",fmt(s.awakeMin)))
         }
         sleepCard.addView(stages)
+        sleepCard.addView(TextView(this).apply {
+            text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(12),0,dp(2))
+        })
         val vitals = GridLayout(this).apply {
             columnCount = 2
             addView(metricCard("❤️","Puls",num(s.avgHr,"bpm")))
