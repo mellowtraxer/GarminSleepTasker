@@ -394,13 +394,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         val tf = java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault())
         sleepCard.removeAllViews()
-        sleepCard.addView(TextView(this).apply {
-            text = "Letzte Nacht  ·  ${tf.format(java.time.Instant.ofEpochMilli(s.startMs))} – ${tf.format(java.time.Instant.ofEpochMilli(s.endMs))}"
-            textSize = 14f; alpha = .7f
+        sleepCard.background = null
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(2),0,dp(2),dp(8))
+            addView(TextView(this@MainActivity).apply {
+                text="LETZTE NACHT"; textSize=11f; letterSpacing=.16f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD)
+                layoutParams=LinearLayout.LayoutParams(0,-2,1f)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="${tf.format(java.time.Instant.ofEpochMilli(s.startMs))} – ${tf.format(java.time.Instant.ofEpochMilli(s.endMs))}"; textSize=12f; setTextColor(Color.rgb(151,158,190))
+            })
         })
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(5),0,dp(14))
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(49,24,91),Color.rgb(22,24,67),Color.rgb(7,47,59))).apply { cornerRadius=dp(28).toFloat(); setStroke(dp(1),Color.rgb(93,72,169)) }
             addView(TextView(this@MainActivity).apply {
                 text = "☾  ${fmt(s.totalMin)}"; textSize = 42f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD)
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -411,6 +419,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 background = GradientDrawable().apply { cornerRadius=dp(20).toFloat(); setColor(Color.rgb(7,35,47)); setStroke(dp(1),Color.rgb(22,155,181)) }
             })
         })
+        sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(18),0,dp(8)) })
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,dp(4))
