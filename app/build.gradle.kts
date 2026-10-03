@@ -11,8 +11,8 @@ android {
         applicationId = "de.ricci.garminsleep.v11test"
         minSdk = 28
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.2.2-v1.1-test"
+        versionCode = 5
+        versionName = "0.2.3-v1.1-test"
     }
 
     compileOptions {
