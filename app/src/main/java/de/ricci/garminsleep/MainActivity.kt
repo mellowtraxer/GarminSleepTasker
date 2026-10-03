@@ -306,20 +306,32 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun metricCard(icon: String, label: String, value: String): MaterialCardView {
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
+        val tone = when (label) {
+            "Leicht" -> stageLight; "Tief" -> stageDeep; "REM" -> stageRem; "Wach" -> stageAwake
+            "Puls" -> Color.rgb(255,82,126); "SpO₂" -> Color.rgb(44,205,255)
+            "Atmung" -> Color.rgb(80,225,184); "HRV" -> Color.rgb(213,96,255)
+            else -> accent
+        }
         val body = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(14), dp(14), dp(14), dp(14))
-            addView(TextView(this@MainActivity).apply { text = "$icon  $label"; textSize = 13f; alpha = .72f })
-            addView(TextView(this@MainActivity).apply { text = value; textSize = 18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(6),0,0) })
+            orientation = LinearLayout.VERTICAL; setPadding(dp(15), dp(14), dp(15), dp(14))
+            addView(TextView(this@MainActivity).apply {
+                text = "$icon   ${label.uppercase()}"; textSize = 11f; letterSpacing = .08f; setTextColor(tone); setTypeface(typeface, Typeface.BOLD)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = value; textSize = 19f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(7),0,dp(3))
+            })
+            addView(View(this@MainActivity).apply {
+                background = GradientDrawable().apply { cornerRadius = dp(3).toFloat(); setColor(tone) }
+                layoutParams = LinearLayout.LayoutParams(dp(38),dp(3))
+            })
         }
         return MaterialCardView(this).apply {
-            radius = dp(20).toFloat(); cardElevation = 0f; strokeWidth = dp(1)
-            setCardBackgroundColor(Color.rgb(18, 21, 43)); strokeColor = Color.rgb(54, 60, 100)
+            radius = dp(21).toFloat(); cardElevation = dp(2).toFloat(); strokeWidth = dp(1); strokeColor = tone
+            setCardBackgroundColor(Color.rgb(15,18,38))
             layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
             addView(body)
         }
     }
-
     private fun renderDashboard(s: SleepSummary) {
         lastSummary = s
         val d = resources.displayMetrics.density
