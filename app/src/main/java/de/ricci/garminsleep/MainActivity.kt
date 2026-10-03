@@ -28,6 +28,9 @@ import kotlinx.coroutines.*
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var status: TextView
     private lateinit var sleepCard: LinearLayout
+    private lateinit var pageTitle: TextView
+    private lateinit var pageSubtitle: TextView
+    private lateinit var contentHost: LinearLayout
     private val garminClient by lazy { GarminConnectClient(this) }
     private val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class),
@@ -48,13 +51,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         status = TextView(this).apply { textSize = 14f; setPadding(dp(18),dp(14),dp(18),dp(14)) }
         sleepCard = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18)) }
-        val header = TextView(this).apply { text = "SleepSync"; textSize = 30f; setTypeface(typeface, Typeface.BOLD) }
-        val sub = TextView(this).apply { text = "Dein Schlaf. Klar, automatisch, im Kalender."; textSize = 15f; alpha = .7f; setPadding(0,dp(4),0,dp(16)) }
+        pageTitle = TextView(this).apply { text = "SleepSync"; textSize = 30f; setTypeface(typeface, Typeface.BOLD) }
+        pageSubtitle = TextView(this).apply { text = "Dein Schlaf. Klar, automatisch, im Kalender."; textSize = 15f; alpha = .7f; setPadding(0,dp(4),0,dp(16)) }
         val sleepShell = MaterialCardView(this).apply { radius=dp(24).toFloat(); cardElevation=0f; strokeWidth=dp(1); addView(sleepCard) }
-        val nav = TextView(this).apply {
-            text = "⌂  Übersicht        ◫  Verlauf        ▣  Kalender        ⚙  Einstellungen"
-            textSize = 13f; alpha = .78f; gravity = android.view.Gravity.CENTER
-            setPadding(dp(4), dp(18), dp(4), dp(4))
+        val nav = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, dp(14), 0, dp(2))
+            fun tab(label: String, action: () -> Unit) = MaterialButton(this@MainActivity).apply {
+                text = label; isAllCaps = false; textSize = 11f
+                layoutParams = LinearLayout.LayoutParams(0, dp(52), 1f)
+                setOnClickListener { action() }
+            }
+            addView(tab("⌂\nÜbersicht") { showOverview() })
+            addView(tab("≋\nVerlauf") { showHistoryPlaceholder() })
+            addView(tab("▣\nKalender") { showCalendarPlaceholder() })
+            addView(tab("⚙\nEinstellungen") { showSettings() })
         }
         val section = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
         val grant = button("Health Connect · Berechtigungen") { permissionLauncher.launch(permissions) }
@@ -66,7 +78,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val actions = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(32))
-            addView(header); addView(sub); addView(statusCard); addView(sleepShell); addView(nav); addView(section); addView(actions)
+            addView(pageTitle); addView(pageSubtitle); addView(statusCard); addView(sleepShell); addView(nav); addView(section); addView(actions)
         }
         val scroll = ScrollView(this).apply { isFillViewport=true; clipToPadding=false; addView(box) }
         ViewCompat.setOnApplyWindowInsetsListener(scroll) { v, insets ->
@@ -151,6 +163,42 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             sleepCard.removeAllViews()
             sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\n${t.message.orEmpty()}"; textSize = 16f })
         }
+    }
+
+    private fun showOverview() {
+        pageTitle.text = "SleepSync"
+        pageSubtitle.text = "Deine letzte Nacht auf einen Blick"
+        sleepCard.visibility = View.VISIBLE
+    }
+
+    private fun showHistoryPlaceholder() {
+        pageTitle.text = "Verlauf"
+        pageSubtitle.text = "Deine Nächte im Vergleich"
+        sleepCard.removeAllViews()
+        sleepCard.addView(TextView(this).apply {
+            text = "📊  Schlafverlauf\n\nHier entsteht die Wochen- und Monatsansicht mit Schlafdauer, Phasen, SpO₂, Atmung und HRV."
+            textSize = 17f; setPadding(0, 18, 0, 18)
+        })
+    }
+
+    private fun showCalendarPlaceholder() {
+        pageTitle.text = "Kalender"
+        pageSubtitle.text = "Automatisch dokumentiert"
+        sleepCard.removeAllViews()
+        sleepCard.addView(TextView(this).apply {
+            text = "📅  Garmin Schlaf\n\nKalender auswählen · Automatisch eintragen · Vorschau des nächsten Eintrags"
+            textSize = 17f; setPadding(0, 18, 0, 18)
+        })
+    }
+
+    private fun showSettings() {
+        pageTitle.text = "Einstellungen"
+        pageSubtitle.text = "Verbindungen, Automatik & Darstellung"
+        sleepCard.removeAllViews()
+        sleepCard.addView(TextView(this).apply {
+            text = "⌚ Garmin Connect\n❤️ Health Connect\n⚡ Tasker Plugin\n🎨 Material You\n🔒 Datenschutz & Diagnose"
+            textSize = 17f; setPadding(0, 18, 0, 18)
+        })
     }
 
     private fun sleepStageBar(s: SleepSummary): String {
