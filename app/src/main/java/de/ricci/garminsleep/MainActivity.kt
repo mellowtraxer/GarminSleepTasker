@@ -41,6 +41,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private val cardBg = Color.rgb(24, 20, 48)
     private val accent = Color.rgb(124, 92, 255)
     private val accent2 = Color.rgb(63, 211, 198)
+    private val stageLight = Color.rgb(99, 190, 255)
+    private val stageDeep = Color.rgb(95, 75, 220)
+    private val stageRem = Color.rgb(183, 99, 255)
+    private val stageAwake = Color.rgb(255, 164, 91)
     private val garminClient by lazy { GarminConnectClient(this) }
     private val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class),
@@ -276,8 +280,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply {
             text = "🌙  ${fmt(s.totalMin)}"; textSize = 38f; setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(3), 0, dp(10))
         })
+        sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(TextView(this).apply {
-            text = sleepStageBar(s); textSize = 24f; letterSpacing = .08f; setTextColor(accent2); setPadding(0, dp(4), 0, dp(2))
+            text = "● Leicht    ● Tief    ● REM    ● Wach"; textSize = 12f; alpha = .75f; setPadding(0,dp(7),0,dp(2))
         })
         sleepCard.addView(TextView(this).apply {
             val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
