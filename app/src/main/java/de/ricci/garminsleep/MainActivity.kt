@@ -246,21 +246,31 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(night("Do, 1. Okt.","6 h 58 min","01:03 – 07:58",intArrayOf(56,16,19,9)))
     }
     private fun showCalendarPlaceholder() {
-        actionsTitle.visibility = View.GONE
-        actionsBox.visibility = View.GONE
-        pageTitle.text = "Kalender"
-        pageSubtitle.text = "Automatisch dokumentiert"
-        sleepCard.removeAllViews()
-        sleepCard.addView(TextView(this).apply {
-            text = "📅  Schlaf automatisch eintragen"; textSize = 20f; setTypeface(typeface, Typeface.BOLD)
+        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
+        pageTitle.text="Kalendereintrag"; pageSubtitle.text="So landet deine Nacht im Kalender"
+        sleepCard.removeAllViews(); sleepCard.background=null
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(106,70,220); setCardBackgroundColor(Color.rgb(24,17,48))
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(17),dp(18),dp(17))
+                addView(TextView(this@MainActivity).apply { text="🗓  GARMIN SCHLAF  💤"; textSize=13f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD) })
+                addView(TextView(this@MainActivity).apply { text="00:29 – 09:19 Uhr"; textSize=14f; setTextColor(Color.rgb(174,180,207)); setPadding(0,dp(5),0,dp(14)) })
+                addView(TextView(this@MainActivity).apply { text="🌙  Gesamt   8 h 50 min\n🌙  Leicht     4 h 40 min\n🌑  Tief          1 h 38 min\n🧠  REM         1 h 46 min\n👀  Wach        0 h 46 min"; textSize=15f; setTextColor(Color.WHITE); setPadding(0,0,0,dp(12)) })
+                addView(TextView(this@MainActivity).apply { text="❤️  Ø Puls 71,4 bpm     🩸 SpO₂ 98,0 %\n🫁  Atmung 15,0/min    💓 HRV 33,0 ms"; textSize=13f; setTextColor(Color.rgb(205,190,235)) })
+            })
         })
-        sleepCard.addView(TextView(this).apply {
-            text = "Kalender   Garmin Schlaf 💤\nStatus       Automatik bereit\n\nVorschau\n💤 Garmin Schlaf\nSchlafdauer · Phasen · Puls · SpO₂ · Atmung · HRV"
-            textSize = 16f; setPadding(0,18,0,18)
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(22).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(33,104,126); setCardBackgroundColor(Color.rgb(8,31,42))
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
+                addView(TextView(this@MainActivity).apply { text="⚡"; textSize=24f; layoutParams=LinearLayout.LayoutParams(dp(42),-2) })
+                addView(TextView(this@MainActivity).apply { text="AUTOMATISCH EINTRAGEN\nAktiv · Garmin Schlaf"; textSize=13f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="●"; textSize=25f; setTextColor(Color.rgb(86,230,166)) })
+            })
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
         })
-        sleepCard.addView(MaterialButton(this).apply { text="Kalender auswählen"; isAllCaps=false })
     }
-
     private fun showSettings() {
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
