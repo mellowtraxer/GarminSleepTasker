@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Garmin Sleep for Tasker</string>
+    <string name="app_name">SleepSync</string>
     <string name="tasker_action">Garmin-Schlaf auslesen</string>
     <string name="permission_rationale">Health-Connect-Zugriff wird benötigt, um Garmin-Schlafdaten auszulesen.</string>
     <string name="start_ms">Start (ms)</string><string name="start_ms_desc">Startzeit der Garmin-Schlafsession in Unix-Millisekunden</string>
