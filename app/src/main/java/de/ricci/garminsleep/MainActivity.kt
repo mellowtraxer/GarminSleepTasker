@@ -335,8 +335,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             text = "Letzte Nacht  ·  ${tf.format(java.time.Instant.ofEpochMilli(s.startMs))} – ${tf.format(java.time.Instant.ofEpochMilli(s.endMs))}"
             textSize = 14f; alpha = .7f
         })
-        sleepCard.addView(TextView(this).apply {
-            text = "☾  ${fmt(s.totalMin)}"; textSize = 42f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(5), 0, dp(12))
+        val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(5),0,dp(14))
+            addView(TextView(this@MainActivity).apply {
+                text = "☾  ${fmt(s.totalMin)}"; textSize = 42f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD)
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = "$quality%\nEFFIZIENZ"; gravity = android.view.Gravity.CENTER; textSize = 11f; setTypeface(typeface, Typeface.BOLD)
+                setTextColor(accent2); setPadding(dp(13),dp(9),dp(13),dp(9))
+                background = GradientDrawable().apply { cornerRadius=dp(20).toFloat(); setColor(Color.rgb(7,35,47)); setStroke(dp(1),Color.rgb(22,155,181)) }
+            })
         })
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(TextView(this).apply {
@@ -346,17 +356,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
             val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
             val remPct = (s.remMin * 100 / sleepOnly).toInt()
-            text = "Schlafarchitektur   Tief $deepPct %  ·  REM $remPct %"
-            textSize = 13f; alpha = .72f; setPadding(0, dp(2), 0, dp(8))
-        })
-        val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
-        sleepCard.addView(TextView(this).apply {
-            text = "Schlafeffizienz   $quality %"; textSize = 15f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(6),0,dp(2))
-        })
-        sleepCard.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
-            max = 100; progress = quality; progressTintList = ColorStateList.valueOf(accent2)
-            progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(30,34,58))
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(8)).apply { setMargins(0,0,0,dp(12)) }
+            text = "SCHLAFARCHITEKTUR\nTief  $deepPct %     ·     REM  $remPct %"
+            textSize = 13f; setTextColor(Color.rgb(200,195,230)); setPadding(0, dp(4), 0, dp(10))
         })
         val stages = GridLayout(this).apply {
             columnCount = 2
