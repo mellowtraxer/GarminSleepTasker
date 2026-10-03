@@ -78,14 +78,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             gravity = android.view.Gravity.CENTER
             setPadding(0, dp(14), 0, dp(2))
             fun tab(label: String, action: () -> Unit) = MaterialButton(this@MainActivity).apply {
-                text = label; isAllCaps = false; textSize = 11f
-                layoutParams = LinearLayout.LayoutParams(0, dp(52), 1f)
+                text = label; isAllCaps = false; textSize = 11f; cornerRadius = dp(18)
+                setTextColor(Color.rgb(205, 210, 235))
+                backgroundTintList = ColorStateList.valueOf(Color.rgb(15, 18, 35))
+                strokeColor = ColorStateList.valueOf(Color.rgb(45, 52, 86)); strokeWidth = dp(1)
+                insetTop = 0; insetBottom = 0
+                layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f).apply { setMargins(dp(3),0,dp(3),0) }
                 setOnClickListener { action() }
             }
-            addView(tab("⌂\nÜbersicht") { showOverview() })
-            addView(tab("≋\nVerlauf") { showHistoryPlaceholder() })
-            addView(tab("▣\nKalender") { showCalendarPlaceholder() })
-            addView(tab("⚙\nEinstellungen") { showSettings() })
+            addView(tab("◉\nÜbersicht") { showOverview() })
+            addView(tab("▥\nVerlauf") { showHistoryPlaceholder() })
+            addView(tab("▦\nKalender") { showCalendarPlaceholder() })
+            addView(tab("⚙\nSettings") { showSettings() })
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
         val grant = button("Health Connect · Berechtigungen") { permissionLauncher.launch(permissions) }
@@ -95,7 +99,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sig = button("App-Signatur anzeigen") { showAppSignature() }
         val statusCard = MaterialCardView(this).apply {
             radius=dp(22).toFloat(); cardElevation=0f; strokeWidth=dp(1)
-            setCardBackgroundColor(Color.rgb(20,18,40)); strokeColor=Color.rgb(55,50,88); addView(status)
+            setCardBackgroundColor(Color.rgb(10,18,31)); strokeColor=Color.rgb(30,102,122); addView(status)
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         val box = LinearLayout(this).apply {
@@ -244,9 +248,28 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageSubtitle.text = "Verbindungen, Automatik & Darstellung"
         sleepCard.removeAllViews()
         sleepCard.addView(TextView(this).apply {
-            text = "⌚ Garmin Connect\n❤️ Health Connect\n⚡ Tasker Plugin\n🎨 Material You\n🔒 Datenschutz & Diagnose"
-            textSize = 17f; setPadding(0, 18, 0, 18)
+            text = "SYSTEM"; textSize = 12f; setTextColor(accent2); setTypeface(typeface, Typeface.BOLD); letterSpacing = .16f
         })
+        val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0) }
+        fun setting(icon:String, title:String, sub:String, color:Int) {
+            settingsGrid.addView(MaterialCardView(this).apply {
+                radius=dp(20).toFloat(); cardElevation=0f; setCardBackgroundColor(Color.rgb(18,21,43))
+                strokeWidth=dp(1); strokeColor=Color.rgb(49,56,91)
+                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(0,dp(5),0,dp(5))}
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
+                    addView(TextView(this@MainActivity).apply { text=icon; textSize=25f; setTextColor(color); layoutParams=LinearLayout.LayoutParams(dp(44),LinearLayout.LayoutParams.WRAP_CONTENT) })
+                    addView(TextView(this@MainActivity).apply { text="$title\n$sub"; textSize=15f; setTextColor(Color.WHITE); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                    addView(TextView(this@MainActivity).apply { text="›"; textSize=28f; setTextColor(color) })
+                })
+            })
+        }
+        setting("⌚","Garmin Connect","Verbunden · Schlafdaten synchronisieren",accent2)
+        setting("♥","Health Connect","Berechtigungen & Gesundheitsdaten",stageRem)
+        setting("⚡","Automatik","Tasker & Kalender",stageAwake)
+        setting("✦","Darstellung","OLED Night · SleepSync",accent)
+        setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight)
+        sleepCard.addView(settingsGrid)
     }
 
     private fun sleepStageStrip(s: SleepSummary): LinearLayout {
