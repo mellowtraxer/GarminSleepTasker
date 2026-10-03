@@ -461,8 +461,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("👀","Wach",fmt(s.awakeMin)))
         }
         sleepCard.addView(stages)
-        sleepCard.addView(TextView(this).apply {
-            text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(12),0,dp(2))
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(14),dp(4),dp(4))
+            addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=10f; setTextColor(Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD) })
         })
         val vitals = GridLayout(this).apply {
             columnCount = 2
@@ -472,15 +474,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("💓","HRV",num(s.avgHrv,"ms")))
         }
         sleepCard.addView(vitals)
+        sleepCard.addView(TextView(this).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(16),0,dp(7)) })
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(22).toFloat(); cardElevation=0f; strokeWidth=dp(1); strokeColor=Color.rgb(47,55,94); setCardBackgroundColor(Color.rgb(10,13,29))
+            radius=dp(24).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
                 addView(TextView(this@MainActivity).apply {
                     text="✦"; textSize=20f; setTextColor(accent2); layoutParams=LinearLayout.LayoutParams(dp(34),LinearLayout.LayoutParams.WRAP_CONTENT)
                 })
                 addView(TextView(this@MainActivity).apply {
-                    text=if (quality >= 90) "Hohe Schlafeffizienz · $quality%" else if (quality >= 80) "Solide Schlafeffizienz · $quality%" else "Schlafeffizienz · $quality%"
+                    text=(if (quality >= 90) "Hohe Schlafeffizienz" else if (quality >= 80) "Solide Schlafeffizienz" else "Schlafeffizienz") + "\n" + "$quality% deiner Bettzeit entfielen auf Schlafphasen."
                     textSize=13f; setTextColor(Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
                 })
             })
