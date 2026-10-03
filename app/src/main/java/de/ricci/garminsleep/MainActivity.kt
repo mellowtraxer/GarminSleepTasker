@@ -19,6 +19,9 @@ import android.text.InputType
 import android.app.AlertDialog
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.GridLayout
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -207,6 +210,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         return parts.joinToString(" ") { m -> "▰".repeat(((m * 18 / total).toInt()).coerceAtLeast(1)) }
     }
 
+    private fun metricCard(icon: String, label: String, value: String): MaterialCardView {
+        val d = resources.displayMetrics.density
+        fun dp(v: Int) = (v * d).toInt()
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(14), dp(14), dp(14))
+            addView(TextView(this@MainActivity).apply { text = "$icon  $label"; textSize = 13f; alpha = .72f })
+            addView(TextView(this@MainActivity).apply { text = value; textSize = 18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(6),0,0) })
+        }
+        return MaterialCardView(this).apply {
+            radius = dp(18).toFloat(); cardElevation = 0f; strokeWidth = dp(1)
+            layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
+            addView(body)
+        }
+    }
+
     private fun renderDashboard(s: SleepSummary) {
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
@@ -227,11 +246,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply {
             text = sleepStageBar(s); textSize = 22f; letterSpacing = .08f; setPadding(0, dp(4), 0, dp(2))
         })
-        sleepCard.addView(row("🌙", "Schlafphasen", "Leicht ${fmt(s.lightMin)}  ·  Tief ${fmt(s.deepMin)}  ·  REM ${fmt(s.remMin)}  ·  Wach ${fmt(s.awakeMin)}"))
-        sleepCard.addView(row("❤️", "Puls", num(s.avgHr, "bpm")))
-        sleepCard.addView(row("🩸", "SpO₂", "Ø ${num(s.avgSpo2, "%")}  ·  Min. ${num(s.minSpo2, "%")}"))
-        sleepCard.addView(row("🫁", "Atmung", "Ø ${num(s.avgResp, "/min")}  ·  Min. ${num(s.minResp, "/min")}"))
-        sleepCard.addView(row("💓", "HRV", num(s.avgHrv, "ms")))
+        val stages = GridLayout(this).apply {
+            columnCount = 2
+            setPadding(0, dp(6), 0, dp(8))
+            addView(metricCard("🌙","Leicht",fmt(s.lightMin)))
+            addView(metricCard("🌑","Tief",fmt(s.deepMin)))
+            addView(metricCard("🧠","REM",fmt(s.remMin)))
+            addView(metricCard("👀","Wach",fmt(s.awakeMin)))
+        }
+        sleepCard.addView(stages)
+        val vitals = GridLayout(this).apply {
+            columnCount = 2
+            addView(metricCard("❤️","Puls",num(s.avgHr,"bpm")))
+            addView(metricCard("🩸","SpO₂","Ø ${num(s.avgSpo2,"%")}\nMin. ${num(s.minSpo2,"%")}"))
+            addView(metricCard("🫁","Atmung","Ø ${num(s.avgResp,"/min")}\nMin. ${num(s.minResp,"/min")}"))
+            addView(metricCard("💓","HRV",num(s.avgHrv,"ms")))
+        }
+        sleepCard.addView(vitals)
     }
 
     override fun onDestroy() { super.onDestroy(); cancel() }
