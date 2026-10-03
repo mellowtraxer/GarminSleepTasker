@@ -20,6 +20,7 @@ import android.app.AlertDialog
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.GridLayout
+import android.widget.ProgressBar
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.content.res.ColorStateList
@@ -277,6 +278,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(TextView(this).apply {
             text = sleepStageBar(s); textSize = 24f; letterSpacing = .08f; setTextColor(accent2); setPadding(0, dp(4), 0, dp(2))
+        })
+        sleepCard.addView(TextView(this).apply {
+            val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
+            val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
+            val remPct = (s.remMin * 100 / sleepOnly).toInt()
+            text = "Schlafarchitektur   Tief $deepPct %  ·  REM $remPct %"
+            textSize = 13f; alpha = .72f; setPadding(0, dp(2), 0, dp(8))
+        })
+        val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
+        sleepCard.addView(TextView(this).apply {
+            text = "Schlafeffizienz   $quality %"; textSize = 15f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(6),0,dp(2))
+        })
+        sleepCard.addView(ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            max = 100; progress = quality; progressTintList = ColorStateList.valueOf(accent2)
+            progressBackgroundTintList = ColorStateList.valueOf(Color.rgb(54,46,88))
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(8)).apply { setMargins(0,0,0,dp(12)) }
         })
         val stages = GridLayout(this).apply {
             columnCount = 2
