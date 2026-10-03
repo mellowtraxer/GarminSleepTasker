@@ -242,6 +242,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showSettings() {
+        val d = resources.displayMetrics.density
+        fun dp(v: Int) = (v * d).toInt()
         actionsTitle.visibility = View.VISIBLE
         actionsBox.visibility = View.VISIBLE
         pageTitle.text = "Einstellungen"
