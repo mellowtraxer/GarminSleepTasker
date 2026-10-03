@@ -2,6 +2,9 @@ package de.ricci.garminsleep
 
 import android.content.Context
 import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 import java.time.LocalDate
@@ -63,7 +66,7 @@ class GarminConnectClient(private val context: Context) {
     }
 
     fun login(email: String, password: String): GarminLoginResult = try {
-        val url = HttpUrl.get("$SSO/mobile/api/login").newBuilder()
+        val url = "$SSO/mobile/api/login".toHttpUrl().newBuilder()
             .addQueryParameter("clientId", IOS_CLIENT)
             .addQueryParameter("locale", "en-US")
             .addQueryParameter("service", IOS_SERVICE)
@@ -103,7 +106,7 @@ class GarminConnectClient(private val context: Context) {
     }
 
     fun verifyMfa(code: String): GarminLoginResult = try {
-        val url = HttpUrl.get("$SSO/mobile/api/mfa/verifyCode").newBuilder()
+        val url = "$SSO/mobile/api/mfa/verifyCode".toHttpUrl().newBuilder()
             .addQueryParameter("clientId", IOS_CLIENT)
             .addQueryParameter("locale", "en-US")
             .addQueryParameter("service", IOS_SERVICE)
@@ -238,7 +241,7 @@ class GarminConnectClient(private val context: Context) {
     }
 
     private fun apiGet(path: String, params: Map<String, String>, token: String): JSONObject? {
-        val ub = HttpUrl.get("$API$path").newBuilder()
+        val ub = "$API$path".toHttpUrl().newBuilder()
         params.forEach { (k, v) -> ub.addQueryParameter(k, v) }
         val req = Request.Builder().url(ub.build())
             .headers(nativeHeaders())
