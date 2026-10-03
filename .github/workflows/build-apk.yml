@@ -34,7 +34,10 @@ jobs:
           mkdir -p "$HOME/.android"
           printf '%s' "$GARMIN_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
           chmod 600 "$HOME/.android/debug.keystore"
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
+          echo "Keystore file SHA-256:"
+          sha256sum "$HOME/.android/debug.keystore"
+          echo "Keystore certificate:"
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep -E "SHA256:|SHA-256:"
 
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
