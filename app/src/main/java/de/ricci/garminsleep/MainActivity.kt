@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var pageTitle: TextView
     private lateinit var pageSubtitle: TextView
     private lateinit var contentHost: LinearLayout
+    private var lastSummary: SleepSummary? = null
     private val garminClient by lazy { GarminConnectClient(this) }
     private val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class),
@@ -171,7 +172,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun showOverview() {
         pageTitle.text = "SleepSync"
         pageSubtitle.text = "Deine letzte Nacht auf einen Blick"
-        sleepCard.visibility = View.VISIBLE
+        lastSummary?.let { renderDashboard(it) }
     }
 
     private fun showHistoryPlaceholder() {
@@ -179,8 +180,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageSubtitle.text = "Deine Nächte im Vergleich"
         sleepCard.removeAllViews()
         sleepCard.addView(TextView(this).apply {
-            text = "📊  Schlafverlauf\n\nHier entsteht die Wochen- und Monatsansicht mit Schlafdauer, Phasen, SpO₂, Atmung und HRV."
-            textSize = 17f; setPadding(0, 18, 0, 18)
+            text = "Diese Woche"; textSize = 22f; setTypeface(typeface, Typeface.BOLD)
+        })
+        sleepCard.addView(TextView(this).apply {
+            text = "  Mo     Di     Mi     Do     Fr     Sa     So\n  ▃      ▅      ▆      ▂      ▇      ▆      ▅"
+            textSize = 21f; letterSpacing = .03f; setPadding(0,24,0,18)
+        })
+        sleepCard.addView(TextView(this).apply {
+            text = "Ø Schlafdauer   7 h 42 min\n\nTrends für Schlafdauer, Tiefschlaf, REM, SpO₂, Atmung und HRV werden hier aus deinen gespeicherten Nächten aufgebaut."
+            textSize = 16f; setPadding(0,8,0,18)
         })
     }
 
@@ -189,9 +197,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageSubtitle.text = "Automatisch dokumentiert"
         sleepCard.removeAllViews()
         sleepCard.addView(TextView(this).apply {
-            text = "📅  Garmin Schlaf\n\nKalender auswählen · Automatisch eintragen · Vorschau des nächsten Eintrags"
-            textSize = 17f; setPadding(0, 18, 0, 18)
+            text = "📅  Schlaf automatisch eintragen"; textSize = 20f; setTypeface(typeface, Typeface.BOLD)
         })
+        sleepCard.addView(TextView(this).apply {
+            text = "Kalender   Garmin Schlaf 💤\nStatus       Automatik bereit\n\nVorschau\n💤 Garmin Schlaf\nSchlafdauer · Phasen · Puls · SpO₂ · Atmung · HRV"
+            textSize = 16f; setPadding(0,18,0,18)
+        })
+        sleepCard.addView(MaterialButton(this).apply { text="Kalender auswählen"; isAllCaps=false })
     }
 
     private fun showSettings() {
@@ -227,6 +239,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun renderDashboard(s: SleepSummary) {
+        lastSummary = s
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
         fun fmt(m: Long) = "${m / 60} h ${m % 60} min"
