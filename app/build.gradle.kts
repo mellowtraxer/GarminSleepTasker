@@ -7,12 +7,21 @@ android {
     namespace = "de.ricci.garminsleep"
     compileSdk = 36
 
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "de.ricci.garminsleep.v11test"
         minSdk = 28
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.2.3-v1.1-test"
+        versionCode = 6
+        versionName = "0.2.4-v1.1-test"
     }
 
     compileOptions {
