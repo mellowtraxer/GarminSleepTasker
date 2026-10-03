@@ -368,8 +368,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(sleepStageStrip(s))
-        sleepCard.addView(TextView(this).apply {
-            text = "● Leicht    ● Tief    ● REM    ● Wach"; textSize = 12f; alpha = .75f; setPadding(0,dp(7),0,dp(2))
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,dp(4))
+            fun legend(name: String, tone: Int) = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
+                addView(View(this@MainActivity).apply {
+                    background = GradientDrawable().apply { shape=GradientDrawable.OVAL; setColor(tone) }
+                    layoutParams=LinearLayout.LayoutParams(dp(7),dp(7)).apply { setMargins(0,0,dp(5),0) }
+                })
+                addView(TextView(this@MainActivity).apply { text=name; textSize=11f; setTextColor(Color.rgb(185,190,215)) })
+                layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
+            }
+            addView(legend("Leicht",stageLight)); addView(legend("Tief",stageDeep)); addView(legend("REM",stageRem)); addView(legend("Wach",stageAwake))
         })
         sleepCard.addView(TextView(this).apply {
             val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
@@ -395,6 +405,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("💓","HRV",num(s.avgHrv,"ms")))
         }
         sleepCard.addView(vitals)
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(22).toFloat(); cardElevation=0f; strokeWidth=dp(1); strokeColor=Color.rgb(47,55,94); setCardBackgroundColor(Color.rgb(10,13,29))
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
+                addView(TextView(this@MainActivity).apply {
+                    text="✦"; textSize=20f; setTextColor(accent2); layoutParams=LinearLayout.LayoutParams(dp(34),LinearLayout.LayoutParams.WRAP_CONTENT)
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text=if (quality >= 90) "Starke Nacht · sehr hohe Schlafeffizienz" else if (quality >= 80) "Gute Nacht · solide Schlafeffizienz" else "Unruhigere Nacht · Erholung im Blick behalten"
+                    textSize=13f; setTextColor(Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
+                })
+            })
+            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(4),dp(10),dp(4),0) }
+        })
     }
 
     override fun onDestroy() { super.onDestroy(); cancel() }
