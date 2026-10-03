@@ -73,22 +73,25 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setCardBackgroundColor(cardBg); strokeColor = Color.rgb(44,49,82); addView(sleepCard)
         }
         val nav = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER
-            setPadding(0, dp(14), 0, dp(2))
-            fun tab(label: String, action: () -> Unit) = MaterialButton(this@MainActivity).apply {
-                text = label; isAllCaps = false; textSize = 11f; cornerRadius = dp(18)
-                setTextColor(Color.rgb(205, 210, 235))
-                backgroundTintList = ColorStateList.valueOf(Color.rgb(15, 18, 35))
-                strokeColor = ColorStateList.valueOf(Color.rgb(45, 52, 86)); strokeWidth = dp(1)
-                insetTop = 0; insetBottom = 0
-                layoutParams = LinearLayout.LayoutParams(0, dp(56), 1f).apply { setMargins(dp(3),0,dp(3),0) }
-                setOnClickListener { action() }
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER; setPadding(dp(6),dp(7),dp(6),dp(7))
+            val tabs = mutableListOf<MaterialButton>()
+            fun activate(active: MaterialButton) = tabs.forEach { b ->
+                val on = b === active
+                b.setTextColor(if(on) accent2 else Color.rgb(137,145,177))
+                b.backgroundTintList=ColorStateList.valueOf(if(on) Color.rgb(11,42,55) else Color.TRANSPARENT)
+                b.strokeWidth=if(on) dp(1) else 0
+                b.strokeColor=ColorStateList.valueOf(Color.rgb(26,129,153))
             }
-            addView(tab("◉\nÜbersicht") { showOverview() })
-            addView(tab("▥\nVerlauf") { showHistoryPlaceholder() })
-            addView(tab("▦\nKalender") { showCalendarPlaceholder() })
-            addView(tab("⚙\nSettings") { showSettings() })
+            fun tab(label: String, action: () -> Unit): MaterialButton = MaterialButton(this@MainActivity).apply {
+                text=label; isAllCaps=false; textSize=10f; cornerRadius=dp(18); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
+                layoutParams=LinearLayout.LayoutParams(0,dp(56),1f).apply { setMargins(dp(2),0,dp(2),0) }
+                setOnClickListener { activate(this); action() }; tabs.add(this)
+            }
+            val home=tab("◉\nÜbersicht"){showOverview()}; addView(home)
+            addView(tab("▥\nVerlauf"){showHistoryPlaceholder()})
+            addView(tab("▦\nKalender"){showCalendarPlaceholder()})
+            addView(tab("⚙\nSettings"){showSettings()})
+            post { activate(home) }
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
         val grant = button("Health Connect · Berechtigungen") { permissionLauncher.launch(permissions) }
