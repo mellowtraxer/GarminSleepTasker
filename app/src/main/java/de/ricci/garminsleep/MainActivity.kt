@@ -418,6 +418,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         addView(TextView(this@MainActivity).apply { text=value; textSize=21f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
                     })
                     if(points.isNotEmpty()) {
+                        addView(TextView(this@MainActivity).apply {
+                            text=points.size.toString()+" echte Messpunkte"
+                            textSize=9f; setTextColor(Color.rgb(94,106,136)); setPadding(0,px(4),0,0)
+                        })
                         val min=points.minOf { it.value }; val max=points.maxOf { it.value }
                         fun fv(v:Double)=if(kotlin.math.abs(v-kotlin.math.round(v))<0.05) kotlin.math.round(v).toInt().toString() else String.format(java.util.Locale.GERMANY,"%.1f",v)
                         val unit=when(name) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
