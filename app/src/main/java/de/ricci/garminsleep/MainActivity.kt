@@ -421,7 +421,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     if(points.isNotEmpty()) {
                         addView(TextView(this@MainActivity).apply {
                             text="●  "+points.size.toString()+" Messpunkte  ·  Garmin"
-                            textSize=9f; setTextColor(Color.rgb(94,106,136)); setPadding(0,px(4),0,0)
+                            textSize=9f; setTextColor(Color.argb(175,Color.red(color),Color.green(color),Color.blue(color))); setPadding(0,px(4),0,0)
                         })
                         val min=points.minOf { it.value }; val max=points.maxOf { it.value }
                         fun fv(v:Double)=if(kotlin.math.abs(v-kotlin.math.round(v))<0.05) kotlin.math.round(v).toInt().toString() else String.format(java.util.Locale.GERMANY,"%.1f",v)
