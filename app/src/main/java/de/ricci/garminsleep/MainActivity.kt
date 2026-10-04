@@ -59,6 +59,19 @@ private class NightLandscapeView(context: android.content.Context) : View(contex
     }
 }
 
+private class MetricSparklineView(context:android.content.Context, private val points:List<MetricPoint>, private val tone:Int, private val label:String, private val valueText:TextView):View(context){
+    private val p=Paint(Paint.ANTI_ALIAS_FLAG); private var touchX=-1f
+    init{setLayerType(LAYER_TYPE_SOFTWARE,null);setOnTouchListener{_,e->when(e.action){android.view.MotionEvent.ACTION_DOWN,android.view.MotionEvent.ACTION_MOVE->{touchX=e.x.coerceIn(0f,width.toFloat());updateReadout();invalidate();true};android.view.MotionEvent.ACTION_UP,android.view.MotionEvent.ACTION_CANCEL->{touchX=-1f;invalidate();true};else->false}}}
+    private fun fmt(v:Double)=when(label){"Puls"->String.format(java.util.Locale.GERMANY,"%.0f bpm",v);"SpO₂"->String.format(java.util.Locale.GERMANY,"%.1f %%",v);"Atmung"->String.format(java.util.Locale.GERMANY,"%.1f /min",v);"HRV"->String.format(java.util.Locale.GERMANY,"%.0f ms",v);else->String.format(java.util.Locale.GERMANY,"%.1f",v)}
+    private fun updateReadout(){if(points.isEmpty()||width<=0)return;val idx=((touchX/width)*(points.size-1)).toInt().coerceIn(0,points.lastIndex);val q=points[idx];val tm=java.time.Instant.ofEpochMilli(q.timeMs).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));valueText.text=fmt(q.value)+"  ·  "+tm}
+    override fun onDraw(c:Canvas){super.onDraw(c);if(points.size<2)return;val w=width.toFloat();val h=height.toFloat();val min=points.minOf{it.value};val max=points.maxOf{it.value};val span=(max-min).coerceAtLeast(.01);fun x(i:Int)=i*w/(points.size-1);fun y(v:Double)=(h*.82f-((v-min)/span).toFloat()*h*.58f)
+        val path=Path();points.forEachIndexed{i,q->if(i==0)path.moveTo(x(i),y(q.value))else path.lineTo(x(i),y(q.value))}
+        p.style=Paint.Style.STROKE;p.strokeWidth=resources.displayMetrics.density*2.2f;p.strokeCap=Paint.Cap.ROUND;p.strokeJoin=Paint.Join.ROUND;p.color=tone;p.setShadowLayer(resources.displayMetrics.density*7f,0f,0f,tone);c.drawPath(path,p);p.clearShadowLayer()
+        p.style=Paint.Style.FILL;p.color=Color.argb(45,Color.red(tone),Color.green(tone),Color.blue(tone));val area=Path(path);area.lineTo(w,h);area.lineTo(0f,h);area.close();c.drawPath(area,p)
+        if(touchX>=0){val idx=((touchX/w)*(points.size-1)).toInt().coerceIn(0,points.lastIndex);val xx=x(idx);val yy=y(points[idx].value);p.color=Color.argb(130,255,255,255);p.strokeWidth=resources.displayMetrics.density;p.style=Paint.Style.STROKE;c.drawLine(xx,0f,xx,h,p);p.style=Paint.Style.FILL;p.color=Color.WHITE;c.drawCircle(xx,yy,resources.displayMetrics.density*4f,p);p.color=tone;c.drawCircle(xx,yy,resources.displayMetrics.density*2f,p)}
+    }
+}
+
 private class BottomNavIconView(context: android.content.Context, private val kind:Int) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE; strokeWidth=resources.displayMetrics.density*2.15f; strokeCap=Paint.Cap.ROUND; strokeJoin=Paint.Join.ROUND }
     var active=false; set(v){field=v; invalidate()}
