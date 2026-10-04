@@ -428,6 +428,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(18),0,dp(8)) })
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL; setPadding(dp(2),dp(5),dp(2),0)
+            addView(TextView(this@MainActivity).apply { text=tf.format(java.time.Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(Color.rgb(118,128,161)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply { text=tf.format(java.time.Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(118,128,161)) })
+        })
+        sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,dp(4))
             fun legend(name: String, tone: Int) = LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
@@ -439,6 +444,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
             }
             addView(legend("Leicht",stageLight)); addView(legend("Tief",stageDeep)); addView(legend("REM",stageRem)); addView(legend("Wach",stageAwake))
+        })
+        sleepCard.addView(View(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.TRANSPARENT,Color.rgb(74,64,116),Color.TRANSPARENT))
+            layoutParams=LinearLayout.LayoutParams(-1,dp(1)).apply { setMargins(dp(12),dp(7),dp(12),dp(3)) }
         })
         val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
