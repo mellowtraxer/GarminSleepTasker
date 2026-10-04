@@ -437,8 +437,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; setPadding(dp(2),dp(5),dp(2),0)
-            addView(TextView(this@MainActivity).apply { text=tf.format(java.time.Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(Color.rgb(118,128,161)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-            addView(TextView(this@MainActivity).apply { text=tf.format(java.time.Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(118,128,161)) })
+            addView(TextView(this@MainActivity).apply { text="☾  "+tf.format(java.time.Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(Color.rgb(118,128,161)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply { text=tf.format(java.time.Instant.ofEpochMilli(s.endMs))+"  ☀"; textSize=10f; setTextColor(Color.rgb(118,128,161)) })
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,dp(4))
@@ -470,8 +470,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(7),0,dp(7)) }
         })
-        sleepCard.addView(TextView(this).apply {
-            text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(10),0,dp(2))
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(10),0,dp(2))
+            addView(TextView(this@MainActivity).apply { text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply { text=fmt(s.lightMin+s.deepMin+s.remMin); textSize=10f; setTextColor(Color.rgb(143,151,183)) })
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; setPadding(dp(4),dp(2),dp(4),dp(3))
