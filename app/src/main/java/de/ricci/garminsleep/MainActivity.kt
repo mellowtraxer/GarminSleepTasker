@@ -130,8 +130,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val test = button("Schlafdaten neu laden") { testRead() }
         val sig = button("App-Signatur anzeigen") { showAppSignature() }
         val statusCard = MaterialCardView(this).apply {
-            radius=dp(16).toFloat(); cardElevation=0f; strokeWidth=0
-            setCardBackgroundColor(Color.argb(205,7,17,25))
+            radius=dp(18).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(80,120,176,255)
+            setCardBackgroundColor(Color.argb(172,7,17,31))
             status.setPadding(dp(12),dp(7),dp(12),dp(7)); addView(status)
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
