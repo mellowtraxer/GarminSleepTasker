@@ -22,8 +22,8 @@ class SleepMetricChartView(
     private var touchX = 0f
     private var dragging = false
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
-    init { minimumHeight=(210*resources.displayMetrics.density).toInt() }
-    override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(210*resources.displayMetrics.density).toInt()) }
+    init { minimumHeight=(230*resources.displayMetrics.density).toInt() }
+    override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(230*resources.displayMetrics.density).toInt()) }
     private fun formatValue(v: Double): String =
         if(kotlin.math.abs(v-kotlin.math.round(v)) < 0.05) kotlin.math.round(v).toInt().toString()
         else String.format(java.util.Locale.GERMANY,"%.1f",v)
@@ -49,7 +49,7 @@ class SleepMetricChartView(
     override fun performClick(): Boolean { super.performClick(); return true }
     override fun onDraw(c:Canvas){
         super.onDraw(c); val d=resources.displayMetrics.density
-        val l=36*d; val r=width-10*d; val top=18*d; val bottom=height-34*d
+        val l=36*d; val r=width-10*d; val top=22*d; val bottom=height-38*d
         p.strokeWidth=d; p.color=Color.rgb(39,48,67)
         repeat(4){ i-> val y=top+(bottom-top)*i/3f; c.drawLine(l,y,r,y,p) }
         val path=Path()
