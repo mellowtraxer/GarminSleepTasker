@@ -181,7 +181,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             GradientDrawable(GradientDrawable.Orientation.TR_BL, intArrayOf(Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)))
         ))
         val scene = android.widget.FrameLayout(this).apply {
-            if(!useLight) addView(NightLandscapeView(this@MainActivity), android.widget.FrameLayout.LayoutParams(-1,-1))
+            if(!useLight) addView(android.widget.ImageView(this@MainActivity).apply {
+                scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
+                setImageResource(resources.getIdentifier("sleepsync_night_v2_1","drawable",packageName))
+            }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
                 background=if(useLight) ColorDrawable(Color.argb(18,255,255,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
