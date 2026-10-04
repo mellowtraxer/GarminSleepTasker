@@ -21,6 +21,8 @@ class SleepMetricChartView(
     private var selectedIndex: Int? = null
     private var touchX = 0f
     private var dragging = false
+    private var downX = 0f
+    private var downY = 0f
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     init { minimumHeight=(230*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(230*resources.displayMetrics.density).toInt()) }
@@ -31,20 +33,27 @@ class SleepMetricChartView(
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if(points.isEmpty()) return super.onTouchEvent(e)
         when(e.action) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+            MotionEvent.ACTION_DOWN -> {
+                downX=e.x; downY=e.y; dragging=true
+                updateSelection(e.x); parent?.requestDisallowInterceptTouchEvent(true); invalidate(); return true
+            }
+            MotionEvent.ACTION_MOVE -> {
                 dragging=true
-                val d=resources.displayMetrics.density; val l=36*d; val r=width-10*d
-                val fraction=((e.x-l)/(r-l)).coerceIn(0f,1f)
-                val target=startMs+((endMs-startMs)*fraction).toLong()
-                selectedIndex=points.indices.minByOrNull { kotlin.math.abs(points[it].timeMs-target) }
-                touchX=e.x
-                parent?.requestDisallowInterceptTouchEvent(e.action==MotionEvent.ACTION_MOVE)
+                updateSelection(e.x)
+                parent?.requestDisallowInterceptTouchEvent(true)
                 invalidate(); return true
             }
             MotionEvent.ACTION_UP -> { dragging=false; performClick(); parent?.requestDisallowInterceptTouchEvent(false); invalidate(); return true }
             MotionEvent.ACTION_CANCEL -> { dragging=false; parent?.requestDisallowInterceptTouchEvent(false); invalidate(); return true }
         }
         return true
+    }
+    private fun updateSelection(xPos: Float) {
+        val d=resources.displayMetrics.density; val l=36*d; val r=width-10*d
+        val fraction=((xPos-l)/(r-l)).coerceIn(0f,1f)
+        val target=startMs+((endMs-startMs)*fraction).toLong()
+        selectedIndex=points.indices.minByOrNull { kotlin.math.abs(points[it].timeMs-target) }
+        touchX=xPos
     }
     override fun performClick(): Boolean { super.performClick(); return true }
     override fun onDraw(c:Canvas){
