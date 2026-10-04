@@ -503,14 +503,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=tone; setCardBackgroundColor(Color.argb(190,9,15,31))
             addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
                 addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
-                addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(14)) })
+                addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(4)) })
+                val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
+                addView(TextView(this@MainActivity).apply { text=pct.toString()+" % der Nacht · "+intervals.size+" Abschnitte"; textSize=11f; setTextColor(Color.rgb(165,175,205)); setPadding(0,0,0,dp(14)) })
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                     val duration=(s.endMs-s.startMs).coerceAtLeast(1); var cursor=s.startMs
                     fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(if(active) tone else Color.argb(38,120,130,160)) }; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 18),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(dp(1),0,dp(1),0) } }
                     intervals.sortedBy { it.startMs }.forEach { st -> if(st.startMs>cursor) addView(seg(st.startMs-cursor,false)); addView(seg(st.endMs-st.startMs,true)); cursor=st.endMs }; if(cursor<s.endMs) addView(seg(s.endMs-cursor,false))
                 })
                 val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
-                addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+"  ·  "+intervals.size+" Abschnitte  ·  "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(135,147,180)); setPadding(0,dp(9),0,0) })
+                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,0)
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(Color.rgb(135,147,180)); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2)); textSize=10f; gravity=android.view.Gravity.CENTER; setTextColor(Color.rgb(135,147,180)); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; gravity=android.view.Gravity.END; setTextColor(Color.rgb(135,147,180)); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                })
             })
         })
     }
