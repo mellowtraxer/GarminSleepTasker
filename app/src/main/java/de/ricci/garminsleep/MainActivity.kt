@@ -69,8 +69,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageTitle = TextView(this).apply { text = "SleepSync"; textSize = 30f; setTypeface(typeface, Typeface.BOLD) }
         pageSubtitle = TextView(this).apply { text = "Dein Schlaf. Klar, automatisch, im Kalender."; textSize = 15f; alpha = .7f; setPadding(0,dp(4),0,dp(16)) }
         val sleepShell = MaterialCardView(this).apply {
-            radius=dp(28).toFloat(); cardElevation=0f; strokeWidth=dp(1)
-            setCardBackgroundColor(cardBg); strokeColor = Color.rgb(44,49,82); addView(sleepCard)
+            radius=0f; cardElevation=0f; strokeWidth=0
+            setCardBackgroundColor(Color.TRANSPARENT); addView(sleepCard)
         }
         val nav = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER; setPadding(dp(6),dp(7),dp(6),dp(7))
