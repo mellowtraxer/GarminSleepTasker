@@ -491,6 +491,28 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if (onClick != null) { isClickable=true; isFocusable=true; setOnClickListener { onClick() } }
         }
     }
+    private fun showStageTimeline(label:String, tone:Int, minutes:Long, s:SleepSummary) {
+        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        pageTitle.text="Schlafphasen"; pageSubtitle.text=label+" · Verlauf dieser Nacht"
+        actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
+        sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
+        val intervals=s.stageSeries.filter { it.stageLabel==label }
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=tone; setCardBackgroundColor(Color.argb(190,9,15,31))
+            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
+                addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
+                addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(14)) })
+                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
+                    val duration=(s.endMs-s.startMs).coerceAtLeast(1); var cursor=s.startMs
+                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(if(active) tone else Color.argb(38,120,130,160)) }; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 18),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(dp(1),0,dp(1),0) } }
+                    intervals.sortedBy { it.startMs }.forEach { st -> if(st.startMs>cursor) addView(seg(st.startMs-cursor,false)); addView(seg(st.endMs-st.startMs,true)); cursor=st.endMs }; if(cursor<s.endMs) addView(seg(s.endMs-cursor,false))
+                })
+                val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+                addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+"  ·  "+intervals.size+" Abschnitte  ·  "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(135,147,180)); setPadding(0,dp(9),0,0) })
+            })
+        })
+    }
+
     private fun showMetricDetail(label: String, icon: String, tone: Int, s: SleepSummary) {
         pageTitle.text = "Gesundheitswerte"
         pageSubtitle.text = "Berühren & entlang der Kurven fahren"
@@ -638,10 +660,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val stages = GridLayout(this).apply {
             columnCount = 2
             setPadding(0, dp(6), 0, dp(8))
-            addView(metricCard("🌙","Leicht",fmt(s.lightMin)))
-            addView(metricCard("🌑","Tief",fmt(s.deepMin)))
-            addView(metricCard("🧠","REM",fmt(s.remMin)))
-            addView(metricCard("👀","Wach",fmt(s.awakeMin)))
+            addView(metricCard("🌙","Leicht",fmt(s.lightMin)) { showStageTimeline("Leicht", stageLight, s.lightMin, s) })
+            addView(metricCard("🌑","Tief",fmt(s.deepMin)) { showStageTimeline("Tief", stageDeep, s.deepMin, s) })
+            addView(metricCard("🧠","REM",fmt(s.remMin)) { showStageTimeline("REM", stageRem, s.remMin, s) })
+            addView(metricCard("👀","Wach",fmt(s.awakeMin)) { showStageTimeline("Wach", stageAwake, s.awakeMin, s) })
         }
         sleepCard.addView(stages)
         sleepCard.addView(View(this).apply {
