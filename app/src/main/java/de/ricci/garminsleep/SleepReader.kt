@@ -21,7 +21,10 @@ data class SleepSummary(
     val avgHr: Double?, val avgSpo2: Double?, val avgResp: Double?,
     val minSpo2: Double?, val minResp: Double?, val avgHrv: Double?,
     val source: String, val calendarText: String,
-    val heartRateSeries: List<MetricPoint> = emptyList()
+    val heartRateSeries: List<MetricPoint> = emptyList(),
+    val spo2Series: List<MetricPoint> = emptyList(),
+    val respirationSeries: List<MetricPoint> = emptyList(),
+    val hrvSeries: List<MetricPoint> = emptyList()
 )
 
 class SleepReader(private val context: Context) {
@@ -58,6 +61,9 @@ class SleepReader(private val context: Context) {
         val total = Duration.between(sleep.startTime, sleep.endTime).toMinutes()
 
         val heartSeries = heartRateSeries(sleep.startTime, sleep.endTime)
+        val spo2Points = oxygenSeries(sleep.startTime, sleep.endTime)
+        val respirationPoints = respirationSeries(sleep.startTime, sleep.endTime)
+        val hrvPoints = hrvSeries(sleep.startTime, sleep.endTime)
         val hr = heartSeries.map { it.value }.average().takeUnless { it.isNaN() }
         // Garmin does not currently export overnight SpO2/respiration to Health
         // Connect. Prefer HC if present, otherwise enrich from Garmin Connect
@@ -77,7 +83,7 @@ class SleepReader(private val context: Context) {
             sleep.startTime.toEpochMilli(), sleep.endTime.toEpochMilli(), total,
             light, deep, rem, awake, sleeping, hr, spo2, resp,
             minSpo2, minResp, avgHrv,
-            sleep.metadata.dataOrigin.packageName, text, heartSeries
+            sleep.metadata.dataOrigin.packageName, text, heartSeries, spo2Points, respirationPoints, hrvPoints
         )
     }
 
@@ -86,6 +92,21 @@ class SleepReader(private val context: Context) {
         return records.filter { it.metadata.dataOrigin.packageName == GARMIN_PACKAGE }.flatMap { it.samples }
             .filter { !it.time.isBefore(start) && !it.time.isAfter(end) }.sortedBy { it.time }
             .map { MetricPoint(it.time.toEpochMilli(), it.beatsPerMinute.toDouble()) }
+    }
+
+    private suspend fun oxygenSeries(start: Instant, end: Instant): List<MetricPoint> {
+        val records=client.readRecords(ReadRecordsRequest(OxygenSaturationRecord::class,TimeRangeFilter.between(start,end))).records
+        return records.filter { it.metadata.dataOrigin.packageName==GARMIN_PACKAGE }.sortedBy { it.time }.map { MetricPoint(it.time.toEpochMilli(),it.percentage.value) }
+    }
+
+    private suspend fun respirationSeries(start: Instant, end: Instant): List<MetricPoint> {
+        val records=client.readRecords(ReadRecordsRequest(RespiratoryRateRecord::class,TimeRangeFilter.between(start,end))).records
+        return records.filter { it.metadata.dataOrigin.packageName==GARMIN_PACKAGE }.sortedBy { it.time }.map { MetricPoint(it.time.toEpochMilli(),it.rate) }
+    }
+
+    private suspend fun hrvSeries(start: Instant, end: Instant): List<MetricPoint> {
+        val records=client.readRecords(ReadRecordsRequest(HeartRateVariabilityRmssdRecord::class,TimeRangeFilter.between(start,end))).records
+        return records.filter { it.metadata.dataOrigin.packageName==GARMIN_PACKAGE }.sortedBy { it.time }.map { MetricPoint(it.time.toEpochMilli(),it.heartRateVariabilityMillis) }
     }
 
     private suspend fun averageHeartRate(start: Instant, end: Instant): Double? {
