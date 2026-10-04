@@ -441,6 +441,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             chartCard("Atmung","🫁",Color.rgb(80,225,184),n(s.avgResp,"/min"),s.respirationSeries),
             chartCard("HRV","💓",Color.rgb(213,96,255),n(s.avgHrv,"ms"),s.hrvSeries)
         )
+        sleepCard.addView(TextView(this).apply {
+            text="NACHTVERLAUF  ·  "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.startMs))+" – "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))
+            textSize=10f; letterSpacing=.08f; setTextColor(Color.rgb(112,122,153)); setPadding(px(2),0,0,px(10))
+        })
         cards.forEach { sleepCard.addView(it) }
         cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
     }
