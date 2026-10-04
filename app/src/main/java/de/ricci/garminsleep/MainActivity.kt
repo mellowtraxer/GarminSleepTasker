@@ -473,7 +473,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(10),0,dp(2))
             addView(TextView(this@MainActivity).apply { text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-            addView(TextView(this@MainActivity).apply { text=fmt(s.lightMin+s.deepMin+s.remMin); textSize=10f; setTextColor(Color.rgb(143,151,183)) })
+            addView(TextView(this@MainActivity).apply { text=fmt(s.lightMin+s.deepMin+s.remMin); textSize=10f; setTypeface(typeface,Typeface.BOLD); setTextColor(stageRem); setPadding(dp(10),dp(4),dp(10),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(Color.rgb(35,19,54)); setStroke(dp(1),Color.rgb(86,48,119)) } })
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; setPadding(dp(4),dp(2),dp(4),dp(3))
@@ -495,7 +495,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(14),dp(4),dp(4))
             addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-            addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=10f; setTextColor(Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD) })
+            addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=9f; letterSpacing=.08f; setTextColor(Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(Color.rgb(8,37,31)); setStroke(dp(1),Color.rgb(24,95,73)) } })
         })
         val vitals = GridLayout(this).apply {
             columnCount = 2
