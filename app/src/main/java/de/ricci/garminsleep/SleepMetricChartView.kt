@@ -40,5 +40,17 @@ class SleepMetricChartView(
         c.drawText(tf.format(Instant.ofEpochMilli(startMs)),l,height-10*d,p)
         val end=tf.format(Instant.ofEpochMilli(endMs)); c.drawText(end,r-p.measureText(end),height-10*d,p)
         p.textSize=10*d; p.color=tone; c.drawText(label.uppercase(),l,12*d,p)
+        if(points.size>=2) {
+            val min=points.minOf { it.value }; val max=points.maxOf { it.value }
+            p.textSize=10*d; p.color=Color.rgb(154,163,190)
+            val maxText=String.format(java.util.Locale.GERMANY,"Max. %.1f",max)
+            val minText=String.format(java.util.Locale.GERMANY,"Min. %.1f",min)
+            c.drawText(maxText,r-p.measureText(maxText),12*d,p)
+            c.drawText(minText,r-p.measureText(minText),bottom+16*d,p)
+        } else {
+            p.textSize=11*d; p.color=Color.rgb(120,130,158)
+            val msg="Keine Zeitreihe für diese Nacht verfügbar"
+            c.drawText(msg,l,(top+bottom)/2f-10*d,p)
+        }
     }
 }
