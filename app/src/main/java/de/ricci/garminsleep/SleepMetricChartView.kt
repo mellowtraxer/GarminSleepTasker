@@ -20,6 +20,7 @@ class SleepMetricChartView(
     private val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
     private var selectedIndex: Int? = null
     private var touchX = 0f
+    private var dragging = false
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     init { minimumHeight=(210*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(210*resources.displayMetrics.density).toInt()) }
@@ -31,6 +32,7 @@ class SleepMetricChartView(
         if(points.isEmpty()) return super.onTouchEvent(e)
         when(e.action) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                dragging=true
                 val d=resources.displayMetrics.density; val l=36*d; val r=width-10*d
                 val fraction=((e.x-l)/(r-l)).coerceIn(0f,1f)
                 val target=startMs+((endMs-startMs)*fraction).toLong()
@@ -39,8 +41,8 @@ class SleepMetricChartView(
                 parent?.requestDisallowInterceptTouchEvent(e.action==MotionEvent.ACTION_MOVE)
                 invalidate(); return true
             }
-            MotionEvent.ACTION_UP -> { performClick(); parent?.requestDisallowInterceptTouchEvent(false); return true }
-            MotionEvent.ACTION_CANCEL -> { parent?.requestDisallowInterceptTouchEvent(false); return true }
+            MotionEvent.ACTION_UP -> { dragging=false; performClick(); parent?.requestDisallowInterceptTouchEvent(false); invalidate(); return true }
+            MotionEvent.ACTION_CANCEL -> { dragging=false; parent?.requestDisallowInterceptTouchEvent(false); invalidate(); return true }
         }
         return true
     }
@@ -87,7 +89,7 @@ class SleepMetricChartView(
             val msg="Keine Zeitreihe für diese Nacht verfügbar"
             c.drawText(msg,l,(top+bottom)/2f-10*d,p)
         }
-        selectedIndex?.takeIf { it in points.indices && points.size>=2 }?.let { idx ->
+        selectedIndex?.takeIf { dragging && it in points.indices && points.size>=2 }?.let { idx ->
             val pt=points[idx]; val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
             val x=l+(r-l)*((pt.timeMs-startMs).toDouble()/(endMs-startMs).coerceAtLeast(1)).coerceIn(0.0,1.0).toFloat()
             val y=bottom-(bottom-top)*((pt.value-minV)/span).toFloat()
