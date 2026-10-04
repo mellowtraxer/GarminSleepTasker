@@ -398,7 +398,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
     private fun showMetricDetail(label: String, icon: String, tone: Int, s: SleepSummary) {
         pageTitle.text = "Gesundheitswerte"
-        pageSubtitle.text = "Zeitverlauf deiner letzten Nacht"
+        pageSubtitle.text = "Berühren & entlang der Kurven fahren"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         sleepCard.removeAllViews(); sleepCard.background=null
         val d=resources.displayMetrics.density; fun px(v:Int)=(v*d).toInt()
