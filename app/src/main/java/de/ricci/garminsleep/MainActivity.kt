@@ -492,9 +492,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("👀","Wach",fmt(s.awakeMin)))
         }
         sleepCard.addView(stages)
+        sleepCard.addView(View(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.TRANSPARENT,Color.rgb(33,104,122),Color.rgb(84,51,133),Color.TRANSPARENT))
+            layoutParams=LinearLayout.LayoutParams(-1,dp(1)).apply { setMargins(dp(18),dp(15),dp(18),dp(3)) }
+        })
         sleepCard.addView(LinearLayout(this).apply {
-            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(14),dp(4),dp(4))
+            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(8),dp(4),dp(4))
             addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply { text="LIVE"; textSize=8f; letterSpacing=.12f; setTextColor(Color.rgb(76,225,169)); setPadding(dp(7),dp(3),dp(7),dp(3)); background=GradientDrawable().apply { cornerRadius=dp(10).toFloat(); setColor(Color.rgb(7,34,28)) } })
+            addView(View(this@MainActivity).apply { layoutParams=LinearLayout.LayoutParams(dp(7),dp(1)) })
             addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=9f; letterSpacing=.08f; setTextColor(Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(Color.rgb(8,37,31)); setStroke(dp(1),Color.rgb(24,95,73)) } })
         })
         val vitals = GridLayout(this).apply {
