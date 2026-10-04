@@ -3,6 +3,7 @@ package de.ricci.garminsleep
 import android.content.Context
 import android.graphics.*
 import android.view.View
+import android.view.MotionEvent
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -17,8 +18,26 @@ class SleepMetricChartView(
 ) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
     private val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+    private var selectedIndex: Int? = null
     init { minimumHeight=(210*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(210*resources.displayMetrics.density).toInt()) }
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        if(points.isEmpty()) return super.onTouchEvent(e)
+        when(e.action) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                val d=resources.displayMetrics.density; val l=36*d; val r=width-10*d
+                val fraction=((e.x-l)/(r-l)).coerceIn(0f,1f)
+                val target=startMs+((endMs-startMs)*fraction).toLong()
+                selectedIndex=points.indices.minByOrNull { kotlin.math.abs(points[it].timeMs-target) }
+                parent?.requestDisallowInterceptTouchEvent(e.action==MotionEvent.ACTION_MOVE)
+                invalidate(); return true
+            }
+            MotionEvent.ACTION_UP -> { performClick(); parent?.requestDisallowInterceptTouchEvent(false); return true }
+            MotionEvent.ACTION_CANCEL -> { parent?.requestDisallowInterceptTouchEvent(false); return true }
+        }
+        return true
+    }
+    override fun performClick(): Boolean { super.performClick(); return true }
     override fun onDraw(c:Canvas){
         super.onDraw(c); val d=resources.displayMetrics.density
         val l=36*d; val r=width-10*d; val top=18*d; val bottom=height-34*d
@@ -51,6 +70,18 @@ class SleepMetricChartView(
             p.textSize=11*d; p.color=Color.rgb(120,130,158)
             val msg="Keine Zeitreihe für diese Nacht verfügbar"
             c.drawText(msg,l,(top+bottom)/2f-10*d,p)
+        }
+        selectedIndex?.takeIf { it in points.indices && points.size>=2 }?.let { idx ->
+            val pt=points[idx]; val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
+            val x=l+(r-l)*((pt.timeMs-startMs).toDouble()/(endMs-startMs).coerceAtLeast(1)).coerceIn(0.0,1.0).toFloat()
+            val y=bottom-(bottom-top)*((pt.value-minV)/span).toFloat()
+            p.strokeWidth=d; p.color=Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)); c.drawLine(x,top,x,bottom,p)
+            p.style=Paint.Style.FILL; p.color=tone; c.drawCircle(x,y,5*d,p); p.color=Color.WHITE; c.drawCircle(x,y,2*d,p)
+            val unit=when(label) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
+            val info=tf.format(Instant.ofEpochMilli(pt.timeMs))+"  ·  "+String.format(java.util.Locale.GERMANY,"%.1f",pt.value)+" "+unit
+            p.textSize=11*d; p.typeface=Typeface.DEFAULT_BOLD; val tw=p.measureText(info); val bx=(x-tw/2-10*d).coerceIn(l,r-tw-20*d)
+            p.color=Color.rgb(24,27,45); c.drawRoundRect(bx,top+8*d,bx+tw+20*d,top+34*d,13*d,13*d,p)
+            p.color=Color.WHITE; c.drawText(info,bx+10*d,top+26*d,p); p.typeface=Typeface.DEFAULT
         }
     }
 }
