@@ -129,17 +129,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val tabs=mutableListOf<MaterialCardView>()
             fun activate(active:MaterialCardView)=tabs.forEachIndexed { index,card ->
                 val on=card===active; val tone=Color.rgb(111,82,255)
-                card.setCardBackgroundColor(if(on) Color.rgb(52,74,170) else Color.TRANSPARENT)
-                card.strokeWidth=if(on) dp(1) else 0; card.strokeColor=Color.rgb(76,112,255); card.cardElevation=0f
+                card.setCardBackgroundColor(if(on) Color.rgb(38,65,190) else Color.TRANSPARENT)
+                card.strokeWidth=if(on) dp(1) else 0; card.strokeColor=Color.rgb(82,118,255); card.cardElevation=0f
                 val box=card.getChildAt(0) as LinearLayout; (box.getChildAt(0) as BottomNavIconView).active=on
                 (box.getChildAt(1) as TextView).setTextColor(if(on) Color.WHITE else Color.rgb(150,158,184))
             }
             fun tab(kind:Int,label:String,action:()->Unit)=MaterialCardView(this@MainActivity).apply {
-                radius=dp(14).toFloat(); setCardBackgroundColor(Color.TRANSPARENT)
-                layoutParams=LinearLayout.LayoutParams(0,dp(58),1f).apply { setMargins(dp(2),0,dp(2),0) }
+                radius=dp(12).toFloat(); setCardBackgroundColor(Color.TRANSPARENT)
+                layoutParams=LinearLayout.LayoutParams(0,dp(56),1f).apply { setMargins(dp(3),0,dp(3),0) }
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; gravity=android.view.Gravity.CENTER
-                    addView(BottomNavIconView(this@MainActivity,kind),LinearLayout.LayoutParams(dp(30),dp(30)))
-                    addView(TextView(this@MainActivity).apply { text=label; textSize=10f; gravity=android.view.Gravity.CENTER },LinearLayout.LayoutParams(-1,dp(18)))
+                    addView(BottomNavIconView(this@MainActivity,kind),LinearLayout.LayoutParams(dp(27),dp(27)))
+                    addView(TextView(this@MainActivity).apply { text=label; textSize=9f; gravity=android.view.Gravity.CENTER },LinearLayout.LayoutParams(-1,dp(18)))
                 }); setOnClickListener { activate(this); action() }; tabs.add(this)
             }
             val home=tab(0,"Übersicht"){showOverview()}; addView(home)
@@ -199,11 +199,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=dp(8).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(27,35,61)
+            radius=dp(14).toFloat(); cardElevation=dp(4).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(25,32,51)
             setCardBackgroundColor(Color.rgb(6,12,25))
             foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(32).toFloat() }
             addView(nav)
-            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(72)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
+            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(68)).apply { setMargins(dp(18),dp(4),dp(18),dp(8)) }
         }
         val root = LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; background=if(useLight) ColorDrawable(Color.rgb(238,243,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
