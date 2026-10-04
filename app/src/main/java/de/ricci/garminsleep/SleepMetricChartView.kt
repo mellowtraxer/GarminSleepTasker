@@ -19,6 +19,7 @@ class SleepMetricChartView(
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
     private val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
     private var selectedIndex: Int? = null
+    private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     init { minimumHeight=(210*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(210*resources.displayMetrics.density).toInt()) }
     override fun onTouchEvent(e: MotionEvent): Boolean {
@@ -53,6 +54,12 @@ class SleepMetricChartView(
             }
         } else {
             path.moveTo(l,(top+bottom)/2f); path.lineTo(r,(top+bottom)/2f)
+        }
+        if(points.size>=2) {
+            val fill=Path(path); fill.lineTo(r,bottom); fill.lineTo(l,bottom); fill.close()
+            fillPaint.style=Paint.Style.FILL
+            fillPaint.shader=LinearGradient(0f,top,0f,bottom,Color.argb(90,Color.red(tone),Color.green(tone),Color.blue(tone)),Color.TRANSPARENT,Shader.TileMode.CLAMP)
+            c.drawPath(fill,fillPaint); fillPaint.shader=null
         }
         p.style=Paint.Style.STROKE; p.strokeWidth=2.2f*d; p.color=tone; p.setShadowLayer(7*d,0f,0f,tone); setLayerType(LAYER_TYPE_SOFTWARE,p); c.drawPath(path,p); p.clearShadowLayer()
         p.style=Paint.Style.FILL; p.textSize=11*d; p.color=Color.rgb(130,140,169)
