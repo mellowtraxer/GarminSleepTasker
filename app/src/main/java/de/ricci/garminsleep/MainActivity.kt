@@ -396,6 +396,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if (onClick != null) { isClickable=true; isFocusable=true; setOnClickListener { onClick() } }
         }
     }
+    private fun showMetricDetail(label: String, icon: String, tone: Int, s: SleepSummary) {
+        pageTitle.text = label
+        pageSubtitle.text = "Zeitverlauf deiner letzten Nacht"
+        actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
+        sleepCard.removeAllViews(); sleepCard.background=null
+        val d=resources.displayMetrics.density; fun px(v:Int)=(v*d).toInt()
+        sleepCard.addView(TextView(this).apply {
+            text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(px(2),px(8),0,px(14))
+            setOnClickListener { showOverview() }
+        })
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=px(26).toFloat(); strokeWidth=px(1); strokeColor=tone; setCardBackgroundColor(Color.rgb(10,17,29))
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.VERTICAL; setPadding(px(18),px(17),px(18),px(18))
+                addView(TextView(this@MainActivity).apply { text=icon+"  "+label; textSize=17f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
+                addView(TextView(this@MainActivity).apply { text="Zeitreihe  ·  letzte Nacht"; textSize=11f; setTextColor(Color.rgb(143,151,183)); setPadding(0,px(4),0,px(12)) })
+                addView(SleepMetricChartView(this@MainActivity,tone,label,s.startMs,s.endMs))
+            })
+        })
+    }
+
     private fun renderDashboard(s: SleepSummary) {
         lastSummary = s
         val d = resources.displayMetrics.density
