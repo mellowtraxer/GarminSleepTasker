@@ -296,29 +296,37 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte im Vergleich"
         sleepCard.removeAllViews(); sleepCard.background=null
-        fun night(day:String,duration:String,time:String,segments:IntArray)=MaterialCardView(this).apply {
-            radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(40,48,78); setCardBackgroundColor(Color.rgb(12,16,31))
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
-                addView(LinearLayout(this@MainActivity).apply {
-                    orientation=LinearLayout.HORIZONTAL
-                    addView(TextView(this@MainActivity).apply { text=day; textSize=14f; setTextColor(Color.rgb(214,218,238)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                    addView(TextView(this@MainActivity).apply { text=duration; textSize=16f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+        val s=lastSummary
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(100,139,92,246); setCardBackgroundColor(Color.argb(180,12,16,31))
+            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(11),dp(14),dp(11))
+                addView(TextView(this@MainActivity).apply { text="⌚"; textSize=19f; setPadding(0,0,dp(9),0) })
+                addView(TextView(this@MainActivity).apply { text="Garmin Connect"; textSize=13f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="● SYNCHRONISIERT"; textSize=10f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD) })
+            })
+        })
+        sleepCard.addView(TextView(this).apply { text="LETZTE NACHT"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(16),0,dp(10)) })
+        if(s==null) {
+            sleepCard.addView(TextView(this).apply { text="Noch keine echte Nacht geladen."; textSize=14f; setTextColor(Color.rgb(170,180,205)); setPadding(dp(4),dp(16),0,dp(16)) })
+            return
+        }
+        val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+        val dateFmt=DateTimeFormatter.ofPattern("EEE, d. MMM",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault())
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(22).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(100,120,105,220); setCardBackgroundColor(Color.argb(188,10,15,31))
+            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
+                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
+                    addView(TextView(this@MainActivity).apply { text="Heute · "+dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=14f; setTextColor(Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                    addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=17f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
                 })
-                addView(TextView(this@MainActivity).apply { text=time; textSize=11f; setTextColor(Color.rgb(126,135,167)); setPadding(0,dp(2),0,dp(8)) })
-                addView(LinearLayout(this@MainActivity).apply {
-                    orientation=LinearLayout.HORIZONTAL
-                    val tones=intArrayOf(stageLight,stageDeep,stageRem,stageAwake)
-                    segments.forEachIndexed { i,w -> addView(View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(3).toFloat(); setColor(tones[i%4]) }; layoutParams=LinearLayout.LayoutParams(0,dp(8),w.toFloat()).apply { setMargins(0,0,dp(2),0) } }) }
+                addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=11f; setTextColor(Color.rgb(140,150,180)); setPadding(0,dp(3),0,dp(10)) })
+                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
+                    val vals=listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake)
+                    vals.filter { it.first>0 }.forEach { pair -> addView(View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(4).toFloat(); setColor(pair.second) }; layoutParams=LinearLayout.LayoutParams(0,dp(9),pair.first.toFloat()).apply { setMargins(0,0,dp(2),0) } }) }
                 })
             })
-            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(9)) }
-        }
-        sleepCard.addView(TextView(this).apply { text="LETZTE NÄCHTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); setPadding(0,0,0,dp(10)) })
-        sleepCard.addView(night("Heute · So, 4. Okt.","8 h 50 min","00:29 – 09:19",intArrayOf(53,18,20,9)))
-        sleepCard.addView(night("Gestern · Sa, 3. Okt.","7 h 42 min","23:58 – 07:40",intArrayOf(48,22,23,7)))
-        sleepCard.addView(night("Fr, 2. Okt.","8 h 11 min","00:12 – 08:23",intArrayOf(51,19,21,9)))
-        sleepCard.addView(night("Do, 1. Okt.","6 h 58 min","01:03 – 07:58",intArrayOf(56,16,19,9)))
+        })
+        sleepCard.addView(TextView(this).apply { text="Weitere Nächte erscheinen hier, sobald wir eine echte lokale Verlaufsspeicherung eingebaut haben."; textSize=11f; setTextColor(Color.rgb(130,140,170)); setPadding(dp(3),dp(12),dp(3),0) })
     }
     private fun showCalendarPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
