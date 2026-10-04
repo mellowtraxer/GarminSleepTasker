@@ -6,14 +6,14 @@ import android.view.View
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.sin
 
 class SleepMetricChartView(
     context: Context,
     private val tone: Int,
     private val label: String,
     private val startMs: Long,
-    private val endMs: Long
+    private val endMs: Long,
+    private val points: List<MetricPoint> = emptyList()
 ) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
     private val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
@@ -25,11 +25,15 @@ class SleepMetricChartView(
         p.strokeWidth=d; p.color=Color.rgb(39,48,67)
         repeat(4){ i-> val y=top+(bottom-top)*i/3f; c.drawLine(l,y,r,y,p) }
         val path=Path()
-        for(i in 0..48){
-            val x=l+(r-l)*i/48f
-            val wave=(sin(i*.73)+sin(i*.21)*.55+sin(i*1.37)*.22)
-            val y=(top+bottom)/2f-wave*(bottom-top)*.18f
-            if(i==0) path.moveTo(x,y) else path.lineTo(x,y)
+        if(points.size >= 2) {
+            val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
+            points.forEachIndexed { i,pt ->
+                val x=l+(r-l)*((pt.timeMs-startMs).toDouble()/(endMs-startMs).coerceAtLeast(1)).coerceIn(0.0,1.0).toFloat()
+                val y=bottom-(bottom-top)*((pt.value-minV)/span).toFloat()
+                if(i==0) path.moveTo(x,y) else path.lineTo(x,y)
+            }
+        } else {
+            path.moveTo(l,(top+bottom)/2f); path.lineTo(r,(top+bottom)/2f)
         }
         p.style=Paint.Style.STROKE; p.strokeWidth=2.2f*d; p.color=tone; p.setShadowLayer(7*d,0f,0f,tone); setLayerType(LAYER_TYPE_SOFTWARE,p); c.drawPath(path,p); p.clearShadowLayer()
         p.style=Paint.Style.FILL; p.textSize=11*d; p.color=Color.rgb(130,140,169)
