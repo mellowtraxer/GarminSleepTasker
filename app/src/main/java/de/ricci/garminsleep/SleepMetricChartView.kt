@@ -22,6 +22,10 @@ class SleepMetricChartView(
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     init { minimumHeight=(210*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(210*resources.displayMetrics.density).toInt()) }
+    private fun formatValue(v: Double): String =
+        if(kotlin.math.abs(v-kotlin.math.round(v)) < 0.05) kotlin.math.round(v).toInt().toString()
+        else String.format(java.util.Locale.GERMANY,"%.1f",v)
+
     override fun onTouchEvent(e: MotionEvent): Boolean {
         if(points.isEmpty()) return super.onTouchEvent(e)
         when(e.action) {
@@ -69,8 +73,8 @@ class SleepMetricChartView(
         if(points.size>=2) {
             val min=points.minOf { it.value }; val max=points.maxOf { it.value }
             p.textSize=10*d; p.color=Color.rgb(154,163,190)
-            val maxText=String.format(java.util.Locale.GERMANY,"Max. %.1f",max)
-            val minText=String.format(java.util.Locale.GERMANY,"Min. %.1f",min)
+            val maxText="Max. "+formatValue(max)
+            val minText="Min. "+formatValue(min)
             c.drawText(maxText,r-p.measureText(maxText),12*d,p)
             c.drawText(minText,r-p.measureText(minText),bottom+16*d,p)
         } else {
@@ -85,7 +89,7 @@ class SleepMetricChartView(
             p.strokeWidth=d; p.color=Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)); c.drawLine(x,top,x,bottom,p)
             p.style=Paint.Style.FILL; p.color=tone; c.drawCircle(x,y,5*d,p); p.color=Color.WHITE; c.drawCircle(x,y,2*d,p)
             val unit=when(label) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
-            val info=tf.format(Instant.ofEpochMilli(pt.timeMs))+"  ·  "+String.format(java.util.Locale.GERMANY,"%.1f",pt.value)+" "+unit
+            val info=tf.format(Instant.ofEpochMilli(pt.timeMs))+"  ·  "+formatValue(pt.value)+" "+unit
             p.textSize=11*d; p.typeface=Typeface.DEFAULT_BOLD; val tw=p.measureText(info); val bx=(x-tw/2-10*d).coerceIn(l,r-tw-20*d)
             p.color=Color.rgb(24,27,45); c.drawRoundRect(bx,top+8*d,bx+tw+20*d,top+34*d,13*d,13*d,p)
             p.color=Color.WHITE; c.drawText(info,bx+10*d,top+26*d,p); p.typeface=Typeface.DEFAULT
