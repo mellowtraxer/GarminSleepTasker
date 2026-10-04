@@ -12,13 +12,16 @@ import java.time.format.DateTimeFormatter
 
 private const val GARMIN_PACKAGE = "com.garmin.android.apps.connectmobile"
 
+data class MetricPoint(val timeMs: Long, val value: Double)
+
 data class SleepSummary(
     val startMs: Long, val endMs: Long, val totalMin: Long,
     val lightMin: Long, val deepMin: Long, val remMin: Long,
     val awakeMin: Long, val sleepingMin: Long,
     val avgHr: Double?, val avgSpo2: Double?, val avgResp: Double?,
     val minSpo2: Double?, val minResp: Double?, val avgHrv: Double?,
-    val source: String, val calendarText: String
+    val source: String, val calendarText: String,
+    val heartRateSeries: List<MetricPoint> = emptyList()
 )
 
 class SleepReader(private val context: Context) {
