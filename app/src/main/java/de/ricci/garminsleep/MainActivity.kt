@@ -42,6 +42,8 @@ private class NightLandscapeView(context: android.content.Context) : View(contex
         super.onDraw(c); val w=width.toFloat(); val h=height.toFloat()
         p.shader=android.graphics.LinearGradient(0f,0f,0f,h*.72f,intArrayOf(Color.rgb(13,8,48),Color.rgb(18,38,82),Color.rgb(5,9,24)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,0f,w,h,p); p.shader=null
         p.color=Color.argb(205,218,228,255); stars.forEachIndexed { i,s -> c.drawCircle(w*s.first,h*s.second,(if(i%3==0)1.7f else 1f)*resources.displayMetrics.density,p) }
+        val extraStars=31
+        for(i in 0 until extraStars){ val x=((i*73)%101)/101f; val y=.035f+(((i*47)%31)/31f)*.27f; p.color=Color.argb(70+(i%5)*24,190+(i%3)*18,205+(i%2)*25,255); c.drawCircle(w*x,h*y,(.45f+(i%4)*.18f)*resources.displayMetrics.density,p) }
         val d=resources.displayMetrics.density
         p.setShadowLayer(22*d,0f,0f,Color.argb(150,181,126,255)); setLayerType(LAYER_TYPE_SOFTWARE,p)
         p.color=Color.rgb(229,220,255); c.drawCircle(w*.82f,h*.115f,15*d,p); p.clearShadowLayer()
