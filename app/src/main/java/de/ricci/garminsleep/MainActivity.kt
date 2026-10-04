@@ -66,6 +66,19 @@ private class NightLandscapeView(context: android.content.Context) : View(contex
     }
 }
 
+private class BottomNavIconView(context: android.content.Context, private val kind:Int) : View(context) {
+    private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE; strokeWidth=resources.displayMetrics.density*2.15f; strokeCap=Paint.Cap.ROUND; strokeJoin=Paint.Join.ROUND }
+    var active=false; set(v){field=v; invalidate()}
+    override fun onDraw(c:Canvas){ super.onDraw(c); val d=resources.displayMetrics.density; val cx=width/2f; val cy=height/2f; p.color=if(active) Color.WHITE else Color.rgb(155,164,190); p.style=Paint.Style.STROKE
+        when(kind){
+            0->{ val q=Path(); q.moveTo(cx-9*d,cy); q.lineTo(cx,cy-8*d); q.lineTo(cx+9*d,cy); q.moveTo(cx-6*d,cy-2*d); q.lineTo(cx-6*d,cy+8*d); q.lineTo(cx+6*d,cy+8*d); q.lineTo(cx+6*d,cy-2*d); c.drawPath(q,p) }
+            1->{ c.drawRoundRect(cx-9*d,cy-7*d,cx+9*d,cy+7*d,2*d,2*d,p); c.drawLine(cx-5*d,cy-2*d,cx-1*d,cy-2*d,p); c.drawLine(cx-5*d,cy+3*d,cx+4*d,cy+3*d,p); c.drawLine(cx+4*d,cy-4*d,cx+6*d,cy-4*d,p) }
+            2->{ c.drawRoundRect(cx-8*d,cy-7*d,cx+8*d,cy+8*d,2*d,2*d,p); c.drawLine(cx-8*d,cy-2*d,cx+8*d,cy-2*d,p); c.drawLine(cx-4*d,cy-9*d,cx-4*d,cy-5*d,p); c.drawLine(cx+4*d,cy-9*d,cx+4*d,cy-5*d,p); p.style=Paint.Style.FILL; c.drawCircle(cx-3*d,cy+2*d,1.2f*d,p); c.drawCircle(cx+3*d,cy+2*d,1.2f*d,p) }
+            else->{ c.drawCircle(cx,cy,3.2f*d,p); for(i in 0 until 8){ val a=Math.PI*2*i/8; c.drawLine(cx+(Math.cos(a)*6*d).toFloat(),cy+(Math.sin(a)*6*d).toFloat(),cx+(Math.cos(a)*9*d).toFloat(),cy+(Math.sin(a)*9*d).toFloat(),p) } }
+        }
+    }
+}
+
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var status: TextView
     private lateinit var sleepCard: LinearLayout
@@ -112,30 +125,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setCardBackgroundColor(Color.TRANSPARENT); addView(sleepCard)
         }
         val nav = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER; setPadding(dp(6),dp(7),dp(6),dp(7))
-            val tabs = mutableListOf<MaterialButton>()
-            fun activate(active: MaterialButton) = tabs.forEachIndexed { index,b ->
-                val on = b === active
-                val tone = intArrayOf(accent2,stageRem,stageAwake,accent)[index]
-                b.setTextColor(if(on) tone else Color.rgb(120,128,158))
-                b.backgroundTintList=ColorStateList.valueOf(if(on) Color.argb(88,Color.red(tone),Color.green(tone),Color.blue(tone)) else Color.TRANSPARENT)
-                b.strokeWidth=if(on) dp(2) else 0
-                b.strokeColor=ColorStateList.valueOf(tone)
-                b.alpha=if(on) 1f else .72f
-                b.elevation=if(on) dp(4).toFloat() else 0f
+            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER; setPadding(dp(6),dp(6),dp(6),dp(6))
+            val tabs=mutableListOf<MaterialCardView>()
+            fun activate(active:MaterialCardView)=tabs.forEachIndexed { index,card ->
+                val on=card===active; val tone=Color.rgb(111,82,255)
+                card.setCardBackgroundColor(if(on) Color.rgb(52,74,170) else Color.TRANSPARENT)
+                card.strokeWidth=if(on) dp(1) else 0; card.strokeColor=Color.rgb(76,112,255); card.cardElevation=0f
+                val box=card.getChildAt(0) as LinearLayout; (box.getChildAt(0) as BottomNavIconView).active=on
+                (box.getChildAt(1) as TextView).setTextColor(if(on) Color.WHITE else Color.rgb(150,158,184))
             }
-            fun tab(iconRes:Int, label:String, action: () -> Unit): MaterialButton = MaterialButton(this@MainActivity).apply {
-                text=label; isAllCaps=false; textSize=11f; cornerRadius=dp(22); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
-                icon=androidx.appcompat.content.res.AppCompatResources.getDrawable(this@MainActivity,iconRes)
-                iconGravity=MaterialButton.ICON_GRAVITY_TOP; iconSize=dp(27); iconPadding=dp(5)
-                gravity=android.view.Gravity.CENTER
-                layoutParams=LinearLayout.LayoutParams(0,dp(68),1f).apply { setMargins(dp(3),0,dp(3),0) }
-                setOnClickListener { activate(this); action() }; tabs.add(this)
+            fun tab(kind:Int,label:String,action:()->Unit)=MaterialCardView(this@MainActivity).apply {
+                radius=dp(14).toFloat(); setCardBackgroundColor(Color.TRANSPARENT)
+                layoutParams=LinearLayout.LayoutParams(0,dp(58),1f).apply { setMargins(dp(2),0,dp(2),0) }
+                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; gravity=android.view.Gravity.CENTER
+                    addView(BottomNavIconView(this@MainActivity,kind),LinearLayout.LayoutParams(dp(30),dp(30)))
+                    addView(TextView(this@MainActivity).apply { text=label; textSize=10f; gravity=android.view.Gravity.CENTER },LinearLayout.LayoutParams(-1,dp(18)))
+                }); setOnClickListener { activate(this); action() }; tabs.add(this)
             }
-            val home=tab(android.R.drawable.ic_menu_view,"Übersicht"){showOverview()}; addView(home)
-            addView(tab(android.R.drawable.ic_menu_sort_by_size,"Verlauf"){showHistoryPlaceholder()})
-            addView(tab(android.R.drawable.ic_menu_my_calendar,"Kalender"){showCalendarPlaceholder()})
-            addView(tab(android.R.drawable.ic_menu_preferences,"Settings"){showSettings()})
+            val home=tab(0,"Übersicht"){showOverview()}; addView(home)
+            addView(tab(1,"Verlauf"){showHistoryPlaceholder()})
+            addView(tab(2,"Kalender"){showCalendarPlaceholder()})
+            addView(tab(3,"Einstellungen"){showSettings()})
             post { activate(home) }
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
@@ -189,11 +199,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
-            radius=dp(32).toFloat(); cardElevation=dp(14).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(125,118,105,210)
-            setCardBackgroundColor(Color.argb(202,7,8,19))
+            radius=dp(18).toFloat(); cardElevation=dp(8).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(27,35,61)
+            setCardBackgroundColor(Color.rgb(6,12,25))
             foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(32).toFloat() }
             addView(nav)
-            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(92)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
+            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(72)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; background=if(useLight) ColorDrawable(Color.rgb(238,243,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
