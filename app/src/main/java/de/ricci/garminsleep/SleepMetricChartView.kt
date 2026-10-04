@@ -70,9 +70,9 @@ class SleepMetricChartView(
     override fun onDraw(c:Canvas){
         super.onDraw(c); val d=resources.displayMetrics.density
         val l=36*d; val r=width-10*d; val top=22*d; val bottom=height-38*d
-        p.strokeWidth=d; p.color=Color.rgb(31,39,58)
+        p.strokeWidth=.8f*d; p.color=Color.rgb(27,35,53)
         repeat(4){ i-> val y=top+(bottom-top)*i/3f; c.drawLine(l,y,r,y,p) }
-        p.strokeWidth=.7f*d; p.color=Color.rgb(23,30,47)
+        p.strokeWidth=.55f*d; p.color=Color.rgb(20,27,43)
         repeat(5){ i-> val x=l+(r-l)*i/4f; c.drawLine(x,top,x,bottom,p) }
         val path=Path()
         if(points.size >= 2) {
