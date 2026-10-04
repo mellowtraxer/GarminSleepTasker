@@ -162,6 +162,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         ))
         val scene = android.widget.FrameLayout(this).apply {
             addView(NightLandscapeView(this@MainActivity), android.widget.FrameLayout.LayoutParams(-1,-1))
+            addView(View(this@MainActivity).apply {
+                background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
+            }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
         val scroll = ScrollView(this).apply {
