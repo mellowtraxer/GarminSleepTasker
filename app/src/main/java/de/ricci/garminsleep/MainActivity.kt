@@ -40,29 +40,21 @@ import kotlinx.coroutines.*
 
 private class NightLandscapeView(context: android.content.Context) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
-    private val stars=listOf(.08f to .11f,.16f to .19f,.27f to .09f,.39f to .15f,.52f to .07f,.64f to .18f,.77f to .10f,.88f to .16f,.94f to .06f)
-    override fun onDraw(c: Canvas) {
-        super.onDraw(c); val w=width.toFloat(); val h=height.toFloat(); val d=resources.displayMetrics.density; val sh=minOf(h,640f*d)
-        p.shader=android.graphics.LinearGradient(0f,0f,0f,sh*.72f,intArrayOf(Color.rgb(9,5,38),Color.rgb(24,39,96),Color.rgb(4,9,27)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,0f,w,h,p); p.shader=null
-        p.color=Color.argb(245,228,236,255); stars.forEachIndexed { i,s -> c.drawCircle(w*s.first,sh*s.second,(if(i%3==0)1.7f else 1f)*resources.displayMetrics.density,p) }
-        val extraStars=78
-        for(i in 0 until extraStars){ val x=((i*73)%101)/101f; val y=.035f+(((i*47)%31)/31f)*.27f; p.color=Color.argb(145+(i%4)*30,190+(i%3)*18,205+(i%2)*25,255); c.drawCircle(w*x,sh*y,(.85f+(i%4)*.28f)*resources.displayMetrics.density,p) }
-        p.setShadowLayer(22*d,0f,0f,Color.argb(150,181,126,255)); setLayerType(LAYER_TYPE_SOFTWARE,p)
-        p.color=Color.rgb(229,220,255); c.drawCircle(w*.82f,sh*.115f,20*d,p); p.clearShadowLayer()
-        p.color=Color.rgb(16,18,57); c.drawCircle(w*.835f,sh*.105f,18*d,p)
-        p.shader=android.graphics.RadialGradient(w*.34f,sh*.30f,w*.48f,intArrayOf(Color.argb(118,126,72,255),Color.argb(52,0,209,255),Color.TRANSPARENT),null,android.graphics.Shader.TileMode.CLAMP); c.drawCircle(w*.34f,sh*.30f,w*.48f,p); p.shader=null
-        fun ridge(color:Int, base:Float, peaks:FloatArray) { val q=Path(); q.moveTo(0f,h*base); peaks.forEachIndexed { i,v -> q.lineTo(w*i/(peaks.size-1),sh*v) }; q.lineTo(w,sh*.62f); q.lineTo(0f,sh*.62f); q.close(); p.color=color; c.drawPath(q,p) }
-        ridge(Color.rgb(43,50,102),.49f,floatArrayOf(.48f,.39f,.44f,.28f,.42f,.32f,.46f,.36f,.49f))
-        p.color=Color.argb(145,174,190,245); p.strokeWidth=.8f*d
-        c.drawLine(w*.31f,sh*.345f,w*.39f,sh*.28f,p); c.drawLine(w*.39f,sh*.28f,w*.47f,sh*.365f,p)
-        c.drawLine(w*.57f,sh*.39f,w*.625f,sh*.32f,p); c.drawLine(w*.625f,sh*.32f,w*.69f,sh*.425f,p)
-        ridge(Color.rgb(12,22,54),.56f,floatArrayOf(.55f,.45f,.51f,.39f,.53f,.43f,.57f,.47f,.56f))
-        p.shader=android.graphics.LinearGradient(0f,sh*.54f,0f,h,intArrayOf(Color.argb(210,32,61,112),Color.rgb(2,5,15)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,sh*.54f,w,h,p); p.shader=null
-        p.strokeWidth=1f*d
-        for(i in 0..6){ val y=h*(.575f+i*.018f); p.color=Color.argb(28-i*3,115,196,255); c.drawLine(w*.08f,y,w*.92f,y,p) }
-        p.shader=android.graphics.RadialGradient(w*.82f,sh*.59f,w*.24f,intArrayOf(Color.argb(95,195,157,255),Color.argb(38,65,205,255),Color.TRANSPARENT),null,android.graphics.Shader.TileMode.CLAMP); c.drawOval(w*.57f,sh*.555f,w*1.05f,sh*.72f,p); p.shader=null
-        p.strokeWidth=.7f*d
-        for(i in 0..9){ val yy=h*(.59f+i*.011f); val spread=w*(.035f+i*.014f); p.color=Color.argb(48-i*3,178,139,255); c.drawLine(w*.82f-spread,yy,w*.82f+spread,yy,p) }
+    override fun onDraw(c:Canvas){
+        super.onDraw(c); val w=width.toFloat(); val h=height.toFloat(); val d=resources.displayMetrics.density; val sh=minOf(h,760*d)
+        p.shader=android.graphics.LinearGradient(0f,0f,0f,sh,intArrayOf(Color.rgb(2,8,30),Color.rgb(18,20,77),Color.rgb(61,31,111),Color.rgb(4,13,34),Color.rgb(1,10,23)),floatArrayOf(0f,.22f,.39f,.62f,1f),android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,0f,w,h,p); p.shader=null
+        for(i in 0 until 150){ val x=((i*67)%149)/149f*w; val y=(.02f+((i*43)%97)/97f*.31f)*sh; val r=(if(i%17==0)1.8f else if(i%7==0)1.2f else .65f)*d; p.color=Color.argb(if(i%9==0)245 else 170,210+(i%3)*15,215+(i%2)*25,255); c.drawCircle(x,y,r,p) }
+        p.shader=android.graphics.RadialGradient(w*.49f,sh*.18f,w*.42f,intArrayOf(Color.argb(135,111,57,255),Color.argb(70,36,74,220),Color.TRANSPARENT),null,android.graphics.Shader.TileMode.CLAMP); c.drawOval(w*.08f,sh*.02f,w*.90f,sh*.42f,p); p.shader=null
+        p.setShadowLayer(30*d,0f,0f,Color.argb(210,195,92,255)); setLayerType(LAYER_TYPE_SOFTWARE,p); p.color=Color.rgb(210,207,255); c.drawCircle(w*.76f,sh*.17f,38*d,p); p.clearShadowLayer(); p.color=Color.rgb(17,18,68); c.drawCircle(w*.79f,sh*.145f,35*d,p)
+        fun ridge(color:Int,base:Float,pts:FloatArray){ val q=Path(); q.moveTo(0f,sh*base); pts.forEachIndexed{i,v->q.lineTo(w*i/(pts.size-1),sh*v)}; q.lineTo(w,sh*base); q.close(); p.color=color; c.drawPath(q,p) }
+        ridge(Color.rgb(53,51,117),.49f,floatArrayOf(.47f,.40f,.43f,.32f,.44f,.23f,.42f,.29f,.45f,.34f,.47f))
+        p.style=Paint.Style.STROKE; p.strokeWidth=1.3f*d; p.color=Color.argb(210,195,185,255); c.drawLine(w*.39f,sh*.35f,w*.50f,sh*.23f,p); c.drawLine(w*.50f,sh*.23f,w*.59f,sh*.37f,p); c.drawLine(w*.62f,sh*.38f,w*.70f,sh*.29f,p); c.drawLine(w*.70f,sh*.29f,w*.78f,sh*.42f,p); p.style=Paint.Style.FILL
+        ridge(Color.rgb(8,18,45),.56f,floatArrayOf(.55f,.46f,.52f,.40f,.54f,.43f,.56f,.45f,.55f,.47f,.56f))
+        for(i in 0 until 26){ val x=i*w/25f; val ht=(16+(i*13)%38)*d; val q=Path(); q.moveTo(x,sh*.58f); q.lineTo(x+5*d,sh*.58f); q.lineTo(x+2.5f*d,sh*.58f-ht); q.close(); p.color=Color.rgb(3,12,29); c.drawPath(q,p) }
+        p.shader=android.graphics.LinearGradient(0f,sh*.56f,0f,sh*.92f,intArrayOf(Color.rgb(8,31,72),Color.rgb(12,31,68),Color.rgb(2,13,29)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,sh*.56f,w,h,p); p.shader=null
+        p.shader=android.graphics.RadialGradient(w*.76f,sh*.61f,w*.28f,intArrayOf(Color.argb(180,255,121,220),Color.argb(80,91,78,255),Color.TRANSPARENT),null,android.graphics.Shader.TileMode.CLAMP); c.drawOval(w*.46f,sh*.565f,w*1.04f,sh*.82f,p); p.shader=null
+        for(i in 0 until 14){ val yy=sh*(.59f+i*.015f); val spread=w*(.025f+i*.016f); p.color=Color.argb(120-i*6,245,137,229); c.drawRoundRect(w*.76f-spread,yy,w*.76f+spread,yy+1.5f*d,2*d,2*d,p) }
+        p.shader=android.graphics.LinearGradient(0f,sh*.73f,0f,h,intArrayOf(Color.TRANSPARENT,Color.argb(175,0,9,20),Color.rgb(1,8,18)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,sh*.70f,w,h,p); p.shader=null
     }
 }
 
