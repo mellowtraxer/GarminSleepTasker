@@ -417,6 +417,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         addView(TextView(this@MainActivity).apply { text=glyph+"  "+name.uppercase(); textSize=12f; letterSpacing=.08f; setTextColor(color); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                         addView(TextView(this@MainActivity).apply { text=value; textSize=21f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
                     })
+                    if(points.isNotEmpty()) {
+                        val min=points.minOf { it.value }; val max=points.maxOf { it.value }
+                        fun fv(v:Double)=if(kotlin.math.abs(v-kotlin.math.round(v))<0.05) kotlin.math.round(v).toInt().toString() else String.format(java.util.Locale.GERMANY,"%.1f",v)
+                        val unit=when(name) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
+                        addView(TextView(this@MainActivity).apply {
+                            text="MIN  "+fv(min)+" "+unit+"     •     MAX  "+fv(max)+" "+unit
+                            textSize=10f; letterSpacing=.05f; setTextColor(Color.rgb(139,149,177)); setPadding(0,px(6),0,0)
+                        })
+                    }
                     addView(SleepMetricChartView(this@MainActivity,color,name,s.startMs,s.endMs,points))
                 })
             }
