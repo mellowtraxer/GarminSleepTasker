@@ -94,8 +94,11 @@ class SleepMetricChartView(
             val unit=when(label) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
             val info=tf.format(Instant.ofEpochMilli(pt.timeMs))+"  ·  "+formatValue(pt.value)+" "+unit
             p.textSize=11*d; p.typeface=Typeface.DEFAULT_BOLD; val tw=p.measureText(info); val bx=(x-tw/2-10*d).coerceIn(l,r-tw-20*d)
-            p.color=Color.rgb(24,27,45); c.drawRoundRect(bx,top+8*d,bx+tw+20*d,top+34*d,13*d,13*d,p)
-            p.color=Color.WHITE; c.drawText(info,bx+10*d,top+26*d,p); p.typeface=Typeface.DEFAULT
+            p.setShadowLayer(10*d,0f,3*d,Color.argb(120,Color.red(tone),Color.green(tone),Color.blue(tone)))
+            p.color=Color.rgb(18,21,38); c.drawRoundRect(bx,top+7*d,bx+tw+20*d,top+35*d,14*d,14*d,p); p.clearShadowLayer()
+            p.style=Paint.Style.STROKE; p.strokeWidth=d; p.color=Color.argb(180,Color.red(tone),Color.green(tone),Color.blue(tone))
+            c.drawRoundRect(bx,top+7*d,bx+tw+20*d,top+35*d,14*d,14*d,p)
+            p.style=Paint.Style.FILL; p.color=Color.WHITE; c.drawText(info,bx+10*d,top+26*d,p); p.typeface=Typeface.DEFAULT
         }
     }
 }
