@@ -169,8 +169,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
-            radius=dp(32).toFloat(); cardElevation=dp(14).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(66,62,116)
-            setCardBackgroundColor(Color.argb(224,7,8,19)); addView(nav)
+            radius=dp(32).toFloat(); cardElevation=dp(14).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(125,118,105,210)
+            setCardBackgroundColor(Color.argb(202,7,8,19))
+            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(32).toFloat() }
+            addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(78)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
