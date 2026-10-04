@@ -428,7 +428,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         val unit=when(name) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
                         addView(TextView(this@MainActivity).apply {
                             text="MIN  "+fv(min)+" "+unit+"     •     MAX  "+fv(max)+" "+unit
-                            textSize=10f; letterSpacing=.05f; setTextColor(Color.rgb(139,149,177)); setPadding(0,px(6),0,0)
+                            textSize=10f; letterSpacing=.05f; setTextColor(Color.rgb(154,164,191)); setPadding(0,px(7),0,px(2))
                         })
                     }
                     addView(SleepMetricChartView(this@MainActivity,color,name,s.startMs,s.endMs,points))
