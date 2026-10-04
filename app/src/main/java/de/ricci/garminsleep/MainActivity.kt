@@ -51,6 +51,9 @@ private class NightLandscapeView(context: android.content.Context) : View(contex
         p.shader=android.graphics.RadialGradient(w*.34f,h*.30f,w*.48f,intArrayOf(Color.argb(82,119,65,255),Color.argb(30,0,209,255),Color.TRANSPARENT),null,android.graphics.Shader.TileMode.CLAMP); c.drawCircle(w*.34f,h*.30f,w*.48f,p); p.shader=null
         fun ridge(color:Int, base:Float, peaks:FloatArray) { val q=Path(); q.moveTo(0f,h*base); peaks.forEachIndexed { i,v -> q.lineTo(w*i/(peaks.size-1),h*v) }; q.lineTo(w,h*.62f); q.lineTo(0f,h*.62f); q.close(); p.color=color; c.drawPath(q,p) }
         ridge(Color.rgb(19,24,58),.49f,floatArrayOf(.48f,.39f,.44f,.28f,.42f,.32f,.46f,.36f,.49f))
+        p.color=Color.argb(80,145,160,220); p.strokeWidth=.8f*d
+        c.drawLine(w*.31f,h*.345f,w*.39f,h*.28f,p); c.drawLine(w*.39f,h*.28f,w*.47f,h*.365f,p)
+        c.drawLine(w*.57f,h*.39f,w*.625f,h*.32f,p); c.drawLine(w*.625f,h*.32f,w*.69f,h*.425f,p)
         ridge(Color.rgb(7,13,32),.56f,floatArrayOf(.55f,.45f,.51f,.39f,.53f,.43f,.57f,.47f,.56f))
         p.shader=android.graphics.LinearGradient(0f,h*.54f,0f,h,intArrayOf(Color.argb(150,30,51,93),Color.rgb(3,5,13)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,h*.54f,w,h,p); p.shader=null
         p.strokeWidth=1f*d
