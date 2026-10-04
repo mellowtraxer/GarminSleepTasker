@@ -15,7 +15,10 @@ data class GarminNightMetrics(
     val minSpo2: Double? = null,
     val avgResp: Double? = null,
     val minResp: Double? = null,
-    val avgHrv: Double? = null
+    val avgHrv: Double? = null,
+    val spo2Series: List<MetricPoint> = emptyList(),
+    val respirationSeries: List<MetricPoint> = emptyList(),
+    val hrvSeries: List<MetricPoint> = emptyList()
 )
 
 sealed class GarminLoginResult {
@@ -222,11 +225,48 @@ class GarminConnectClient(private val context: Context) {
         val avgResp = dto.num("averageRespirationValue")
         val minResp = dto.num("lowestRespirationValue")
         val hrv = sleep.num("avgOvernightHrv") ?: dto.num("avgSleepHRV")
+        val spo2Raw = apiGet("/wellness-service/wellness/daily/spo2/$d", emptyMap(), token)
+        val respRaw = apiGet("/wellness-service/wellness/daily/respiration/$d", emptyMap(), token)
+        val hrvRaw = apiGet("/hrv-service/hrv/$d", emptyMap(), token)
+        val spo2Series = extractSeries(spo2Raw, listOf("spo2Values","spO2Values","spo2ValueArray","sleepSpO2Values","values"), listOf("spo2","spO2","value","reading"), listOf("timestampGMT","timestamp","timeGMT","time","startGMT"))
+        val respirationSeries = extractSeries(respRaw, listOf("respirationValues","respirationValueArray","respirationData","values"), listOf("respiration","respirationValue","value","breathsPerMinute"), listOf("timestampGMT","timestamp","timeGMT","time","startGMT"))
+        val hrvSeries = extractSeries(hrvRaw, listOf("hrvReadings","hrvValues","readings","values"), listOf("hrv","hrvValue","value","rmssd"), listOf("readingTimeGMT","timestampGMT","timestamp","timeGMT","time"))
 
-        if (avgSpo2 != null || minSpo2 != null || avgResp != null || minResp != null || hrv != null) {
-            return GarminNightMetrics(avgSpo2, minSpo2, avgResp, minResp, hrv)
+        if (avgSpo2 != null || minSpo2 != null || avgResp != null || minResp != null || hrv != null || spo2Series.isNotEmpty() || respirationSeries.isNotEmpty() || hrvSeries.isNotEmpty()) {
+            return GarminNightMetrics(avgSpo2, minSpo2, avgResp, minResp, hrv, spo2Series, respirationSeries, hrvSeries)
         }
         return fallbackMetrics(d, token)
+    }
+
+
+    private fun extractSeries(root: JSONObject?, arrayKeys: List<String>, valueKeys: List<String>, timeKeys: List<String>): List<MetricPoint> {
+        if (root == null) return emptyList()
+        val arrays = arrayKeys.mapNotNull { root.optJSONArray(it) } + sequence {
+            val it = root.keys()
+            while (it.hasNext()) { val k=it.next(); root.optJSONObject(k)?.let { o -> arrayKeys.forEach { ak -> o.optJSONArray(ak)?.let { yield(it) } } } }
+        }.toList()
+        return arrays.flatMap { arr ->
+            (0 until arr.length()).mapNotNull { i ->
+                val item=arr.opt(i)
+                when(item) {
+                    is JSONObject -> {
+                        val v=valueKeys.firstNotNullOfOrNull { item.num(it) } ?: return@mapNotNull null
+                        val raw=timeKeys.firstNotNullOfOrNull { k -> item.opt(k)?.takeUnless { it==JSONObject.NULL } }
+                        parseMetricTime(raw)?.let { MetricPoint(it,v) }
+                    }
+                    is org.json.JSONArray -> {
+                        if(item.length()<2) null else parseMetricTime(item.opt(0))?.let { t -> (item.opt(1) as? Number)?.toDouble()?.let { MetricPoint(t,it) } }
+                    }
+                    else -> null
+                }
+            }
+        }.filter { it.value > 0.0 }.distinctBy { it.timeMs }.sortedBy { it.timeMs }
+    }
+
+    private fun parseMetricTime(v: Any?): Long? = when(v) {
+        is Number -> v.toLong().let { if(it < 100000000000L) it*1000 else it }
+        is String -> v.toLongOrNull()?.let { if(it < 100000000000L) it*1000 else it } ?: runCatching { java.time.Instant.parse(v).toEpochMilli() }.getOrNull()
+        else -> null
     }
 
     private fun fallbackMetrics(date: String, token: String): GarminNightMetrics? {
