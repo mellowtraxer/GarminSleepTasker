@@ -101,7 +101,10 @@ class SleepMetricChartView(
             fillPaint.shader=LinearGradient(0f,top,0f,bottom,Color.argb(90,Color.red(tone),Color.green(tone),Color.blue(tone)),Color.TRANSPARENT,Shader.TileMode.CLAMP)
             c.drawPath(fill,fillPaint); fillPaint.shader=null
         }
-        p.style=Paint.Style.STROKE; p.strokeWidth=2.2f*d; p.color=tone; p.setShadowLayer(7*d,0f,0f,tone); setLayerType(LAYER_TYPE_SOFTWARE,p); c.drawPath(path,p); p.clearShadowLayer()
+        setLayerType(LAYER_TYPE_SOFTWARE,p)
+        p.style=Paint.Style.STROKE; p.strokeCap=Paint.Cap.ROUND; p.strokeJoin=Paint.Join.ROUND
+        p.strokeWidth=5.2f*d; p.color=Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)); c.drawPath(path,p)
+        p.strokeWidth=2.15f*d; p.color=tone; p.setShadowLayer(5*d,0f,0f,tone); c.drawPath(path,p); p.clearShadowLayer()
         p.style=Paint.Style.FILL; p.textSize=11*d; p.color=Color.rgb(130,140,169)
         c.drawText(tf.format(Instant.ofEpochMilli(startMs)),l,height-10*d,p)
         val end=tf.format(Instant.ofEpochMilli(endMs)); c.drawText(end,r-p.measureText(end),height-10*d,p)
