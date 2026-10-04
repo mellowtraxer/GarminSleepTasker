@@ -23,6 +23,7 @@ class SleepMetricChartView(
     private var dragging = false
     private var downX = 0f
     private var downY = 0f
+    private var selectedAtMs: Long? = null
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     init { minimumHeight=(230*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(230*resources.displayMetrics.density).toInt()) }
@@ -53,9 +54,18 @@ class SleepMetricChartView(
         val fraction=((xPos-l)/(r-l)).coerceIn(0f,1f)
         val target=startMs+((endMs-startMs)*fraction).toLong()
         selectedIndex=points.indices.minByOrNull { kotlin.math.abs(points[it].timeMs-target) }
+        selectedAtMs=selectedIndex?.let { points[it].timeMs }
         touchX=xPos
     }
-    override fun performClick(): Boolean { super.performClick(); return true }
+    override fun performClick(): Boolean {
+        super.performClick()
+        selectedIndex?.takeIf { it in points.indices }?.let {
+            val pt=points[it]; val unit=when(label) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
+            contentDescription=label+", "+formatValue(pt.value)+" "+unit+", "+tf.format(Instant.ofEpochMilli(pt.timeMs))
+            announceForAccessibility(contentDescription)
+        }
+        return true
+    }
     override fun onDraw(c:Canvas){
         super.onDraw(c); val d=resources.displayMetrics.density
         val l=36*d; val r=width-10*d; val top=22*d; val bottom=height-38*d
