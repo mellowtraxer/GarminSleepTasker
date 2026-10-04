@@ -110,12 +110,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         pageTitle.setTextColor(Color.WHITE); pageTitle.textSize=30f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.02f
+        pageTitle.setShadowLayer(18f,0f,0f,Color.argb(120,139,92,246))
         pageSubtitle.setTextColor(Color.rgb(151,158,190)); pageSubtitle.textSize=13f
         status.setTextColor(Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         val brandGlow = View(this).apply {
             background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(accent,accent2,stageRem,Color.TRANSPARENT)).apply { cornerRadius=dp(2).toFloat() }
-            layoutParams=LinearLayout.LayoutParams(dp(104),dp(3)).apply { setMargins(0,dp(8),0,dp(2)) }
+            elevation=dp(3).toFloat()
+            layoutParams=LinearLayout.LayoutParams(dp(118),dp(3)).apply { setMargins(0,dp(8),0,dp(2)) }
         }
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(24))
