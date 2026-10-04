@@ -4,6 +4,9 @@ import androidx.activity.ComponentActivity
 import android.os.Bundle
 import android.content.pm.PackageManager
 import java.security.MessageDigest
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import android.graphics.Typeface
 import android.view.View
 import android.view.ViewGroup
