@@ -360,7 +360,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
-    private fun metricCard(icon: String, label: String, value: String): MaterialCardView {
+    private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null): MaterialCardView {
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
         val tone = when (label) {
@@ -393,6 +393,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setCardBackgroundColor(fill)
             layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
             addView(body)
+            if (onClick != null) { isClickable=true; isFocusable=true; setOnClickListener { onClick() } }
         }
     }
     private fun renderDashboard(s: SleepSummary) {
@@ -508,10 +509,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         val vitals = GridLayout(this).apply {
             columnCount = 2
-            addView(metricCard("❤️","Puls",num(s.avgHr,"bpm")))
+            addView(metricCard("❤️","Puls",num(s.avgHr,"bpm")) { showMetricDetail("Puls", "❤️", Color.rgb(255,82,126), s) })
             addView(metricCard("🩸","SpO₂","Ø ${num(s.avgSpo2,"%")}\nMin. ${num(s.minSpo2,"%")}"))
             addView(metricCard("🫁","Atmung","Ø ${num(s.avgResp,"/min")}\nMin. ${num(s.minResp,"/min")}"))
-            addView(metricCard("💓","HRV",num(s.avgHrv,"ms")))
+            addView(metricCard("💓","HRV",num(s.avgHrv,"ms")) { showMetricDetail("HRV", "💓", Color.rgb(213,96,255), s) })
         }
         sleepCard.addView(vitals)
         sleepCard.addView(MaterialCardView(this).apply {
