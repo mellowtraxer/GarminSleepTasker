@@ -500,7 +500,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("💓","HRV",num(s.avgHrv,"ms")))
         }
         sleepCard.addView(vitals)
-        sleepCard.addView(TextView(this).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(16),0,dp(7)) })
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(16),0,dp(7))
+            addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply {
+                text=when { quality>=90 -> "AUSGEZEICHNET"; quality>=80 -> "GUT"; else -> "IM BLICK BEHALTEN" }
+                textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(accent2); setPadding(dp(10),dp(5),dp(10),dp(5))
+                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(Color.rgb(8,34,47)); setStroke(dp(1),Color.rgb(28,112,137)) }
+            })
+        })
         sleepCard.addView(MaterialCardView(this).apply {
             radius=dp(24).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
