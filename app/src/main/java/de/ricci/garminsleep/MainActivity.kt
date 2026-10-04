@@ -416,7 +416,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     addView(LinearLayout(this@MainActivity).apply {
                         orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
                         addView(TextView(this@MainActivity).apply { text=glyph+"  "+name.uppercase(); textSize=12f; letterSpacing=.08f; setTextColor(color); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                        addView(TextView(this@MainActivity).apply { text=value; textSize=21f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                        addView(TextView(this@MainActivity).apply { text=value; textSize=22f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setShadowLayer(px(7).toFloat(),0f,0f,Color.argb(75,Color.red(color),Color.green(color),Color.blue(color))) })
                     })
                     if(points.isNotEmpty()) {
                         addView(TextView(this@MainActivity).apply {
