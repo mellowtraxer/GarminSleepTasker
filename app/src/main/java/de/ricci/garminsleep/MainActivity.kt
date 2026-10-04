@@ -159,18 +159,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(26),dp(20),dp(24))
             addView(pageTitle); addView(pageSubtitle); addView(brandGlow); addView(statusCard); addView(sleepShell); addView(actionsTitle); addView(actionsBox)
         }
-        val nightAtmosphere = LayerDrawable(arrayOf(
-            GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(
-                Color.rgb(20,10,58), Color.rgb(8,30,68), Color.rgb(5,6,14), Color.rgb(2,3,9)
-            )),
-            GradientDrawable(GradientDrawable.Orientation.TR_BL, intArrayOf(
-                Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)
-            ))
+        val savedTheme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
+        val systemDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val useLight=savedTheme=="light" || (savedTheme=="system" && !systemDark)
+        val nightAtmosphere = if(useLight) LayerDrawable(arrayOf(
+            GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(248,250,255),Color.rgb(226,235,255),Color.rgb(242,246,255))),
+            GradientDrawable(GradientDrawable.Orientation.TR_BL,intArrayOf(Color.argb(75,160,130,255),Color.TRANSPARENT,Color.argb(45,50,210,255)))
+        )) else LayerDrawable(arrayOf(
+            GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(20,10,58), Color.rgb(8,30,68), Color.rgb(5,6,14), Color.rgb(2,3,9))),
+            GradientDrawable(GradientDrawable.Orientation.TR_BL, intArrayOf(Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)))
         ))
         val scene = android.widget.FrameLayout(this).apply {
-            addView(NightLandscapeView(this@MainActivity), android.widget.FrameLayout.LayoutParams(-1,-1))
+            if(!useLight) addView(NightLandscapeView(this@MainActivity), android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
-                background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
+                background=if(useLight) ColorDrawable(Color.argb(18,255,255,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
@@ -186,7 +188,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(78)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL; background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
+            orientation=LinearLayout.VERTICAL; background=if(useLight) ColorDrawable(Color.rgb(238,243,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
@@ -402,7 +404,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(TextView(this@MainActivity).apply { text=sub; textSize=10f; setTextColor(if(key=="light") Color.rgb(80,85,105) else Color.rgb(165,175,205)); gravity=android.view.Gravity.CENTER })
                 if(current==key) addView(TextView(this@MainActivity).apply { text="✓ AKTIV"; textSize=10f; setTextColor(accent); setTypeface(typeface,Typeface.BOLD); gravity=android.view.Gravity.CENTER; setPadding(0,dp(12),0,0) })
             })
-            setOnClickListener { prefs.edit().putString("theme",key).apply(); showAppearanceSettings() }
+            setOnClickListener { prefs.edit().putString("theme",key).apply(); recreate() }
         }
         row.addView(choice("dark","Dunkel","OLED Night","🌙",Color.rgb(10,15,34)))
         row.addView(choice("light","Hell","Weiß","☀️",Color.rgb(239,242,250)))
