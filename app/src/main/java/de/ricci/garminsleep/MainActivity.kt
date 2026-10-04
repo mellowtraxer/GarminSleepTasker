@@ -500,6 +500,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("💓","HRV",num(s.avgHrv,"ms")))
         }
         sleepCard.addView(vitals)
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(18).toFloat(); cardElevation=0f; strokeWidth=dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.rgb(7,25,31))
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(10),dp(14),dp(10))
+                addView(TextView(this@MainActivity).apply { text="●"; textSize=12f; setTextColor(Color.rgb(76,225,169)); layoutParams=LinearLayout.LayoutParams(dp(24),-2) })
+                addView(TextView(this@MainActivity).apply { text="Messwerte vollständig synchronisiert"; textSize=11f; setTextColor(Color.rgb(160,210,214)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="GARMIN"; textSize=9f; letterSpacing=.12f; setTypeface(typeface,Typeface.BOLD); setTextColor(accent2) })
+            })
+        })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(16),0,dp(7))
             addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
