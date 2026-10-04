@@ -87,7 +87,10 @@ class SleepReader(private val context: Context) {
             sleep.startTime.toEpochMilli(), sleep.endTime.toEpochMilli(), total,
             light, deep, rem, awake, sleeping, hr, spo2, resp,
             minSpo2, minResp, avgHrv,
-            sleep.metadata.dataOrigin.packageName, text, heartSeries, spo2Points, respirationPoints, hrvPoints,
+            sleep.metadata.dataOrigin.packageName, text, heartSeries,
+            if (spo2Points.isNotEmpty()) spo2Points else garmin?.spo2Series.orEmpty(),
+            if (respirationPoints.isNotEmpty()) respirationPoints else garmin?.respirationSeries.orEmpty(),
+            if (hrvPoints.isNotEmpty()) hrvPoints else garmin?.hrvSeries.orEmpty(),
             sleep.stages.mapNotNull { st ->
                 val label = when(st.stage) {
                     SleepSessionRecord.STAGE_TYPE_LIGHT -> "Leicht"
