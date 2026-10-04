@@ -183,7 +183,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val scene = android.widget.FrameLayout(this).apply {
             if(!useLight) addView(android.widget.ImageView(this@MainActivity).apply {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
-                setImageURI(android.net.Uri.parse("https://raw.githubusercontent.com/mellowtraxer/GarminSleepTasker/v2-store-ui/app/src/main/res/drawable-nodpi/sleepsync_night_v2-1.webp"))
+                setImageResource(R.drawable.sleepsync_night)
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
                 background=if(useLight) ColorDrawable(Color.argb(18,255,255,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
