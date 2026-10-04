@@ -240,27 +240,29 @@ class GarminConnectClient(private val context: Context) {
 
 
     private fun extractSeries(root: JSONObject?, arrayKeys: List<String>, valueKeys: List<String>, timeKeys: List<String>): List<MetricPoint> {
-        if (root == null) return emptyList()
-        val arrays = arrayKeys.mapNotNull { root.optJSONArray(it) } + sequence {
-            val it = root.keys()
-            while (it.hasNext()) { val k=it.next(); root.optJSONObject(k)?.let { o -> arrayKeys.forEach { ak -> o.optJSONArray(ak)?.let { yield(it) } } } }
-        }.toList()
-        return arrays.flatMap { arr ->
-            (0 until arr.length()).mapNotNull { i ->
-                val item=arr.opt(i)
-                when(item) {
-                    is JSONObject -> {
-                        val v=valueKeys.firstNotNullOfOrNull { item.num(it) } ?: return@mapNotNull null
-                        val raw=timeKeys.firstNotNullOfOrNull { k -> item.opt(k)?.takeUnless { it==JSONObject.NULL } }
-                        parseMetricTime(raw)?.let { MetricPoint(it,v) }
+        if(root==null) return emptyList()
+        val out=mutableListOf<MetricPoint>()
+        fun walk(v:Any?, inheritedTime:Long?=null) {
+            when(v) {
+                is JSONObject -> {
+                    val ownTime=timeKeys.firstNotNullOfOrNull { k -> parseMetricTime(v.opt(k)) } ?: inheritedTime
+                    val ownValue=valueKeys.firstNotNullOfOrNull { k -> v.num(k) }
+                    if(ownTime!=null && ownValue!=null && ownValue>0) out.add(MetricPoint(ownTime,ownValue))
+                    val keys=v.keys(); while(keys.hasNext()){ val k=keys.next(); val child=v.opt(k)
+                        if(k in arrayKeys || child is JSONObject || child is org.json.JSONArray) walk(child,ownTime)
                     }
-                    is org.json.JSONArray -> {
-                        if(item.length()<2) null else parseMetricTime(item.opt(0))?.let { t -> (item.opt(1) as? Number)?.toDouble()?.let { MetricPoint(t,it) } }
+                }
+                is org.json.JSONArray -> {
+                    if(v.length()>=2) {
+                        val t=parseMetricTime(v.opt(0)); val n=(v.opt(1) as? Number)?.toDouble() ?: v.optString(1).toDoubleOrNull()
+                        if(t!=null && n!=null && n>0) out.add(MetricPoint(t,n))
                     }
-                    else -> null
+                    for(i in 0 until v.length()) walk(v.opt(i),inheritedTime)
                 }
             }
-        }.filter { it.value > 0.0 }.distinctBy { it.timeMs }.sortedBy { it.timeMs }
+        }
+        walk(root)
+        return out.distinctBy { it.timeMs to it.value }.sortedBy { it.timeMs }
     }
 
     private fun parseMetricTime(v: Any?): Long? = when(v) {
