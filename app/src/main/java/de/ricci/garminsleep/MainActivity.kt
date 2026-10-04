@@ -531,8 +531,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val vitals = GridLayout(this).apply {
             columnCount = 2
             addView(metricCard("❤️","Puls",num(s.avgHr,"bpm")) { showMetricDetail("Puls", "❤️", Color.rgb(255,82,126), s) })
-            addView(metricCard("🩸","SpO₂","Ø ${num(s.avgSpo2,"%")}\nMin. ${num(s.minSpo2,"%")}"))
-            addView(metricCard("🫁","Atmung","Ø ${num(s.avgResp,"/min")}\nMin. ${num(s.minResp,"/min")}"))
+            addView(metricCard("🩸","SpO₂","Ø ${num(s.avgSpo2,"%")}\nMin. ${num(s.minSpo2,"%")}") { showMetricDetail("SpO₂", "🩸", Color.rgb(44,205,255), s) })
+            addView(metricCard("🫁","Atmung","Ø ${num(s.avgResp,"/min")}\nMin. ${num(s.minResp,"/min")}") { showMetricDetail("Atmung", "🫁", Color.rgb(80,225,184), s) })
             addView(metricCard("💓","HRV",num(s.avgHrv,"ms")) { showMetricDetail("HRV", "💓", Color.rgb(213,96,255), s) })
         }
         sleepCard.addView(vitals)
