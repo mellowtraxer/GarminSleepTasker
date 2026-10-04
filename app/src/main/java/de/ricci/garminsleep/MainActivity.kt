@@ -348,12 +348,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             text = "SYSTEM"; textSize = 12f; setTextColor(accent2); setTypeface(typeface, Typeface.BOLD); letterSpacing = .16f
         })
         val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0) }
-        fun setting(icon:String, title:String, sub:String, color:Int) {
+        fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
             val fill = Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView(MaterialCardView(this).apply {
                 radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(fill)
                 strokeWidth=dp(1); strokeColor=color
                 layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(0,dp(5),0,dp(5))}
+                isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
                     addView(TextView(this@MainActivity).apply {
@@ -373,7 +374,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("⌚","Garmin Connect","Verbunden · Schlafdaten synchronisieren",accent2)
         setting("♥","Health Connect","Berechtigungen & Gesundheitsdaten",stageRem)
         setting("⚡","Automatik","Tasker & Kalender",stageAwake)
-        setting("✦","Darstellung","OLED Night · SleepSync",accent)
+        setting("✦","Darstellung","OLED Night · SleepSync",accent) { showAppearanceSettings() }
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight)
         sleepCard.addView(settingsGrid)
         actionsTitle.text="WERKZEUGE"; actionsTitle.setTextColor(stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
@@ -382,6 +383,32 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             b.cornerRadius=dp(18); b.setTextColor(Color.rgb(220,224,244))
             b.backgroundTintList=ColorStateList.valueOf(Color.rgb(14,17,34)); b.strokeWidth=dp(1); b.strokeColor=ColorStateList.valueOf(Color.rgb(48,55,89))
         }
+    }
+
+    private fun showAppearanceSettings() {
+        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        pageTitle.text="Wähle dein Design"; pageSubtitle.text="SleepSync so, wie du es magst"
+        actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
+        sleepCard.addView(TextView(this).apply { text="‹  Zurück zu Einstellungen"; textSize=12f; setTextColor(accent); setPadding(dp(2),dp(8),0,dp(18)); setOnClickListener { showSettings() } })
+        val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE); val current=prefs.getString("theme","dark") ?: "dark"
+        val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        fun choice(key:String,title:String,sub:String,icon:String,bg:Int):MaterialCardView = MaterialCardView(this).apply {
+            radius=dp(22).toFloat(); strokeWidth=dp(if(current==key) 2 else 1); strokeColor=if(current==key) accent else Color.rgb(65,72,104)
+            setCardBackgroundColor(bg); isClickable=true; isFocusable=true
+            layoutParams=LinearLayout.LayoutParams(0,dp(210),1f).apply { setMargins(dp(4),0,dp(4),0) }
+            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; gravity=android.view.Gravity.CENTER; setPadding(dp(8),dp(16),dp(8),dp(12))
+                addView(TextView(this@MainActivity).apply { text=icon; textSize=42f; gravity=android.view.Gravity.CENTER })
+                addView(TextView(this@MainActivity).apply { text=title; textSize=14f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(key=="light") Color.rgb(25,28,42) else Color.WHITE); gravity=android.view.Gravity.CENTER; setPadding(0,dp(12),0,dp(5)) })
+                addView(TextView(this@MainActivity).apply { text=sub; textSize=10f; setTextColor(if(key=="light") Color.rgb(80,85,105) else Color.rgb(165,175,205)); gravity=android.view.Gravity.CENTER })
+                if(current==key) addView(TextView(this@MainActivity).apply { text="✓ AKTIV"; textSize=10f; setTextColor(accent); setTypeface(typeface,Typeface.BOLD); gravity=android.view.Gravity.CENTER; setPadding(0,dp(12),0,0) })
+            })
+            setOnClickListener { prefs.edit().putString("theme",key).apply(); showAppearanceSettings() }
+        }
+        row.addView(choice("dark","Dunkel","OLED Night","🌙",Color.rgb(10,15,34)))
+        row.addView(choice("light","Hell","Weiß","☀️",Color.rgb(239,242,250)))
+        row.addView(choice("system","Automatisch","System","◐",Color.rgb(24,27,45)))
+        sleepCard.addView(row)
+        sleepCard.addView(TextView(this).apply { text="Die Auswahl wird gespeichert. Die vollständige Theme-Umschaltung wird als nächster Schritt auf alle SleepSync-Flächen angewendet."; textSize=11f; setTextColor(Color.rgb(155,165,195)); setPadding(dp(8),dp(18),dp(8),0) })
     }
 
     private fun sleepStageStrip(s: SleepSummary): LinearLayout {
