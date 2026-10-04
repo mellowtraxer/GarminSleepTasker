@@ -25,12 +25,29 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.ColorDrawable
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
 import android.content.res.ColorStateList
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
 import kotlinx.coroutines.*
+
+private class NightLandscapeView(context: android.content.Context) : View(context) {
+    private val p=Paint(Paint.ANTI_ALIAS_FLAG)
+    private val stars=listOf(.08f to .11f,.16f to .19f,.27f to .09f,.39f to .15f,.52f to .07f,.64f to .18f,.77f to .10f,.88f to .16f,.94f to .06f)
+    override fun onDraw(c: Canvas) {
+        super.onDraw(c); val w=width.toFloat(); val h=height.toFloat()
+        p.shader=android.graphics.LinearGradient(0f,0f,0f,h*.72f,intArrayOf(Color.rgb(13,8,48),Color.rgb(18,38,82),Color.rgb(5,9,24)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,0f,w,h,p); p.shader=null
+        p.color=Color.argb(205,218,228,255); stars.forEachIndexed { i,s -> c.drawCircle(w*s.first,h*s.second,(if(i%3==0)1.7f else 1f)*resources.displayMetrics.density,p) }
+        fun ridge(color:Int, base:Float, peaks:FloatArray) { val q=Path(); q.moveTo(0f,h*base); peaks.forEachIndexed { i,v -> q.lineTo(w*i/(peaks.size-1),h*v) }; q.lineTo(w,h*.62f); q.lineTo(0f,h*.62f); q.close(); p.color=color; c.drawPath(q,p) }
+        ridge(Color.rgb(19,24,58),.49f,floatArrayOf(.48f,.39f,.44f,.28f,.42f,.32f,.46f,.36f,.49f))
+        ridge(Color.rgb(7,13,32),.56f,floatArrayOf(.55f,.45f,.51f,.39f,.53f,.43f,.57f,.47f,.56f))
+        p.shader=android.graphics.LinearGradient(0f,h*.54f,0f,h,intArrayOf(Color.argb(150,30,51,93),Color.rgb(3,5,13)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,h*.54f,w,h,p); p.shader=null
+    }
+}
 
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var status: TextView
@@ -133,8 +150,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)
             ))
         ))
+        val scene = android.widget.FrameLayout(this).apply {
+            addView(NightLandscapeView(this@MainActivity), android.widget.FrameLayout.LayoutParams(-1,-1))
+            addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
+        }
         val scroll = ScrollView(this).apply {
-            isFillViewport=true; clipToPadding=false; background=nightAtmosphere; addView(box)
+            isFillViewport=true; clipToPadding=false; background=nightAtmosphere; addView(scene)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
