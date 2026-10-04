@@ -19,6 +19,7 @@ class SleepMetricChartView(
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
     private val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
     private var selectedIndex: Int? = null
+    private var touchX = 0f
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     init { minimumHeight=(210*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(210*resources.displayMetrics.density).toInt()) }
@@ -34,6 +35,7 @@ class SleepMetricChartView(
                 val fraction=((e.x-l)/(r-l)).coerceIn(0f,1f)
                 val target=startMs+((endMs-startMs)*fraction).toLong()
                 selectedIndex=points.indices.minByOrNull { kotlin.math.abs(points[it].timeMs-target) }
+                touchX=e.x
                 parent?.requestDisallowInterceptTouchEvent(e.action==MotionEvent.ACTION_MOVE)
                 invalidate(); return true
             }
