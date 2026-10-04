@@ -63,13 +63,15 @@ class SleepReader(private val context: Context) {
         val heartSeries = heartRateSeries(sleep.startTime, sleep.endTime)
         val spo2Points = oxygenSeries(sleep.startTime, sleep.endTime)
         val respirationPoints = respirationSeries(sleep.startTime, sleep.endTime)
-        val hrvPoints = hrvSeries(sleep.startTime, sleep.endTime)
+        // HRV is optional: older/existing installs may not have granted the newer
+        // Health Connect HRV permission yet. Never let that block the whole night.
+        val hrvPoints = runCatching { hrvSeries(sleep.startTime, sleep.endTime) }.getOrDefault(emptyList())
         val hr = heartSeries.map { it.value }.average().takeUnless { it.isNaN() }
         // Garmin does not currently export overnight SpO2/respiration to Health
         // Connect. Prefer HC if present, otherwise enrich from Garmin Connect
         // when the user has linked the account inside this app.
-        val hcSpo2 = averageSpo2(sleep.startTime, sleep.endTime)
-        val hcResp = averageRespiratoryRate(sleep.startTime, sleep.endTime)
+        val hcSpo2 = runCatching { averageSpo2(sleep.startTime, sleep.endTime) }.getOrNull()
+        val hcResp = runCatching { averageRespiratoryRate(sleep.startTime, sleep.endTime) }.getOrNull()
         val sleepDate = sleep.endTime.atZone(ZoneId.systemDefault()).toLocalDate()
         val garmin = runCatching { GarminConnectClient(context).nightMetrics(sleepDate) }.getOrNull()
         val spo2 = hcSpo2 ?: garmin?.avgSpo2
