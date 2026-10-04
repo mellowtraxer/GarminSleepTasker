@@ -51,6 +51,9 @@ private class NightLandscapeView(context: android.content.Context) : View(contex
         ridge(Color.rgb(19,24,58),.49f,floatArrayOf(.48f,.39f,.44f,.28f,.42f,.32f,.46f,.36f,.49f))
         ridge(Color.rgb(7,13,32),.56f,floatArrayOf(.55f,.45f,.51f,.39f,.53f,.43f,.57f,.47f,.56f))
         p.shader=android.graphics.LinearGradient(0f,h*.54f,0f,h,intArrayOf(Color.argb(150,30,51,93),Color.rgb(3,5,13)),null,android.graphics.Shader.TileMode.CLAMP); c.drawRect(0f,h*.54f,w,h,p); p.shader=null
+        p.strokeWidth=1f*d
+        for(i in 0..6){ val y=h*(.575f+i*.018f); p.color=Color.argb(28-i*3,115,196,255); c.drawLine(w*.08f,y,w*.92f,y,p) }
+        p.shader=android.graphics.RadialGradient(w*.82f,h*.59f,w*.24f,intArrayOf(Color.argb(54,173,128,255),Color.argb(20,40,190,255),Color.TRANSPARENT),null,android.graphics.Shader.TileMode.CLAMP); c.drawOval(w*.57f,h*.555f,w*1.05f,h*.72f,p); p.shader=null
     }
 }
 
