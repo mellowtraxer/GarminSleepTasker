@@ -124,16 +124,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 b.alpha=if(on) 1f else .62f
                 b.elevation=if(on) dp(4).toFloat() else 0f
             }
-            fun tab(icon: String, label:String, action: () -> Unit): MaterialButton = MaterialButton(this@MainActivity).apply {
-                text=icon+"\n"+label; isAllCaps=false; textSize=11f; cornerRadius=dp(18); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
-                setLineSpacing(dp(2).toFloat(),1f); gravity=android.view.Gravity.CENTER
+            fun tab(iconRes:Int, label:String, action: () -> Unit): MaterialButton = MaterialButton(this@MainActivity).apply {
+                text=label; isAllCaps=false; textSize=10f; cornerRadius=dp(18); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
+                icon=androidx.appcompat.content.res.AppCompatResources.getDrawable(this@MainActivity,iconRes)
+                iconGravity=MaterialButton.ICON_GRAVITY_TOP; iconSize=dp(23); iconPadding=dp(4)
+                gravity=android.view.Gravity.CENTER
                 layoutParams=LinearLayout.LayoutParams(0,dp(62),1f).apply { setMargins(dp(2),0,dp(2),0) }
                 setOnClickListener { activate(this); action() }; tabs.add(this)
             }
-            val home=tab("⌂","Übersicht"){showOverview()}; addView(home)
-            addView(tab("▥","Verlauf"){showHistoryPlaceholder()})
-            addView(tab("▣","Kalender"){showCalendarPlaceholder()})
-            addView(tab("⚙","Settings"){showSettings()})
+            val home=tab(android.R.drawable.ic_menu_view,"Übersicht"){showOverview()}; addView(home)
+            addView(tab(android.R.drawable.ic_menu_sort_by_size,"Verlauf"){showHistoryPlaceholder()})
+            addView(tab(android.R.drawable.ic_menu_my_calendar,"Kalender"){showCalendarPlaceholder()})
+            addView(tab(android.R.drawable.ic_menu_preferences,"Settings"){showSettings()})
             post { activate(home) }
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
