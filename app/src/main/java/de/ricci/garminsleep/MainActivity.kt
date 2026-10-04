@@ -102,15 +102,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val test = button("Schlafdaten neu laden") { testRead() }
         val sig = button("App-Signatur anzeigen") { showAppSignature() }
         val statusCard = MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=0f; strokeWidth=dp(1)
-            setCardBackgroundColor(Color.rgb(8,25,34)); strokeColor=Color.rgb(25,92,108)
-            status.setPadding(dp(14),dp(9),dp(14),dp(9)); addView(status)
+            radius=dp(16).toFloat(); cardElevation=0f; strokeWidth=0
+            setCardBackgroundColor(Color.rgb(7,17,25))
+            status.setPadding(dp(12),dp(7),dp(12),dp(7)); addView(status)
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         pageTitle.setTextColor(Color.WHITE); pageTitle.textSize=30f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.02f
         pageSubtitle.setTextColor(Color.rgb(151,158,190)); pageSubtitle.textSize=13f
-        status.setTextColor(Color.rgb(166,238,244)); status.textSize=12f
+        status.setTextColor(Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         val brandGlow = View(this).apply {
             background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(accent,accent2,stageRem,Color.TRANSPARENT)).apply { cornerRadius=dp(2).toFloat() }
