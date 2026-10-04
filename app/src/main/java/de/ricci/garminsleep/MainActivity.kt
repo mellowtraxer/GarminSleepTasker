@@ -419,7 +419,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     })
                     if(points.isNotEmpty()) {
                         addView(TextView(this@MainActivity).apply {
-                            text=points.size.toString()+" echte Messpunkte"
+                            val density=when { points.size>=300 -> "hohe Datendichte"; points.size>=80 -> "gute Datendichte"; else -> "wenige Messungen" }
+                            text=points.size.toString()+" Messpunkte  ·  "+density
                             textSize=9f; setTextColor(Color.rgb(94,106,136)); setPadding(0,px(4),0,0)
                         })
                         val min=points.minOf { it.value }; val max=points.maxOf { it.value }
