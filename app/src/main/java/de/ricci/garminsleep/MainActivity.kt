@@ -138,6 +138,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         pageTitle.setTextColor(Color.WHITE); pageTitle.textSize=30f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.02f
         pageTitle.setShadowLayer(18f,0f,0f,Color.argb(120,139,92,246))
+        pageTitle.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(42,139,92,246),Color.argb(18,34,211,238),Color.TRANSPARENT)).apply { cornerRadius=dp(18).toFloat() }
+        pageTitle.setPadding(dp(10),dp(5),dp(12),dp(5))
         pageSubtitle.setTextColor(Color.rgb(151,158,190)); pageSubtitle.textSize=13f
         status.setTextColor(Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
