@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var actionsBox: LinearLayout
     private var lastSummary: SleepSummary? = null
     private val nightBg = Color.rgb(5, 6, 14)
-    private val cardBg = Color.rgb(15, 17, 34)
+    private val cardBg = Color.argb(222, 10, 16, 36)
     private val accent = Color.rgb(139, 92, 246)
     private val accent2 = Color.rgb(34, 211, 238)
     private val stageLight = Color.rgb(99, 190, 255)
@@ -106,7 +106,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sig = button("App-Signatur anzeigen") { showAppSignature() }
         val statusCard = MaterialCardView(this).apply {
             radius=dp(16).toFloat(); cardElevation=0f; strokeWidth=0
-            setCardBackgroundColor(Color.rgb(7,17,25))
+            setCardBackgroundColor(Color.argb(205,7,17,25))
             status.setPadding(dp(12),dp(7),dp(12),dp(7)); addView(status)
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
@@ -139,7 +139,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         val navShell = MaterialCardView(this).apply {
             radius=dp(32).toFloat(); cardElevation=dp(14).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(66,62,116)
-            setCardBackgroundColor(Color.rgb(7,8,19)); addView(nav)
+            setCardBackgroundColor(Color.argb(224,7,8,19)); addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(78)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
