@@ -353,8 +353,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             text = "SYSTEM"; textSize = 12f; setTextColor(accent2); setTypeface(typeface, Typeface.BOLD); letterSpacing = .16f
         })
         val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0) }
+        val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
+        val selectedTheme=prefs.getString("theme","dark") ?: "dark"
+        val selectedThemeLabel=when(selectedTheme) { "light"->"Hell"; "system"->"Automatisch"; else->"OLED Night" }
+        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
-            val fill = Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
+            val fill = if(settingsLight) Color.rgb(248,250,255) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView(MaterialCardView(this).apply {
                 radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(fill)
                 strokeWidth=dp(1); strokeColor=color
@@ -369,8 +374,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     })
                     addView(LinearLayout(this@MainActivity).apply {
                         orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
-                        addView(TextView(this@MainActivity).apply { text=title; textSize=15f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
-                        addView(TextView(this@MainActivity).apply { text=sub; textSize=12f; setTextColor(Color.rgb(166,172,202)); setPadding(0,dp(3),0,0) })
+                        addView(TextView(this@MainActivity).apply { text=title; textSize=15f; setTextColor(if(settingsLight) Color.rgb(24,29,48) else Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                        addView(TextView(this@MainActivity).apply { text=sub; textSize=12f; setTextColor(if(settingsLight) Color.rgb(92,101,128) else Color.rgb(166,172,202)); setPadding(0,dp(3),0,0) })
                     })
                     addView(TextView(this@MainActivity).apply { text="›"; textSize=28f; setTextColor(color) })
                 })
@@ -379,7 +384,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("⌚","Garmin Connect","Verbunden · Schlafdaten synchronisieren",accent2)
         setting("♥","Health Connect","Berechtigungen & Gesundheitsdaten",stageRem)
         setting("⚡","Automatik","Tasker & Kalender",stageAwake)
-        setting("✦","Darstellung","OLED Night · SleepSync",accent) { showAppearanceSettings() }
+        setting("✦","Darstellung","$selectedThemeLabel · SleepSync",accent) { showAppearanceSettings() }
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight)
         sleepCard.addView(settingsGrid)
         actionsTitle.text="WERKZEUGE"; actionsTitle.setTextColor(stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
