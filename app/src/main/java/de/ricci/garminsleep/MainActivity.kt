@@ -23,6 +23,8 @@ import android.widget.GridLayout
 import android.widget.ProgressBar
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.ColorDrawable
 import android.content.res.ColorStateList
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -123,8 +125,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(24))
             addView(pageTitle); addView(pageSubtitle); addView(brandGlow); addView(statusCard); addView(sleepShell); addView(actionsTitle); addView(actionsBox)
         }
+        val nightAtmosphere = LayerDrawable(arrayOf(
+            GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(
+                Color.rgb(20,10,58), Color.rgb(8,30,68), Color.rgb(5,6,14), Color.rgb(2,3,9)
+            )),
+            GradientDrawable(GradientDrawable.Orientation.TR_BL, intArrayOf(
+                Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)
+            ))
+        ))
         val scroll = ScrollView(this).apply {
-            isFillViewport=true; clipToPadding=false; setBackgroundColor(nightBg); addView(box)
+            isFillViewport=true; clipToPadding=false; background=nightAtmosphere; addView(box)
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
@@ -133,7 +143,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(78)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL; setBackgroundColor(nightBg); addView(scroll); addView(navShell)
+            orientation=LinearLayout.VERTICAL; background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
