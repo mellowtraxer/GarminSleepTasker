@@ -457,13 +457,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             "Atmung" -> Color.rgb(10,42,34); "HRV" -> Color.rgb(45,17,55)
             else -> Color.rgb(15,18,38)
         }
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
+        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val light=theme=="light" || (theme=="system" && !sysDark)
+        val cardFill=if(light) Color.rgb(248,250,255) else fill
+        val valueColor=if(light) Color.rgb(22,27,45) else Color.WHITE
         val body = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(15), dp(14), dp(15), dp(14))
             addView(TextView(this@MainActivity).apply {
                 text = "$icon   ${label.uppercase()}"; textSize = 11f; letterSpacing = .08f; setTextColor(tone); setTypeface(typeface, Typeface.BOLD)
             })
             addView(TextView(this@MainActivity).apply {
-                text = value; textSize = 19f; setTextColor(Color.WHITE); setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(7),0,dp(3))
+                text = value; textSize = 19f; setTextColor(valueColor); setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(7),0,dp(3))
             })
             addView(View(this@MainActivity).apply {
                 background = GradientDrawable().apply { cornerRadius = dp(3).toFloat(); setColor(tone) }
@@ -472,7 +477,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         return MaterialCardView(this).apply {
             radius = dp(21).toFloat(); cardElevation = dp(2).toFloat(); strokeWidth = dp(1); strokeColor = tone
-            setCardBackgroundColor(fill)
+            setCardBackgroundColor(cardFill)
             layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
             addView(body)
             if (onClick != null) { isClickable=true; isFocusable=true; setOnClickListener { onClick() } }
