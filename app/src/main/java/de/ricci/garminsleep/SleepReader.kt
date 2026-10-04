@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter
 private const val GARMIN_PACKAGE = "com.garmin.android.apps.connectmobile"
 
 data class MetricPoint(val timeMs: Long, val value: Double)
+data class StagePoint(val startMs: Long, val endMs: Long, val stageLabel: String)
 
 data class SleepSummary(
     val startMs: Long, val endMs: Long, val totalMin: Long,
@@ -24,7 +25,8 @@ data class SleepSummary(
     val heartRateSeries: List<MetricPoint> = emptyList(),
     val spo2Series: List<MetricPoint> = emptyList(),
     val respirationSeries: List<MetricPoint> = emptyList(),
-    val hrvSeries: List<MetricPoint> = emptyList()
+    val hrvSeries: List<MetricPoint> = emptyList(),
+    val stageSeries: List<StagePoint> = emptyList()
 )
 
 class SleepReader(private val context: Context) {
@@ -85,7 +87,17 @@ class SleepReader(private val context: Context) {
             sleep.startTime.toEpochMilli(), sleep.endTime.toEpochMilli(), total,
             light, deep, rem, awake, sleeping, hr, spo2, resp,
             minSpo2, minResp, avgHrv,
-            sleep.metadata.dataOrigin.packageName, text, heartSeries, spo2Points, respirationPoints, hrvPoints
+            sleep.metadata.dataOrigin.packageName, text, heartSeries, spo2Points, respirationPoints, hrvPoints,
+            sleep.stages.mapNotNull { st ->
+                val label = when(st.stage) {
+                    SleepSessionRecord.STAGE_TYPE_LIGHT -> "Leicht"
+                    SleepSessionRecord.STAGE_TYPE_DEEP -> "Tief"
+                    SleepSessionRecord.STAGE_TYPE_REM -> "REM"
+                    SleepSessionRecord.STAGE_TYPE_AWAKE -> "Wach"
+                    else -> null
+                }
+                label?.let { StagePoint(st.startTime.toEpochMilli(), st.endTime.toEpochMilli(), it) }
+            }
         )
     }
 
