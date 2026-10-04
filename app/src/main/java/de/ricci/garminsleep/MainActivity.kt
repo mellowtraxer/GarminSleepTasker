@@ -470,6 +470,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply {
             text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(10),0,dp(2))
         })
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL; setPadding(dp(4),dp(2),dp(4),dp(3))
+            fun phase(label:String,minutes:Long,tone:Int)=TextView(this@MainActivity).apply {
+                text="$label  ${(minutes*100/s.totalMin.coerceAtLeast(1)).toInt()}%"; textSize=10f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD)
+                gravity=android.view.Gravity.CENTER; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
+            }
+            addView(phase("LEICHT",s.lightMin,stageLight)); addView(phase("TIEF",s.deepMin,stageDeep)); addView(phase("REM",s.remMin,stageRem)); addView(phase("WACH",s.awakeMin,stageAwake))
+        })
         val stages = GridLayout(this).apply {
             columnCount = 2
             setPadding(0, dp(6), 0, dp(8))
