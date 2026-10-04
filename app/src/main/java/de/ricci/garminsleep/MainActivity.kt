@@ -112,9 +112,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageSubtitle.setTextColor(Color.rgb(151,158,190)); pageSubtitle.textSize=13f
         status.setTextColor(Color.rgb(166,238,244)); status.textSize=12f
         actionsTitle.setTextColor(Color.WHITE)
+        val brandGlow = View(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(accent,accent2,stageRem,Color.TRANSPARENT)).apply { cornerRadius=dp(2).toFloat() }
+            layoutParams=LinearLayout.LayoutParams(dp(104),dp(3)).apply { setMargins(0,dp(8),0,dp(2)) }
+        }
         val box = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(20),dp(20),dp(20),dp(24))
-            addView(pageTitle); addView(pageSubtitle); addView(statusCard); addView(sleepShell); addView(actionsTitle); addView(actionsBox)
+            addView(pageTitle); addView(pageSubtitle); addView(brandGlow); addView(statusCard); addView(sleepShell); addView(actionsTitle); addView(actionsBox)
         }
         val scroll = ScrollView(this).apply {
             isFillViewport=true; clipToPadding=false; setBackgroundColor(nightBg); addView(box)
@@ -142,8 +146,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         if (sdk != HealthConnectClient.SDK_AVAILABLE) { status.text = "Health Connect ist auf diesem Gerät nicht verfügbar."; return@launch }
         val granted = HealthConnectClient.getOrCreate(this@MainActivity).permissionController.getGrantedPermissions()
         val hc = if (granted.containsAll(permissions)) "✅ Health Connect bereit." else "⚠️ Bitte Health-Connect-Berechtigungen erteilen."
-        val gc = if (garminClient.isLinked()) "● Garmin verbunden" else "○ Garmin nicht verbunden"
-        status.text = "$gc   ·   $hc"
+        val gc = if (garminClient.isLinked()) "GARMIN  ●" else "GARMIN  ○"
+        val hcShort = if (granted.containsAll(permissions)) "HEALTH CONNECT  ●" else "HEALTH CONNECT  ○"
+        status.text = "$gc        $hcShort"
     }
 
 
