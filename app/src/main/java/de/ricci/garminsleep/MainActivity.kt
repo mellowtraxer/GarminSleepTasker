@@ -82,7 +82,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 b.backgroundTintList=ColorStateList.valueOf(if(on) Color.argb(48,Color.red(tone),Color.green(tone),Color.blue(tone)) else Color.TRANSPARENT)
                 b.strokeWidth=if(on) dp(1) else 0
                 b.strokeColor=ColorStateList.valueOf(tone)
-                b.alpha=if(on) 1f else .72f
+                b.alpha=if(on) 1f else .62f
+                b.elevation=if(on) dp(4).toFloat() else 0f
             }
             fun tab(label: String, action: () -> Unit): MaterialButton = MaterialButton(this@MainActivity).apply {
                 text=label; isAllCaps=false; textSize=10f; cornerRadius=dp(18); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
@@ -125,8 +126,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
-            radius=dp(30).toFloat(); cardElevation=dp(12).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(59,66,108)
-            setCardBackgroundColor(Color.rgb(8,10,22)); addView(nav)
+            radius=dp(32).toFloat(); cardElevation=dp(14).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(66,62,116)
+            setCardBackgroundColor(Color.rgb(7,8,19)); addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(78)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
