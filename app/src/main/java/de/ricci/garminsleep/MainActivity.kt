@@ -397,24 +397,38 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
     private fun showMetricDetail(label: String, icon: String, tone: Int, s: SleepSummary) {
-        pageTitle.text = label
+        pageTitle.text = "Gesundheitswerte"
         pageSubtitle.text = "Zeitverlauf deiner letzten Nacht"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         sleepCard.removeAllViews(); sleepCard.background=null
         val d=resources.displayMetrics.density; fun px(v:Int)=(v*d).toInt()
         sleepCard.addView(TextView(this).apply {
-            text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(px(2),px(8),0,px(14))
+            text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(px(2),px(8),0,px(12))
             setOnClickListener { showOverview() }
         })
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=px(26).toFloat(); strokeWidth=px(1); strokeColor=tone; setCardBackgroundColor(Color.rgb(10,17,29))
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.VERTICAL; setPadding(px(18),px(17),px(18),px(18))
-                addView(TextView(this@MainActivity).apply { text=icon+"  "+label; textSize=17f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
-                addView(TextView(this@MainActivity).apply { text="Zeitreihe  ·  letzte Nacht"; textSize=11f; setTextColor(Color.rgb(143,151,183)); setPadding(0,px(4),0,px(12)) })
-                addView(SleepMetricChartView(this@MainActivity,tone,label,s.startMs,s.endMs, when(label) { "Puls" -> s.heartRateSeries; "SpO₂" -> s.spo2Series; "Atmung" -> s.respirationSeries; "HRV" -> s.hrvSeries; else -> emptyList() }))
-            })
-        })
+        fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>) =
+            MaterialCardView(this).apply {
+                radius=px(24).toFloat(); strokeWidth=px(1); strokeColor=Color.argb(180,Color.red(color),Color.green(color),Color.blue(color))
+                setCardBackgroundColor(Color.rgb(9,15,27)); layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(12)) }
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.VERTICAL; setPadding(px(16),px(15),px(16),px(12))
+                    addView(LinearLayout(this@MainActivity).apply {
+                        orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
+                        addView(TextView(this@MainActivity).apply { text=glyph+"  "+name.uppercase(); textSize=12f; letterSpacing=.08f; setTextColor(color); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                        addView(TextView(this@MainActivity).apply { text=value; textSize=14f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                    })
+                    addView(SleepMetricChartView(this@MainActivity,color,name,s.startMs,s.endMs,points))
+                })
+            }
+        fun n(v:Double?,suffix:String)=v?.let { String.format(java.util.Locale.GERMANY,"%.1f %s",it,suffix) } ?: "–"
+        val cards=listOf(
+            chartCard("Puls","❤️",Color.rgb(255,82,126),n(s.avgHr,"bpm"),s.heartRateSeries),
+            chartCard("SpO₂","🩸",Color.rgb(44,205,255),n(s.avgSpo2,"%"),s.spo2Series),
+            chartCard("Atmung","🫁",Color.rgb(80,225,184),n(s.avgResp,"/min"),s.respirationSeries),
+            chartCard("HRV","💓",Color.rgb(213,96,255),n(s.avgHrv,"ms"),s.hrvSeries)
+        )
+        cards.forEach { sleepCard.addView(it) }
+        cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
     }
 
     private fun renderDashboard(s: SleepSummary) {
