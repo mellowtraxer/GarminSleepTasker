@@ -71,6 +71,9 @@ class SleepMetricChartView(
         val end=tf.format(Instant.ofEpochMilli(endMs)); c.drawText(end,r-p.measureText(end),height-10*d,p)
         p.textSize=10*d; p.color=tone; c.drawText(label.uppercase(),l,12*d,p)
         if(points.size>=2) {
+            val midMs=startMs+(endMs-startMs)/2
+            val mid=tf.format(Instant.ofEpochMilli(midMs)); p.textSize=10*d; p.color=Color.rgb(105,115,145)
+            c.drawText(mid,(l+r)/2-p.measureText(mid)/2,height-10*d,p)
             val min=points.minOf { it.value }; val max=points.maxOf { it.value }
             p.textSize=10*d; p.color=Color.rgb(154,163,190)
             val maxText="Max. "+formatValue(max)
