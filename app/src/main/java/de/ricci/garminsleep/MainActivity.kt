@@ -118,18 +118,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 val on = b === active
                 val tone = intArrayOf(accent2,stageRem,stageAwake,accent)[index]
                 b.setTextColor(if(on) tone else Color.rgb(120,128,158))
-                b.backgroundTintList=ColorStateList.valueOf(if(on) Color.argb(48,Color.red(tone),Color.green(tone),Color.blue(tone)) else Color.TRANSPARENT)
-                b.strokeWidth=if(on) dp(1) else 0
+                b.backgroundTintList=ColorStateList.valueOf(if(on) Color.argb(88,Color.red(tone),Color.green(tone),Color.blue(tone)) else Color.TRANSPARENT)
+                b.strokeWidth=if(on) dp(2) else 0
                 b.strokeColor=ColorStateList.valueOf(tone)
-                b.alpha=if(on) 1f else .62f
+                b.alpha=if(on) 1f else .72f
                 b.elevation=if(on) dp(4).toFloat() else 0f
             }
             fun tab(iconRes:Int, label:String, action: () -> Unit): MaterialButton = MaterialButton(this@MainActivity).apply {
-                text=label; isAllCaps=false; textSize=10f; cornerRadius=dp(18); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
+                text=label; isAllCaps=false; textSize=11f; cornerRadius=dp(22); insetTop=0; insetBottom=0; minWidth=0; minimumWidth=0
                 icon=androidx.appcompat.content.res.AppCompatResources.getDrawable(this@MainActivity,iconRes)
-                iconGravity=MaterialButton.ICON_GRAVITY_TOP; iconSize=dp(23); iconPadding=dp(4)
+                iconGravity=MaterialButton.ICON_GRAVITY_TOP; iconSize=dp(27); iconPadding=dp(5)
                 gravity=android.view.Gravity.CENTER
-                layoutParams=LinearLayout.LayoutParams(0,dp(62),1f).apply { setMargins(dp(2),0,dp(2),0) }
+                layoutParams=LinearLayout.LayoutParams(0,dp(68),1f).apply { setMargins(dp(3),0,dp(3),0) }
                 setOnClickListener { activate(this); action() }; tabs.add(this)
             }
             val home=tab(android.R.drawable.ic_menu_view,"Übersicht"){showOverview()}; addView(home)
@@ -193,7 +193,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setCardBackgroundColor(Color.argb(202,7,8,19))
             foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(32).toFloat() }
             addView(nav)
-            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(86)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
+            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(92)).apply { setMargins(dp(14),dp(4),dp(14),dp(10)) }
         }
         val root = LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL; background=if(useLight) ColorDrawable(Color.rgb(238,243,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
