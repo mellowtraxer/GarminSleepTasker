@@ -412,7 +412,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 orientation=LinearLayout.VERTICAL; setPadding(px(18),px(17),px(18),px(18))
                 addView(TextView(this@MainActivity).apply { text=icon+"  "+label; textSize=17f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
                 addView(TextView(this@MainActivity).apply { text="Zeitreihe  ·  letzte Nacht"; textSize=11f; setTextColor(Color.rgb(143,151,183)); setPadding(0,px(4),0,px(12)) })
-                addView(SleepMetricChartView(this@MainActivity,tone,label,s.startMs,s.endMs))
+                addView(SleepMetricChartView(this@MainActivity,tone,label,s.startMs,s.endMs, if(label=="Puls") s.heartRateSeries else emptyList()))
             })
         })
     }
