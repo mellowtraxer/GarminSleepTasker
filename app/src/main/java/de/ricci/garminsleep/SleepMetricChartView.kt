@@ -24,6 +24,7 @@ class SleepMetricChartView(
     private var downX = 0f
     private var downY = 0f
     private var selectedAtMs: Long? = null
+    private val pointPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     init { minimumHeight=(230*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(230*resources.displayMetrics.density).toInt()) }
@@ -86,6 +87,15 @@ class SleepMetricChartView(
             path.moveTo(l,(top+bottom)/2f); path.lineTo(r,(top+bottom)/2f)
         }
         if(points.size>=2) {
+            pointPaint.style=Paint.Style.FILL
+            pointPaint.color=Color.argb(105,Color.red(tone),Color.green(tone),Color.blue(tone))
+            val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
+            val step=(points.size/24).coerceAtLeast(1)
+            points.forEachIndexed { i,pt -> if(i%step==0) {
+                val x=l+(r-l)*((pt.timeMs-startMs).toDouble()/(endMs-startMs).coerceAtLeast(1)).coerceIn(0.0,1.0).toFloat()
+                val y=bottom-(bottom-top)*(.08f+((pt.value-minV)/span).toFloat()*.84f)
+                c.drawCircle(x,y,1.35f*d,pointPaint)
+            }}
             val fill=Path(path); fill.lineTo(r,bottom); fill.lineTo(l,bottom); fill.close()
             fillPaint.style=Paint.Style.FILL
             fillPaint.shader=LinearGradient(0f,top,0f,bottom,Color.argb(90,Color.red(tone),Color.green(tone),Color.blue(tone)),Color.TRANSPARENT,Shader.TileMode.CLAMP)
