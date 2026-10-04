@@ -57,7 +57,8 @@ class SleepReader(private val context: Context) {
         val sleeping = stageMinutes(SleepSessionRecord.STAGE_TYPE_SLEEPING)
         val total = Duration.between(sleep.startTime, sleep.endTime).toMinutes()
 
-        val hr = averageHeartRate(sleep.startTime, sleep.endTime)
+        val heartSeries = heartRateSeries(sleep.startTime, sleep.endTime)
+        val hr = heartSeries.map { it.value }.average().takeUnless { it.isNaN() }
         // Garmin does not currently export overnight SpO2/respiration to Health
         // Connect. Prefer HC if present, otherwise enrich from Garmin Connect
         // when the user has linked the account inside this app.
@@ -76,8 +77,15 @@ class SleepReader(private val context: Context) {
             sleep.startTime.toEpochMilli(), sleep.endTime.toEpochMilli(), total,
             light, deep, rem, awake, sleeping, hr, spo2, resp,
             minSpo2, minResp, avgHrv,
-            sleep.metadata.dataOrigin.packageName, text
+            sleep.metadata.dataOrigin.packageName, text, heartSeries
         )
+    }
+
+    private suspend fun heartRateSeries(start: Instant, end: Instant): List<MetricPoint> {
+        val records = client.readRecords(ReadRecordsRequest(HeartRateRecord::class, TimeRangeFilter.between(start, end))).records
+        return records.filter { it.metadata.dataOrigin.packageName == GARMIN_PACKAGE }.flatMap { it.samples }
+            .filter { !it.time.isBefore(start) && !it.time.isAfter(end) }.sortedBy { it.time }
+            .map { MetricPoint(it.time.toEpochMilli(), it.beatsPerMinute.toDouble()) }
     }
 
     private suspend fun averageHeartRate(start: Instant, end: Instant): Double? {
