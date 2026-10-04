@@ -469,45 +469,25 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
-    private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null): MaterialCardView {
-        val d = resources.displayMetrics.density
-        fun dp(v: Int) = (v * d).toInt()
-        val tone = when (label) {
-            "Leicht" -> stageLight; "Tief" -> stageDeep; "REM" -> stageRem; "Wach" -> stageAwake
-            "Puls" -> Color.rgb(255,82,126); "SpO₂" -> Color.rgb(44,205,255)
-            "Atmung" -> Color.rgb(80,225,184); "HRV" -> Color.rgb(213,96,255)
-            else -> accent
-        }
-        val fill = when (label) {
-            "Leicht" -> Color.rgb(10,32,48); "Tief" -> Color.rgb(22,20,56); "REM" -> Color.rgb(42,18,58); "Wach" -> Color.rgb(54,31,16)
-            "Puls" -> Color.rgb(54,18,31); "SpO₂" -> Color.rgb(9,37,49)
-            "Atmung" -> Color.rgb(10,42,34); "HRV" -> Color.rgb(45,17,55)
-            else -> Color.rgb(15,18,38)
-        }
-        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
+    private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null, series: List<MetricPoint> = emptyList()): MaterialCardView {
+        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        val tone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;"Puls"->Color.rgb(255,82,126);"SpO₂"->Color.rgb(44,205,255);"Atmung"->Color.rgb(80,225,184);"HRV"->Color.rgb(213,96,255);else->accent}
+        val fill=when(label){"Leicht"->Color.rgb(10,32,48);"Tief"->Color.rgb(22,20,56);"REM"->Color.rgb(42,18,58);"Wach"->Color.rgb(54,31,16);"Puls"->Color.rgb(54,18,31);"SpO₂"->Color.rgb(9,37,49);"Atmung"->Color.rgb(10,42,34);"HRV"->Color.rgb(45,17,55);else->Color.rgb(15,18,38)}
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
-        val cardFill=if(light) Color.rgb(248,250,255) else fill
-        val valueColor=if(light) Color.rgb(22,27,45) else Color.WHITE
-        val body = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; setPadding(dp(15), dp(14), dp(15), dp(14))
-            addView(TextView(this@MainActivity).apply {
-                text = "$icon   ${label.uppercase()}"; textSize = 11f; letterSpacing = .08f; setTextColor(tone); setTypeface(typeface, Typeface.BOLD)
-            })
-            addView(TextView(this@MainActivity).apply {
-                text = value; textSize = 19f; setTextColor(valueColor); setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(7),0,dp(3))
-            })
-            addView(View(this@MainActivity).apply {
-                background = GradientDrawable().apply { cornerRadius = dp(3).toFloat(); setColor(tone) }
-                layoutParams = LinearLayout.LayoutParams(dp(38),dp(3))
-            })
+        val valueText=TextView(this).apply{text=value;textSize=19f;setTextColor(if(light) Color.rgb(22,27,45) else Color.WHITE);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(7),0,dp(3))}
+        val body=LinearLayout(this).apply{
+            orientation=LinearLayout.VERTICAL;setPadding(dp(15),dp(14),dp(15),dp(12))
+            addView(TextView(this@MainActivity).apply{text="$icon   ${label.uppercase()}";textSize=11f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
+            addView(valueText)
+            if(series.size>=2) addView(MetricSparklineView(this@MainActivity,series,tone,label,valueText).apply{layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(4),0,0)}})
+            else addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(3).toFloat();setColor(tone)};layoutParams=LinearLayout.LayoutParams(dp(38),dp(3)).apply{setMargins(0,dp(4),0,0)}})
         }
-        return MaterialCardView(this).apply {
-            radius = dp(21).toFloat(); cardElevation = dp(2).toFloat(); strokeWidth = dp(1); strokeColor = tone
-            setCardBackgroundColor(cardFill)
-            layoutParams = GridLayout.LayoutParams().apply { width=0; height=GridLayout.LayoutParams.WRAP_CONTENT; columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f); setMargins(dp(4),dp(4),dp(4),dp(4)) }
-            addView(body)
-            if (onClick != null) { isClickable=true; isFocusable=true; setOnClickListener { onClick() } }
+        return MaterialCardView(this).apply{
+            radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(if(light) Color.rgb(248,250,255) else fill)
+            layoutParams=GridLayout.LayoutParams().apply{width=0;height=GridLayout.LayoutParams.WRAP_CONTENT;columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))}
+            addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
     }
     private fun showStageTimeline(label:String, tone:Int, minutes:Long, s:SleepSummary) {
@@ -704,10 +684,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         val vitals = GridLayout(this).apply {
             columnCount = 2
-            addView(metricCard("❤️","Puls",num(s.avgHr,"bpm")) { showMetricDetail("Puls", "❤️", Color.rgb(255,82,126), s) })
-            addView(metricCard("🩸","SpO₂","Ø ${num(s.avgSpo2,"%")}\nMin. ${num(s.minSpo2,"%")}") { showMetricDetail("SpO₂", "🩸", Color.rgb(44,205,255), s) })
-            addView(metricCard("🫁","Atmung","Ø ${num(s.avgResp,"/min")}\nMin. ${num(s.minResp,"/min")}") { showMetricDetail("Atmung", "🫁", Color.rgb(80,225,184), s) })
-            addView(metricCard("💓","HRV",num(s.avgHrv,"ms")) { showMetricDetail("HRV", "💓", Color.rgb(213,96,255), s) })
+            addView(metricCard("❤️","Puls",num(s.avgHr,"bpm"), series=s.heartRateSeries) { showMetricDetail("Puls", "❤️", Color.rgb(255,82,126), s) })
+            addView(metricCard("🩸","SpO₂","Ø ${num(s.avgSpo2,"%")}\nMin. ${num(s.minSpo2,"%")}", series=s.spo2Series) { showMetricDetail("SpO₂", "🩸", Color.rgb(44,205,255), s) })
+            addView(metricCard("🫁","Atmung","Ø ${num(s.avgResp,"/min")}\nMin. ${num(s.minResp,"/min")}", series=s.respirationSeries) { showMetricDetail("Atmung", "🫁", Color.rgb(80,225,184), s) })
+            addView(metricCard("💓","HRV",num(s.avgHrv,"ms"), series=s.hrvSeries) { showMetricDetail("HRV", "💓", Color.rgb(213,96,255), s) })
         }
         sleepCard.addView(vitals)
         sleepCard.addView(MaterialCardView(this).apply {
