@@ -801,6 +801,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         sleepCard.removeAllViews(); sleepCard.background=null
         val d=resources.displayMetrics.density; fun px(v:Int)=(v*d).toInt()
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
+        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val light=theme=="light" || (theme=="system" && !sysDark)
         sleepCard.addView(TextView(this).apply {
             text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(px(2),px(8),0,px(12))
             setOnClickListener { showOverview() }
@@ -808,14 +811,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>) =
             MaterialCardView(this).apply {
                 radius=px(24).toFloat(); strokeWidth=px(1); strokeColor=Color.argb(180,Color.red(color),Color.green(color),Color.blue(color))
-                setCardBackgroundColor(Color.argb(188,9,15,31)); cardElevation=px(3).toFloat()
+                setCardBackgroundColor(if(light) Color.argb(224,244,248,255) else Color.argb(188,9,15,31)); cardElevation=px(3).toFloat()
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(14)) }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.VERTICAL; setPadding(px(16),px(15),px(16),px(12))
                     addView(LinearLayout(this@MainActivity).apply {
                         orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
                         addView(TextView(this@MainActivity).apply { text=glyph+"  "+name.uppercase(); textSize=12f; letterSpacing=.08f; setTextColor(color); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                        addView(TextView(this@MainActivity).apply { text=value; textSize=22f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setShadowLayer(px(7).toFloat(),0f,0f,Color.argb(75,Color.red(color),Color.green(color),Color.blue(color))) })
+                        addView(TextView(this@MainActivity).apply { text=value; textSize=22f; setTextColor(if(light) Color.rgb(20,31,62) else Color.WHITE); setTypeface(typeface,Typeface.BOLD); setShadowLayer(px(7).toFloat(),0f,0f,Color.argb(75,Color.red(color),Color.green(color),Color.blue(color))) })
                     })
                     if(points.isNotEmpty()) {
                         addView(TextView(this@MainActivity).apply {
@@ -827,7 +830,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         val unit=when(name) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
                         addView(TextView(this@MainActivity).apply {
                             text="MIN  "+fv(min)+" "+unit+"     •     MAX  "+fv(max)+" "+unit
-                            textSize=10f; letterSpacing=.05f; setTextColor(Color.rgb(154,164,191)); setPadding(0,px(7),0,px(2))
+                            textSize=10f; letterSpacing=.05f; setTextColor(if(light) Color.rgb(88,101,132) else Color.rgb(154,164,191)); setPadding(0,px(7),0,px(2))
                         })
                     }
                     addView(SleepMetricChartView(this@MainActivity,color,name,s.startMs,s.endMs,points))
@@ -842,7 +845,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         )
         sleepCard.addView(TextView(this).apply {
             text="NACHTVERLAUF  ·  "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.startMs))+" – "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))
-            textSize=10f; letterSpacing=.08f; setTextColor(Color.rgb(112,122,153)); setPadding(px(2),0,0,px(10))
+            textSize=10f; letterSpacing=.08f; setTextColor(if(light) Color.rgb(75,91,126) else Color.rgb(112,122,153)); setPadding(px(2),0,0,px(10))
         })
         cards.forEach { sleepCard.addView(it) }
         cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
