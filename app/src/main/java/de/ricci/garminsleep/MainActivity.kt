@@ -802,7 +802,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     private fun showPrivacySettings() {
         val cached=sleepHistory.size
-        AlertDialog.Builder(this)
+        val dialog=AlertDialog.Builder(this)
             .setTitle("Datenschutz & Diagnose")
             .setMessage("SleepSync verarbeitet deine Schlaf- und Gesundheitsdaten lokal auf diesem Gerät. Garmin-Anmeldedaten werden nicht gespeichert; gespeichert werden nur die für die Verbindung benötigten OAuth-Tokens.\n\nLokaler Verlauf: $cached Nächte\nPaket: $packageName\n\nUnter Diagnose findest du technische Informationen zur installierten App.")
             .setPositiveButton("Diagnose") { _,_ -> showAppSignature() }
@@ -810,7 +810,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 AlertDialog.Builder(this).setTitle("Lokalen Verlauf löschen?").setMessage("Der lokal zwischengespeicherte SleepSync-Verlauf wird gelöscht. Daten bei Garmin, Health Connect und im Kalender bleiben erhalten.").setPositiveButton("Löschen") { _,_ -> getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().clear().apply(); sleepHistory=emptyList(); showSettings() }.setNegativeButton("Abbrechen",null).show()
             }
             .setNegativeButton("Schließen",null)
-            .show()
+            .create()
+        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.show()
     }
 
     private fun showAboutSettings() {
