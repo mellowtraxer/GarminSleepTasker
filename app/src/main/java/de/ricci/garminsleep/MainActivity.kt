@@ -614,7 +614,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(MaterialButton(this).apply{
             text="⚡  JETZT EINTRAGEN";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
-            setTextColor(primary);backgroundTintList=ColorStateList.valueOf(if(light) Color.rgb(55,76,218) else Color.rgb(64,63,205))
+            setTextColor(if(light) Color.rgb(38,52,112) else Color.WHITE)
+            backgroundTintList=ColorStateList.valueOf(if(light) Color.rgb(239,243,255) else Color.rgb(64,63,205))
+            strokeWidth=if(light) dp(1) else 0
+            strokeColor=ColorStateList.valueOf(if(light) Color.rgb(91,104,255) else Color.TRANSPARENT)
             cornerRadius=dp(18);layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}
             setOnClickListener{
                 val latest=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
