@@ -549,7 +549,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         return MaterialCardView(this).apply{
             radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(if(light) Color.rgb(248,250,255) else fill)
-            layoutParams=GridLayout.LayoutParams().apply{width=0;height=GridLayout.LayoutParams.WRAP_CONTENT;columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))}
+            layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))}
             addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
     }
