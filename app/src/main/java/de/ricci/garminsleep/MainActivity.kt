@@ -400,10 +400,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             return
         }
         val spectrum=intArrayOf(Color.rgb(255,70,120),Color.rgb(255,184,72),Color.rgb(86,235,170),Color.rgb(48,211,255),Color.rgb(100,105,255),Color.rgb(205,83,255),Color.rgb(255,70,120))
-        brandGlow.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,spectrum).apply { cornerRadius=resources.displayMetrics.density*2f }
-        brandGlowAnimator=ValueAnimator.ofFloat(-.18f,.18f).apply {
-            duration=850L; repeatCount=ValueAnimator.INFINITE; repeatMode=ValueAnimator.REVERSE; interpolator=LinearInterpolator()
-            addUpdateListener { brandGlow.translationX=brandGlow.width*(it.animatedValue as Float) }
+        brandGlow.translationX=0f
+        brandGlowAnimator=ValueAnimator.ofFloat(0f,1f).apply {
+            duration=1400L; repeatCount=ValueAnimator.INFINITE; repeatMode=ValueAnimator.RESTART; interpolator=LinearInterpolator()
+            addUpdateListener { a ->
+                val shift=((a.animatedValue as Float)*spectrum.size).toInt()
+                val flowing=IntArray(spectrum.size){ i -> spectrum[(i+shift)%spectrum.size] }
+                brandGlow.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,flowing).apply { cornerRadius=resources.displayMetrics.density*2f }
+            }
             start()
         }
     }
