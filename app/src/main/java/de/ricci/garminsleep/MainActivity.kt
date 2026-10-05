@@ -36,6 +36,8 @@ import android.view.animation.LinearInterpolator
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import android.content.res.ColorStateList
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -394,21 +396,43 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun setLoadingGlow(loading:Boolean) {
         if(!::brandGlow.isInitialized)return
         brandGlowAnimator?.cancel(); brandGlowAnimator=null
+        brandGlow.translationX=0f
         if(!loading) {
-            brandGlow.translationX=0f
             brandGlow.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(78,118,255),Color.rgb(49,216,255),Color.rgb(190,91,255),Color.TRANSPARENT)).apply { cornerRadius=resources.displayMetrics.density*2f }
             return
         }
-        val spectrum=intArrayOf(Color.rgb(255,70,120),Color.rgb(255,184,72),Color.rgb(86,235,170),Color.rgb(48,211,255),Color.rgb(100,105,255),Color.rgb(205,83,255),Color.rgb(255,70,120))
-        brandGlow.translationX=0f
+        val spectrum=intArrayOf(
+            Color.rgb(255,70,120),Color.rgb(255,184,72),Color.rgb(86,235,170),
+            Color.rgb(48,211,255),Color.rgb(100,105,255),Color.rgb(205,83,255),
+            Color.rgb(255,70,120),Color.rgb(255,184,72),Color.rgb(86,235,170),
+            Color.rgb(48,211,255),Color.rgb(100,105,255),Color.rgb(205,83,255),
+            Color.rgb(255,70,120)
+        )
+        val paint=Paint(Paint.ANTI_ALIAS_FLAG)
+        brandGlow.background=null
         brandGlowAnimator=ValueAnimator.ofFloat(0f,1f).apply {
-            duration=1400L; repeatCount=ValueAnimator.INFINITE; repeatMode=ValueAnimator.RESTART; interpolator=LinearInterpolator()
+            duration=1800L; repeatCount=ValueAnimator.INFINITE; repeatMode=ValueAnimator.RESTART; interpolator=LinearInterpolator()
             addUpdateListener { a ->
-                val shift=((a.animatedValue as Float)*spectrum.size).toInt()
-                val flowing=IntArray(spectrum.size){ i -> spectrum[(i+shift)%spectrum.size] }
-                brandGlow.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,flowing).apply { cornerRadius=resources.displayMetrics.density*2f }
+                val phase=a.animatedValue as Float
+                brandGlow.setTag(phase)
+                brandGlow.invalidate()
             }
             start()
+        }
+        brandGlow.setWillNotDraw(false)
+        brandGlow.setLayerType(View.LAYER_TYPE_SOFTWARE,null)
+        brandGlow.background=object:android.graphics.drawable.Drawable(){
+            override fun draw(canvas:Canvas){
+                val w=bounds.width().toFloat().coerceAtLeast(1f); val h=bounds.height().toFloat()
+                val phase=(brandGlow.tag as? Float) ?: 0f
+                val period=w*.82f
+                paint.shader=LinearGradient(-period+phase*period,0f,period*2f+phase*period,0f,spectrum,null,Shader.TileMode.REPEAT)
+                canvas.drawRoundRect(0f,0f,w,h,h/2f,h/2f,paint)
+                paint.shader=null
+            }
+            override fun setAlpha(alpha:Int){paint.alpha=alpha}
+            override fun setColorFilter(cf:android.graphics.ColorFilter?){paint.colorFilter=cf}
+            @Suppress("DEPRECATION") override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
         }
     }
 
