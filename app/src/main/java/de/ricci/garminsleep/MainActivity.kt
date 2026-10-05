@@ -172,12 +172,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         if(!calendarPermissionReady()){requestCalendarPermission();return}
         val items=availableCalendars(); if(items.isEmpty()){AlertDialog.Builder(this).setMessage("Android stellt aktuell keinen beschreibbaren Kalender bereit.").setPositiveButton("OK",null).show();return}
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
-        val shell=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.rgb(12,15,35));setStroke(dp(1),stageRem)}}
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"; val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES; val light=theme=="light" || (theme=="system" && !sysDark); val primary=if(light) Color.rgb(24,29,48) else Color.WHITE; val secondary=if(light) Color.rgb(82,94,121) else Color.rgb(165,175,205); val selectedId=calendarPrefs().getLong("calendar_id",-1L)
+        val shell=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(246,247,250,255) else Color.rgb(12,15,35));setStroke(dp(1),stageRem)}}
         shell.addView(TextView(this).apply{text="📅  ZIELKALENDER";textSize=18f;setTextColor(stageRem);setTypeface(typeface,Typeface.BOLD);setPadding(0,0,0,dp(4))})
-        shell.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(Color.rgb(165,175,205));setPadding(0,0,0,dp(12))})
+        shell.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(secondary);setPadding(0,0,0,dp(12))})
         val list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
         val dialog=AlertDialog.Builder(this).setView(ScrollView(this).apply{addView(shell)}).create()
-        items.forEach{item->list.addView(TextView(this).apply{text=item.second+"\n"+item.third;textSize=14f;setTextColor(Color.WHITE);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(Color.argb(120,40,29,70))};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
+        items.forEach{item->val selected=item.first==selectedId;list.addView(TextView(this).apply{text=(if(selected) "✓  " else "")+item.second+"\n"+item.third;textSize=14f;setTextColor(primary);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(if(light) (if(selected) Color.argb(160,226,220,255) else Color.argb(145,229,235,248)) else Color.argb(120,40,29,70));if(selected)setStroke(dp(1),stageRem)};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
         shell.addView(list);dialog.setOnShowListener{dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))};dialog.show()
     }
     private fun calendarPrefs()=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE)
@@ -261,8 +262,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val test = button("Schlafdaten neu laden") { testRead() }
         val sig = button("App-Signatur anzeigen") { showAppSignature() }
         val statusCard = MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(115,91,176,255)
-            setCardBackgroundColor(Color.argb(118,5,13,30))
+            radius=dp(18).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=if(bootLight) Color.argb(125,74,190,225) else Color.argb(115,91,176,255)
+            setCardBackgroundColor(if(bootLight) Color.argb(210,240,247,255) else Color.argb(118,5,13,30))
             status.setPadding(dp(12),dp(7),dp(12),dp(7)); addView(status)
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
@@ -272,7 +273,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageTitle.background=null
         pageTitle.setPadding(0,0,0,0)
         pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(6f,0f,dp(1).toFloat(),Color.argb(190,2,5,20))
-        status.setTextColor(Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
+        status.setTextColor(if(bootLight) Color.rgb(31,100,119) else Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         brandGlow = View(this).apply {
             background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(78,118,255),Color.rgb(49,216,255),Color.rgb(190,91,255),Color.TRANSPARENT)).apply { cornerRadius=dp(2).toFloat() }
