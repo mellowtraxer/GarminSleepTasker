@@ -161,8 +161,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun chooseCalendar() {
         if(!calendarPermissionReady()){requestCalendarPermission();return}
         val items=availableCalendars(); if(items.isEmpty()){AlertDialog.Builder(this).setMessage("Android stellt aktuell keinen beschreibbaren Kalender bereit.").setPositiveButton("OK",null).show();return}
-        val labels=items.map{it.second+"\n"+it.third}.toTypedArray()
-        AlertDialog.Builder(this).setTitle("Zielkalender wählen").setItems(labels){_,i->getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",items[i].first).putString("calendar_name",items[i].second).putString("calendar_account",items[i].third).apply();showCalendarPlaceholder()}.show()
+        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        val shell=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.rgb(12,15,35));setStroke(dp(1),stageRem)}
+        shell.addView(TextView(this).apply{text="📅  ZIELKALENDER";textSize=18f;setTextColor(stageRem);setTypeface(typeface,Typeface.BOLD);setPadding(0,0,0,dp(4))})
+        shell.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(Color.rgb(165,175,205));setPadding(0,0,0,dp(12))})
+        val list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
+        val dialog=AlertDialog.Builder(this).setView(ScrollView(this).apply{addView(shell)}).create()
+        items.forEach{item->list.addView(TextView(this).apply{text=item.second+"\n"+item.third;textSize=14f;setTextColor(Color.WHITE);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(Color.argb(120,40,29,70))};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
+        shell.addView(list);dialog.setOnShowListener{dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))};dialog.show()
     }
     private fun insertNightIntoCalendar(s:SleepSummary):Boolean {
         if(!calendarPermissionReady())return false
