@@ -15,6 +15,7 @@ class SleepSyncWorker(appContext: Context, params: WorkerParameters) : Coroutine
     override suspend fun doWork(): Result {
         val ctx=applicationContext
         val prefs=ctx.getSharedPreferences("sleepsync_calendar",Context.MODE_PRIVATE)
+        prefs.edit().putLong("last_background_check",System.currentTimeMillis()).apply()
         if(!prefs.getBoolean("auto_enabled",true)) return Result.success()
         val calendarId=prefs.getLong("calendar_id",-1)
         if(calendarId<0 || ctx.checkSelfPermission(Manifest.permission.READ_CALENDAR)!=PackageManager.PERMISSION_GRANTED || ctx.checkSelfPermission(Manifest.permission.WRITE_CALENDAR)!=PackageManager.PERMISSION_GRANTED) return Result.success()
@@ -37,7 +38,7 @@ class SleepSyncWorker(appContext: Context, params: WorkerParameters) : Coroutine
                     put(CalendarContract.Events.DESCRIPTION,latest.calendarText+"\n\nSleepSync")
                 }
                 if(ctx.contentResolver.insert(CalendarContract.Events.CONTENT_URI,values)==null) return Result.retry()
-                prefs.edit().putLong("last_inserted_end",latest.endMs).apply()
+                prefs.edit().putLong("last_inserted_end",latest.endMs).putLong("last_auto_insert_at",System.currentTimeMillis()).apply()
             }
             Result.success()
         } catch(_:Throwable){ Result.retry() }
