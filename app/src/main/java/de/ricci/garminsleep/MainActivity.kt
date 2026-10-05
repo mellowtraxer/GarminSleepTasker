@@ -807,7 +807,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             .setMessage("SleepSync verarbeitet deine Schlaf- und Gesundheitsdaten lokal auf diesem Gerät. Garmin-Anmeldedaten werden nicht gespeichert; gespeichert werden nur die für die Verbindung benötigten OAuth-Tokens.\n\nLokaler Verlauf: $cached Nächte\nPaket: $packageName\n\nUnter Diagnose findest du technische Informationen zur installierten App.")
             .setPositiveButton("Diagnose") { _,_ -> showAppSignature() }
             .setNeutralButton("Verlauf löschen") { _,_ ->
-                val deleteDialog=AlertDialog.Builder(this).setTitle("Lokalen Verlauf löschen?").setMessage("Der lokal zwischengespeicherte SleepSync-Verlauf wird gelöscht. Daten bei Garmin, Health Connect und im Kalender bleiben erhalten.").setPositiveButton("Löschen") { _,_ -> getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().clear().apply(); sleepHistory=emptyList(); showSettings() }.setNegativeButton("Abbrechen",null).create()\n                deleteDialog.setOnShowListener { styleSleepSyncDialog(deleteDialog); deleteDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.rgb(220,70,85)) }\n                deleteDialog.show()
+                val deleteDialog=AlertDialog.Builder(this)
+                    .setTitle("Lokalen Verlauf löschen?")
+                    .setMessage("Der lokal zwischengespeicherte SleepSync-Verlauf wird gelöscht. Daten bei Garmin, Health Connect und im Kalender bleiben erhalten.")
+                    .setPositiveButton("Löschen") { _,_ ->
+                        getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().clear().apply()
+                        sleepHistory=emptyList()
+                        showSettings()
+                    }
+                    .setNegativeButton("Abbrechen",null)
+                    .create()
+                deleteDialog.setOnShowListener {
+                    styleSleepSyncDialog(deleteDialog)
+                    deleteDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.rgb(220,70,85))
+                }
+                deleteDialog.show()
             }
             .setNegativeButton("Schließen",null)
             .create()
