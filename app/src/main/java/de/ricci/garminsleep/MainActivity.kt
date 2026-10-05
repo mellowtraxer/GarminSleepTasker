@@ -184,7 +184,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         if(!calendarPermissionReady())return false
         val p=calendarPrefs();val id=p.getLong("calendar_id",-1);if(id<0)return false
         if(calendarEventExists(s))return true
-        val zone=ZoneId.systemDefault();val values=android.content.ContentValues().apply{put(CalendarContract.Events.CALENDAR_ID,id);put(CalendarContract.Events.TITLE,"💤 Garmin Schlaf");put(CalendarContract.Events.DTSTART,s.startMs);put(CalendarContract.Events.DTEND,s.endMs);put(CalendarContract.Events.EVENT_TIMEZONE,zone.id);put(CalendarContract.Events.DESCRIPTION,"SleepSync · Gesamt "+(s.totalMin/60)+" h "+(s.totalMin%60)+" min · Leicht "+s.lightMin+" min · Tief "+s.deepMin+" min · REM "+s.remMin+" min · Wach "+s.awakeMin+" min")}
+        val zone=ZoneId.systemDefault();val values=android.content.ContentValues().apply{put(CalendarContract.Events.CALENDAR_ID,id);put(CalendarContract.Events.TITLE,"💤 Garmin Schlaf");put(CalendarContract.Events.DTSTART,s.startMs);put(CalendarContract.Events.DTEND,s.endMs);put(CalendarContract.Events.EVENT_TIMEZONE,zone.id);put(CalendarContract.Events.DESCRIPTION,s.calendarText+"\n\nSleepSync")}
         val ok=contentResolver.insert(CalendarContract.Events.CONTENT_URI,values)!=null
         if(ok)p.edit().putLong("last_inserted_end",s.endMs).apply()
         return ok
