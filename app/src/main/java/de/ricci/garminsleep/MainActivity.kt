@@ -354,7 +354,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     })
                     addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(135,150,180)); setPadding(0,dp(2),0,dp(7)) })
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                        listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach { pair -> addView(View(this@MainActivity).apply { background=GradientDrawable().apply{cornerRadius=dp(4).toFloat();setColor(pair.second)} },LinearLayout.LayoutParams(0,dp(8),pair.first.toFloat()).apply{setMargins(0,0,dp(2),0)}) }
+                        listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach { pair -> val bar=View(this@MainActivity).apply { background=GradientDrawable().apply{cornerRadius=dp(4).toFloat();setColor(pair.second)} }; addView(bar,LinearLayout.LayoutParams(0,dp(8),pair.first.toFloat()).apply{setMargins(0,0,dp(2),0)}) }
                     })
                 })
             }
