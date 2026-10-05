@@ -31,6 +31,8 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.ColorDrawable
+import android.animation.ValueAnimator
+import android.view.animation.LinearInterpolator
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
@@ -135,6 +137,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var contentHost: LinearLayout
     private lateinit var actionsTitle: TextView
     private lateinit var actionsBox: LinearLayout
+    private lateinit var brandGlow: View
+    private var brandGlowAnimator: ValueAnimator? = null
     private var lastSummary: SleepSummary? = null
     private var sleepHistory: List<SleepSummary> = emptyList()
     private var viewingHistoryNight = false
@@ -268,7 +272,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(6f,0f,dp(1).toFloat(),Color.argb(190,2,5,20))
         status.setTextColor(Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
-        val brandGlow = View(this).apply {
+        brandGlow = View(this).apply {
             background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(78,118,255),Color.rgb(49,216,255),Color.rgb(190,91,255),Color.TRANSPARENT)).apply { cornerRadius=dp(2).toFloat() }
             elevation=0f
             layoutParams=LinearLayout.LayoutParams(dp(138),dp(3)).apply { setMargins(0,dp(7),0,dp(3)) }
@@ -387,8 +391,26 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }.show()
     }
 
+    private fun setLoadingGlow(loading:Boolean) {
+        if(!::brandGlow.isInitialized)return
+        brandGlowAnimator?.cancel(); brandGlowAnimator=null
+        if(!loading) {
+            brandGlow.translationX=0f
+            brandGlow.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(78,118,255),Color.rgb(49,216,255),Color.rgb(190,91,255),Color.TRANSPARENT)).apply { cornerRadius=resources.displayMetrics.density*2f }
+            return
+        }
+        val spectrum=intArrayOf(Color.rgb(255,70,120),Color.rgb(255,184,72),Color.rgb(86,235,170),Color.rgb(48,211,255),Color.rgb(100,105,255),Color.rgb(205,83,255),Color.rgb(255,70,120))
+        brandGlow.background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,spectrum).apply { cornerRadius=resources.displayMetrics.density*2f }
+        brandGlowAnimator=ValueAnimator.ofFloat(-.18f,.18f).apply {
+            duration=850L; repeatCount=ValueAnimator.INFINITE; repeatMode=ValueAnimator.REVERSE; interpolator=LinearInterpolator()
+            addUpdateListener { brandGlow.translationX=brandGlow.width*(it.animatedValue as Float) }
+            start()
+        }
+    }
+
     private fun testRead() = launch {
         status.text = "Lese Garmin-Schlaf…"
+        setLoadingGlow(true)
         try {
             val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
             sleepHistory = history
@@ -400,6 +422,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         } catch (t: Throwable) {
             sleepCard.removeAllViews()
             sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\n${t.message.orEmpty()}"; textSize = 16f })
+        } finally {
+            setLoadingGlow(false)
         }
     }
 
