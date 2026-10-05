@@ -32,7 +32,9 @@ data class SleepSummary(
 class SleepReader(private val context: Context) {
     private val client by lazy { HealthConnectClient.getOrCreate(context) }
 
-    suspend fun latestGarminSleep(hoursBack: Long = 36): SleepSummary {
+    suspend fun latestGarminSleep(hoursBack: Long = 36): SleepSummary = garminHistory(hoursBack).maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession in den letzten $hoursBack Stunden gefunden")
+
+    suspend fun garminHistory(hoursBack: Long = 24L * 90L): List<SleepSummary> {
         val now = Instant.now()
         val from = now.minus(Duration.ofHours(hoursBack))
         val response = client.readRecords(
@@ -42,11 +44,13 @@ class SleepReader(private val context: Context) {
                 ascendingOrder = false
             )
         )
-        val sleep = response.records
+        val sleeps = response.records
             .filter { it.metadata.dataOrigin.packageName == GARMIN_PACKAGE }
-            .maxByOrNull { it.endTime }
-            ?: error("Keine Garmin-Schlafsession in den letzten $hoursBack Stunden gefunden")
+            .sortedByDescending { it.endTime }
+        return sleeps.mapNotNull { sleep -> runCatching { buildSummary(sleep) }.getOrNull() }
+    }
 
+    private suspend fun buildSummary(sleep: SleepSessionRecord): SleepSummary {
         fun stageMinutes(vararg types: Int): Long = sleep.stages
             .filter { it.stage in types }
             .sumOf { Duration.between(it.startTime, it.endTime).toMinutes() }
