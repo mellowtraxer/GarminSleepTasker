@@ -708,10 +708,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             b.cornerRadius=dp(16)
             b.textSize=12f
             b.minHeight=dp(46)
-            b.setTextColor(if(settingsLight) Color.rgb(55,65,92) else Color.rgb(220,224,244))
-            b.backgroundTintList=ColorStateList.valueOf(if(settingsLight) Color.argb(205,242,246,255) else Color.rgb(14,17,34))
+            b.setTextColor(if(settingsLight) Color.rgb(38,48,76) else Color.rgb(220,224,244))
+            b.backgroundTintList=ColorStateList.valueOf(if(settingsLight) Color.argb(220,240,245,255) else Color.rgb(14,17,34))
             b.strokeWidth=dp(1)
-            b.strokeColor=ColorStateList.valueOf(if(settingsLight) Color.argb(105,125,150,210) else Color.rgb(48,55,89))
+            b.strokeColor=ColorStateList.valueOf(if(settingsLight) Color.argb(175,105,132,190) else Color.rgb(48,55,89))
             b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply { height=dp(46) }
         }
     }
