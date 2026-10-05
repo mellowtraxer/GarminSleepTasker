@@ -261,11 +261,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
-        pageTitle.setTextColor(Color.WHITE); pageTitle.textSize=31f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.025f
+        pageTitle.setTextColor(if(bootLight) Color.rgb(16,32,72) else Color.WHITE); pageTitle.textSize=31f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.025f
         pageTitle.setShadowLayer(10f,0f,dp(1).toFloat(),Color.argb(165,3,7,28))
         pageTitle.background=null
         pageTitle.setPadding(0,0,0,0)
-        pageSubtitle.setTextColor(Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(6f,0f,dp(1).toFloat(),Color.argb(190,2,5,20))
+        pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(6f,0f,dp(1).toFloat(),Color.argb(190,2,5,20))
         status.setTextColor(Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         val brandGlow = View(this).apply {
@@ -281,19 +281,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val systemDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val useLight=savedTheme=="light" || (savedTheme=="system" && !systemDark)
         val nightAtmosphere = if(useLight) LayerDrawable(arrayOf(
-            GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(248,250,255),Color.rgb(226,235,255),Color.rgb(242,246,255))),
-            GradientDrawable(GradientDrawable.Orientation.TR_BL,intArrayOf(Color.argb(75,160,130,255),Color.TRANSPARENT,Color.argb(45,50,210,255)))
+            GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(247,250,255),Color.rgb(232,244,255),Color.rgb(242,236,255),Color.rgb(226,247,255))),
+            GradientDrawable(GradientDrawable.Orientation.TR_BL,intArrayOf(Color.argb(48,255,184,218),Color.TRANSPARENT,Color.argb(45,86,214,255))),
+            GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(35,56,224,214),Color.TRANSPARENT,Color.argb(34,176,105,255)))
         )) else LayerDrawable(arrayOf(
             GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(20,10,58), Color.rgb(8,30,68), Color.rgb(5,6,14), Color.rgb(2,3,9))),
             GradientDrawable(GradientDrawable.Orientation.TR_BL, intArrayOf(Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)))
         ))
         val scene = android.widget.FrameLayout(this).apply {
-            if(!useLight) addView(android.widget.ImageView(this@MainActivity).apply {
+            addView(android.widget.ImageView(this@MainActivity).apply {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
                 setImageResource(R.drawable.sleepsync_night)
+                alpha=if(useLight) .10f else 1f
+                if(useLight) setColorFilter(Color.argb(90,110,175,255),android.graphics.PorterDuff.Mode.SRC_ATOP)
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
-                background=if(useLight) ColorDrawable(Color.argb(18,255,255,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
+                background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(72,255,255,255),Color.argb(28,240,247,255),Color.argb(58,225,245,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
@@ -302,14 +305,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
-            radius=dp(14).toFloat(); cardElevation=dp(4).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(25,32,51)
-            setCardBackgroundColor(Color.rgb(6,12,25))
+            radius=dp(14).toFloat(); cardElevation=dp(4).toFloat(); strokeWidth=dp(1); strokeColor=if(useLight) Color.rgb(116,181,255) else Color.rgb(25,32,51)
+            setCardBackgroundColor(if(useLight) Color.argb(235,248,251,255) else Color.rgb(6,12,25))
             foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(32).toFloat() }
             addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(68)).apply { setMargins(dp(18),dp(4),dp(18),dp(8)) }
         }
         val root = LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL; background=if(useLight) ColorDrawable(Color.rgb(238,243,255)) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
+            orientation=LinearLayout.VERTICAL; background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(248,250,255),Color.rgb(231,243,255),Color.rgb(239,233,255),Color.rgb(222,246,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
@@ -561,7 +564,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
-            val fill = if(settingsLight) Color.rgb(248,250,255) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
+            val fill = if(settingsLight) Color.argb(224,247,250,255) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView(MaterialCardView(this).apply {
                 radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(fill)
                 strokeWidth=dp(1); strokeColor=color
