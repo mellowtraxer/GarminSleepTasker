@@ -162,7 +162,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         if(!calendarPermissionReady()){requestCalendarPermission();return}
         val items=availableCalendars(); if(items.isEmpty()){AlertDialog.Builder(this).setMessage("Android stellt aktuell keinen beschreibbaren Kalender bereit.").setPositiveButton("OK",null).show();return}
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
-        val shell=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.rgb(12,15,35));setStroke(dp(1),stageRem)}
+        val shell=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.rgb(12,15,35));setStroke(dp(1),stageRem)}}
         shell.addView(TextView(this).apply{text="📅  ZIELKALENDER";textSize=18f;setTextColor(stageRem);setTypeface(typeface,Typeface.BOLD);setPadding(0,0,0,dp(4))})
         shell.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(Color.rgb(165,175,205));setPadding(0,0,0,dp(12))})
         val list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
