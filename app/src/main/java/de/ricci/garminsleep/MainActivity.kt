@@ -834,12 +834,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val versionName=info.versionName ?: "–"
         val versionCode=info.longVersionCode
         val installed=runCatching { DateTimeFormatter.ofPattern("dd.MM.yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(info.lastUpdateTime)) }.getOrDefault("–")
-        AlertDialog.Builder(this)
+        val dialog=AlertDialog.Builder(this)
             .setTitle("Über SleepSync")
             .setMessage("SleepSync\nDein Schlaf. Klar, automatisch, im Kalender.\n\nEntwickelt von Riccardo Hoff\n© 2026\n\nVersion: $versionName\nBuild: $versionCode\nPaket: $packageName\nInstallierter Build: $installed\n\nGarmin → Health Connect → SleepSync → Kalender\n\nSleepSync ist ein unabhängiges Projekt und steht in keiner offiziellen Verbindung zu Garmin.")
             .setPositiveButton("Schließen",null)
             .setNeutralButton("App-Signatur") { _,_ -> showAppSignature() }
-            .show()
+            .create()
+        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.show()
     }
 
     private fun showAppearanceSettings() {
