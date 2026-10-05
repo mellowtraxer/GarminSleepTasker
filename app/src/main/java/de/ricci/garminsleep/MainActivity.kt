@@ -530,7 +530,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if(recent.isEmpty()) addView(TextView(this@MainActivity).apply{text="Noch keine Einträge";setTextColor(Color.rgb(180,190,215))})
             recent.forEach{s0->val df=DateTimeFormatter.ofPattern("EEE, dd.MM.",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault());addView(TextView(this@MainActivity).apply{text=df.format(Instant.ofEpochMilli(s0.endMs))+"     "+(s0.totalMin/60)+" h "+(s0.totalMin%60)+" min     ✓";textSize=14f;setTextColor(Color.WHITE);setPadding(dp(4),dp(10),dp(4),dp(10))})}
         })
-        sleepCard.addView(TextView(this).apply{text="●  Bereit · nächster Eintrag nach der nächsten synchronisierten Nacht";textSize=11f;setTextColor(Color.rgb(88,220,183));gravity=android.view.Gravity.CENTER;setPadding(0,dp(4),0,dp(12))})
+        val bgPrefs=calendarPrefs()
+        val lastCheck=bgPrefs.getLong("last_background_check",0L)
+        val lastAuto=bgPrefs.getLong("last_auto_insert_at",0L)
+        val statusFmt=DateTimeFormatter.ofPattern("dd.MM. · HH:mm").withZone(ZoneId.systemDefault())
+        val statusText=buildString{
+            append(if(calendarAutoEnabled()) "●  Automatik aktiv" else "○  Automatik aus")
+            append("\nLetzte Hintergrundprüfung: ")
+            append(if(lastCheck>0) statusFmt.format(Instant.ofEpochMilli(lastCheck))+" Uhr" else "noch keine")
+            append("\nLetzter automatischer Eintrag: ")
+            append(if(lastAuto>0) statusFmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
+        }
+        sleepCard.addView(TextView(this).apply{text=statusText;textSize=11f;setTextColor(if(calendarAutoEnabled()) Color.rgb(88,220,183) else Color.rgb(165,175,205));gravity=android.view.Gravity.CENTER;setPadding(0,dp(4),0,dp(12))})
     }
     private fun showSettings() {
         val d = resources.displayMetrics.density
