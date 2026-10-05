@@ -960,9 +960,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(8),dp(4),dp(4))
             addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-            addView(TextView(this@MainActivity).apply { text="LIVE"; textSize=8f; letterSpacing=.12f; setTextColor(Color.rgb(76,225,169)); setPadding(dp(7),dp(3),dp(7),dp(3)); background=GradientDrawable().apply { cornerRadius=dp(10).toFloat(); setColor(Color.rgb(7,34,28)) } })
+            addView(TextView(this@MainActivity).apply { text="LIVE"; textSize=8f; letterSpacing=.12f; setTextColor(if(light) Color.rgb(18,121,92) else Color.rgb(76,225,169)); setPadding(dp(7),dp(3),dp(7),dp(3)); background=GradientDrawable().apply { cornerRadius=dp(10).toFloat(); setColor(if(light) Color.argb(205,218,250,239) else Color.rgb(7,34,28)); if(light) setStroke(dp(1),Color.rgb(76,205,164)) } })
             addView(View(this@MainActivity).apply { layoutParams=LinearLayout.LayoutParams(dp(7),dp(1)) })
-            addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=9f; letterSpacing=.08f; setTextColor(Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(Color.rgb(8,37,31)); setStroke(dp(1),Color.rgb(24,95,73)) } })
+            addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=9f; letterSpacing=.08f; setTextColor(if(light) Color.rgb(15,126,98) else Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(if(light) Color.argb(210,220,249,243) else Color.rgb(8,37,31)); setStroke(dp(1),if(light) Color.rgb(63,194,166) else Color.rgb(24,95,73)) } })
         })
         val vitals = GridLayout(this).apply {
             columnCount = 2
@@ -987,8 +987,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
             addView(TextView(this@MainActivity).apply {
                 text=when { quality>=90 -> "AUSGEZEICHNET"; quality>=80 -> "GUT"; else -> "IM BLICK BEHALTEN" }
-                textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(accent2); setPadding(dp(10),dp(5),dp(10),dp(5))
-                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(Color.rgb(8,34,47)); setStroke(dp(1),Color.rgb(28,112,137)) }
+                textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(light) Color.rgb(22,105,145) else accent2); setPadding(dp(10),dp(5),dp(10),dp(5))
+                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(if(light) Color.argb(215,224,245,255) else Color.rgb(8,34,47)); setStroke(dp(1),if(light) Color.rgb(66,177,214) else Color.rgb(28,112,137)) }
             })
         })
         sleepCard.addView(MaterialCardView(this).apply {
