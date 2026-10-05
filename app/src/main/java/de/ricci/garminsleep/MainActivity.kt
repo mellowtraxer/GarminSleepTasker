@@ -583,11 +583,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
             })
         }
-        setting("⌚","Garmin Connect","Verbunden · Schlafdaten synchronisieren",accent2)
-        setting("♥","Health Connect","Berechtigungen & Gesundheitsdaten",stageRem)
-        setting("⚡","Automatik","Tasker & Kalender",stageAwake)
+        val garminLabel=if(garminClient.isLinked()) "Verbunden · Schlafdaten synchronisieren" else "Nicht verbunden · Jetzt verbinden"
+        setting("⌚","Garmin Connect",garminLabel,accent2) { showGarminSettings() }
+        setting("♥","Health Connect","Berechtigungen & Gesundheitsdaten",stageRem) { showHealthSettings() }
+        setting("⚡","Automatik","Hintergrund-Sync & Kalender",stageAwake) { showAutomationSettings() }
         setting("✦","Darstellung","$selectedThemeLabel · SleepSync",accent) { showAppearanceSettings() }
-        setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight)
+        setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight) { showPrivacySettings() }
         sleepCard.addView(settingsGrid)
         actionsTitle.text="WERKZEUGE"; actionsTitle.setTextColor(stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
         listOf(0,1,2,3,4).forEach { i ->
@@ -595,6 +596,70 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             b.cornerRadius=dp(18); b.setTextColor(Color.rgb(220,224,244))
             b.backgroundTintList=ColorStateList.valueOf(Color.rgb(14,17,34)); b.strokeWidth=dp(1); b.strokeColor=ColorStateList.valueOf(Color.rgb(48,55,89))
         }
+    }
+
+    private fun showGarminSettings() {
+        val linked=garminClient.isLinked()
+        AlertDialog.Builder(this)
+            .setTitle("Garmin Connect")
+            .setMessage(if(linked) "Garmin Connect ist verbunden. Du kannst Schlafdaten jetzt neu synchronisieren oder die Verbindung trennen." else "Verbinde SleepSync mit Garmin Connect, damit deine Schlafdaten synchronisiert werden können.")
+            .setPositiveButton(if(linked) "Schlafdaten laden" else "Verbinden") { _,_ -> if(linked) testRead() else showGarminLogin() }
+            .setNeutralButton(if(linked) "Trennen" else null) { _,_ -> garminClient.logout(); refresh(); showSettings() }
+            .setNegativeButton("Schließen",null)
+            .show()
+    }
+
+    private fun showHealthSettings() {
+        launch {
+            val sdk=HealthConnectClient.getSdkStatus(this@MainActivity)
+            if(sdk!=HealthConnectClient.SDK_AVAILABLE) {
+                AlertDialog.Builder(this@MainActivity).setTitle("Health Connect").setMessage("Health Connect ist auf diesem Gerät nicht verfügbar.").setPositiveButton("OK",null).show()
+                return@launch
+            }
+            val granted=HealthConnectClient.getOrCreate(this@MainActivity).permissionController.getGrantedPermissions()
+            val ok=granted.containsAll(permissions)
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("Health Connect")
+                .setMessage((if(ok) "✓ Alle benötigten Berechtigungen sind erteilt." else "SleepSync benötigt noch Berechtigungen.")+"\n\nGelesen werden Schlaf, Herzfrequenz, Sauerstoffsättigung und Atemfrequenz. Die Daten werden lokal verarbeitet.")
+                .setPositiveButton("Berechtigungen") { _,_ -> permissionLauncher.launch(permissions) }
+                .setNegativeButton("Schließen",null)
+                .show()
+        }
+    }
+
+    private fun showAutomationSettings() {
+        val p=calendarPrefs()
+        val lastCheck=p.getLong("last_background_check",0L)
+        val lastAuto=p.getLong("last_auto_insert_at",0L)
+        val fmt=DateTimeFormatter.ofPattern("dd.MM. · HH:mm").withZone(ZoneId.systemDefault())
+        val selected=p.getString("calendar_name",null) ?: "Noch kein Zielkalender"
+        val msg=buildString {
+            append(if(calendarAutoEnabled()) "✓ Automatik ist aktiv" else "○ Automatik ist ausgeschaltet")
+            append("\n\nZielkalender: ").append(selected)
+            append("\nLetzte Hintergrundprüfung: ").append(if(lastCheck>0) fmt.format(Instant.ofEpochMilli(lastCheck))+" Uhr" else "noch keine")
+            append("\nLetzter automatischer Eintrag: ").append(if(lastAuto>0) fmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
+            append("\n\nSleepSync prüft selbstständig im Hintergrund auf neue Schlafdaten. Tasker wird dafür nicht benötigt.")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Automatik & Kalender")
+            .setMessage(msg)
+            .setPositiveButton(if(calendarAutoEnabled()) "Automatik ausschalten" else "Automatik einschalten") { _,_ -> p.edit().putBoolean("auto_enabled",!calendarAutoEnabled()).apply(); showSettings() }
+            .setNeutralButton("Zielkalender") { _,_ -> chooseCalendar() }
+            .setNegativeButton("Schließen",null)
+            .show()
+    }
+
+    private fun showPrivacySettings() {
+        val cached=sleepHistory.size
+        AlertDialog.Builder(this)
+            .setTitle("Datenschutz & Diagnose")
+            .setMessage("SleepSync verarbeitet deine Schlaf- und Gesundheitsdaten lokal auf diesem Gerät. Garmin-Anmeldedaten werden nicht gespeichert; gespeichert werden nur die für die Verbindung benötigten OAuth-Tokens.\n\nLokaler Verlauf: $cached Nächte\nPaket: $packageName\n\nÜber „Diagnose“ kannst du die installierte App-Signatur anzeigen.")
+            .setPositiveButton("Diagnose") { _,_ -> showAppSignature() }
+            .setNeutralButton("Verlauf löschen") { _,_ ->
+                AlertDialog.Builder(this).setTitle("Lokalen Verlauf löschen?").setMessage("Der lokal zwischengespeicherte SleepSync-Verlauf wird gelöscht. Daten bei Garmin, Health Connect und im Kalender bleiben erhalten.").setPositiveButton("Löschen") { _,_ -> getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().clear().apply(); sleepHistory=emptyList(); showSettings() }.setNegativeButton("Abbrechen",null).show()
+            }
+            .setNegativeButton("Schließen",null)
+            .show()
     }
 
     private fun showAppearanceSettings() {
