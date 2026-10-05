@@ -291,9 +291,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val scene = android.widget.FrameLayout(this).apply {
             addView(android.widget.ImageView(this@MainActivity).apply {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
-                setImageResource(R.drawable.sleepsync_night)
-                alpha=if(useLight) .10f else 1f
-                if(useLight) setColorFilter(Color.argb(90,110,175,255),android.graphics.PorterDuff.Mode.SRC_ATOP)
+                setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
+                alpha=if(useLight) .34f else 1f
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
                 background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(72,255,255,255),Color.argb(28,240,247,255),Color.argb(58,225,245,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
