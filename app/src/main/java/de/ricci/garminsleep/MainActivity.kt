@@ -762,7 +762,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }
         return MaterialCardView(this).apply{
-            radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(if(light) Color.rgb(248,250,255) else fill)
+            radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(if(light) Color.argb(238,246,250,255) else fill)
             layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))}
             addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
@@ -860,6 +860,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val tf = java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault())
         sleepCard.removeAllViews()
         sleepCard.background = null
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
+        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val light=theme=="light" || (theme=="system" && !sysDark)
+        fun glass(vararg rgb:Int)=if(light) Color.argb(224,246,250,255) else Color.rgb(rgb[0],rgb[1],rgb[2])
         val historical=viewingHistoryNight
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(2),0,dp(2),dp(8))
@@ -868,21 +872,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=LinearLayout.LayoutParams(0,-2,1f)
             })
             addView(TextView(this@MainActivity).apply {
-                text="${tf.format(java.time.Instant.ofEpochMilli(s.startMs))} – ${tf.format(java.time.Instant.ofEpochMilli(s.endMs))}"; textSize=12f; setTextColor(Color.rgb(151,158,190))
+                text="${tf.format(java.time.Instant.ofEpochMilli(s.startMs))} – ${tf.format(java.time.Instant.ofEpochMilli(s.endMs))}"; textSize=12f; setTextColor(if(light) Color.rgb(91,105,139) else Color.rgb(151,158,190))
             })
         })
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=dp(8).toFloat()
-            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, if(light) intArrayOf(Color.rgb(248,245,255),Color.rgb(229,241,255),Color.rgb(221,250,249)) else intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
                     addView(View(this@MainActivity).apply { background=GradientDrawable().apply { shape=GradientDrawable.OVAL; setColor(accent2) }; layoutParams=LinearLayout.LayoutParams(dp(7),dp(7)).apply { marginEnd=dp(7) } })
-                    addView(TextView(this@MainActivity).apply { text="GESAMTSCHLAF"; textSize=10f; letterSpacing=.14f; setTextColor(Color.rgb(184,174,224)); setTypeface(typeface,Typeface.BOLD) })
+                    addView(TextView(this@MainActivity).apply { text="GESAMTSCHLAF"; textSize=10f; letterSpacing=.14f; setTextColor(if(light) Color.rgb(88,83,145) else Color.rgb(184,174,224)); setTypeface(typeface,Typeface.BOLD) })
                 })
-                addView(TextView(this@MainActivity).apply { text=fmt(s.totalMin); textSize=42f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(2),0,0) })
-                addView(TextView(this@MainActivity).apply { text="☾  Schlafzeit"; textSize=12f; setTextColor(Color.rgb(151,210,225)); setPadding(0,dp(2),0,0) })
+                addView(TextView(this@MainActivity).apply { text=fmt(s.totalMin); textSize=42f; setTextColor(if(light) Color.rgb(17,31,66) else Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(2),0,0) })
+                addView(TextView(this@MainActivity).apply { text="☾  Schlafzeit"; textSize=12f; setTextColor(if(light) Color.rgb(74,118,148) else Color.rgb(151,210,225)); setPadding(0,dp(2),0,0) })
             })
             addView(TextView(this@MainActivity).apply {
                 text = "$quality%\nEFFIZIENZ"; gravity = android.view.Gravity.CENTER; textSize = 12f; setTypeface(typeface, Typeface.BOLD)
@@ -905,7 +909,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     background = GradientDrawable().apply { shape=GradientDrawable.OVAL; setColor(tone) }
                     layoutParams=LinearLayout.LayoutParams(dp(7),dp(7)).apply { setMargins(0,0,dp(5),0) }
                 })
-                addView(TextView(this@MainActivity).apply { text=name; textSize=11f; setTextColor(Color.rgb(185,190,215)) })
+                addView(TextView(this@MainActivity).apply { text=name; textSize=11f; setTextColor(if(light) Color.rgb(82,95,128) else Color.rgb(185,190,215)) })
                 layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
             }
             addView(legend("Leicht",stageLight)); addView(legend("Tief",stageDeep)); addView(legend("REM",stageRem)); addView(legend("Wach",stageAwake))
@@ -918,10 +922,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
         val remPct = (s.remMin * 100 / sleepOnly).toInt()
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(74,57,126); setCardBackgroundColor(Color.rgb(19,15,39))
+            radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(116,91,207); setCardBackgroundColor(if(light) Color.argb(232,244,242,255) else Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
-                addView(TextView(this@MainActivity).apply { text="SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(88,74,150) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                 addView(TextView(this@MainActivity).apply { text="$deepPct%\nTIEF"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageDeep); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
                 addView(TextView(this@MainActivity).apply { text="$remPct%\nREM"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
             })
@@ -930,7 +934,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(10),0,dp(2))
             addView(TextView(this@MainActivity).apply { text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-            addView(TextView(this@MainActivity).apply { text=fmt(s.lightMin+s.deepMin+s.remMin); textSize=10f; setTypeface(typeface,Typeface.BOLD); setTextColor(stageRem); setPadding(dp(10),dp(4),dp(10),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(Color.rgb(35,19,54)); setStroke(dp(1),Color.rgb(86,48,119)) } })
+            addView(TextView(this@MainActivity).apply { text=fmt(s.lightMin+s.deepMin+s.remMin); textSize=10f; setTypeface(typeface,Typeface.BOLD); setTextColor(stageRem); setPadding(dp(10),dp(4),dp(10),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(if(light) Color.argb(220,240,230,255) else Color.rgb(35,19,54)); setStroke(dp(1),Color.rgb(86,48,119)) } })
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; setPadding(dp(4),dp(2),dp(4),dp(3))
@@ -969,12 +973,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         sleepCard.addView(vitals)
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=0f; strokeWidth=dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.rgb(7,25,31))
+            radius=dp(18).toFloat(); cardElevation=0f; strokeWidth=dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(if(light) Color.argb(225,226,250,248) else Color.rgb(7,25,31))
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(10),dp(14),dp(10))
                 addView(TextView(this@MainActivity).apply { text="●"; textSize=12f; setTextColor(Color.rgb(76,225,169)); layoutParams=LinearLayout.LayoutParams(dp(24),-2) })
-                addView(TextView(this@MainActivity).apply { text="Messwerte vollständig synchronisiert"; textSize=11f; setTextColor(Color.rgb(160,210,214)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="Messwerte vollständig synchronisiert"; textSize=11f; setTextColor(if(light) Color.rgb(47,112,116) else Color.rgb(160,210,214)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                 addView(TextView(this@MainActivity).apply { text="GARMIN"; textSize=9f; letterSpacing=.12f; setTypeface(typeface,Typeface.BOLD); setTextColor(accent2) })
             })
         })
@@ -988,7 +992,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.rgb(19,15,39))
+            radius=dp(24).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(if(light) Color.argb(230,244,239,255) else Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
                 addView(TextView(this@MainActivity).apply {
@@ -999,7 +1003,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(TextView(this@MainActivity).apply {
                     layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
                     text=(if (quality >= 90) "Hohe Schlafeffizienz" else if (quality >= 80) "Solide Schlafeffizienz" else "Schlafeffizienz") + "\n" + "$quality% deiner Bettzeit entfielen auf Schlafphasen."
-                    textSize=13f; setTextColor(Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
+                    textSize=13f; setTextColor(if(light) Color.rgb(28,39,72) else Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
                 })
             })
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(4),dp(10),dp(4),0) }
