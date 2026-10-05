@@ -3,6 +3,9 @@ package de.ricci.garminsleep
 import androidx.activity.ComponentActivity
 import android.os.Bundle
 import android.content.pm.PackageManager
+import android.Manifest
+import android.provider.CalendarContract
+import androidx.activity.result.contract.ActivityResultContracts
 import java.security.MessageDigest
 import java.time.Instant
 import java.time.ZoneId
@@ -146,6 +149,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         HealthPermission.getReadPermission(OxygenSaturationRecord::class),
         HealthPermission.getReadPermission(RespiratoryRateRecord::class)
     )
+    private val calendarPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { showCalendarPlaceholder() }
+    private fun calendarPermissionReady() = checkSelfPermission(Manifest.permission.READ_CALENDAR)==PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.WRITE_CALENDAR)==PackageManager.PERMISSION_GRANTED
+    private fun requestCalendarPermission(){ calendarPermissionLauncher.launch(arrayOf(Manifest.permission.READ_CALENDAR,Manifest.permission.WRITE_CALENDAR)) }
+    private fun availableCalendars():List<Triple<Long,String,String>> {
+        if(!calendarPermissionReady()) return emptyList()
+        val out=mutableListOf<Triple<Long,String,String>>()
+        contentResolver.query(CalendarContract.Calendars.CONTENT_URI,arrayOf(CalendarContract.Calendars._ID,CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,CalendarContract.Calendars.ACCOUNT_NAME),CalendarContract.Calendars.VISIBLE+"=1",null,CalendarContract.Calendars.CALENDAR_DISPLAY_NAME+" COLLATE NOCASE")?.use{q->while(q.moveToNext())out+=Triple(q.getLong(0),q.getString(1)?:"Kalender",q.getString(2)?:"")}
+        return out
+    }
+    private fun chooseCalendar() {
+        if(!calendarPermissionReady()){requestCalendarPermission();return}
+        val items=availableCalendars(); if(items.isEmpty()){AlertDialog.Builder(this).setMessage("Android stellt aktuell keinen beschreibbaren Kalender bereit.").setPositiveButton("OK",null).show();return}
+        val labels=items.map{it.second+"\n"+it.third}.toTypedArray()
+        AlertDialog.Builder(this).setTitle("Zielkalender wählen").setItems(labels){_,i->getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",items[i].first).putString("calendar_name",items[i].second).putString("calendar_account",items[i].third).apply();showCalendarPlaceholder()}.show()
+    }
+    private fun insertNightIntoCalendar(s:SleepSummary):Boolean {
+        if(!calendarPermissionReady())return false
+        val p=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE);val id=p.getLong("calendar_id",-1);if(id<0)return false
+        val zone=ZoneId.systemDefault();val values=android.content.ContentValues().apply{put(CalendarContract.Events.CALENDAR_ID,id);put(CalendarContract.Events.TITLE,"💤 Garmin Schlaf");put(CalendarContract.Events.DTSTART,s.startMs);put(CalendarContract.Events.DTEND,s.endMs);put(CalendarContract.Events.EVENT_TIMEZONE,zone.id);put(CalendarContract.Events.DESCRIPTION,"SleepSync · Gesamt "+(s.totalMin/60)+" h "+(s.totalMin%60)+" min · Leicht "+s.lightMin+" min · Tief "+s.deepMin+" min · REM "+s.remMin+" min · Wach "+s.awakeMin+" min")}
+        return contentResolver.insert(CalendarContract.Events.CONTENT_URI,values)!=null
+    }
     private val permissionLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { refresh() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -448,7 +472,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
-            addView(TextView(this@MainActivity).apply{text="Garmin Schlaf  ›";textSize=16f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(Color.argb(150,45,29,73))}})
+            val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ›";textSize=16f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(Color.argb(150,45,29,73))};isClickable=true;setOnClickListener{chooseCalendar()}})
             addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere Android-Kalender können hier später ausgewählt werden.";textSize=11f;setTextColor(Color.rgb(165,175,205));setPadding(0,dp(10),0,0)})
         })
         sleepCard.addView(card("◷  LETZTE EINTRÄGE","Zuletzt synchronisierte Nächte",stageLight){
