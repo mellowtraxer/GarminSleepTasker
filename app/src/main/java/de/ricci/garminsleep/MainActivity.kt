@@ -425,8 +425,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             override fun draw(canvas:Canvas){
                 val w=bounds.width().toFloat().coerceAtLeast(1f); val h=bounds.height().toFloat()
                 val phase=(brandGlow.tag as? Float) ?: 0f
-                val period=w*.82f
-                paint.shader=LinearGradient(-period+phase*period,0f,period*2f+phase*period,0f,spectrum,null,Shader.TileMode.REPEAT)
+                // One complete spectrum cycle exactly equals the translation distance.
+                // Because the first and last spectrum colors are identical, phase 1.0
+                // renders pixel-for-pixel like phase 0.0: no visible reset or jump.
+                val period=w
+                paint.shader=LinearGradient(
+                    -period+phase*period,0f,
+                    phase*period,0f,
+                    spectrum,null,Shader.TileMode.REPEAT
+                )
                 canvas.drawRoundRect(0f,0f,w,h,h/2f,h/2f,paint)
                 paint.shader=null
             }
