@@ -84,6 +84,29 @@ private class MetricSparklineView(context:android.content.Context, private val p
     }
 }
 
+
+private class StageNeonView(context:android.content.Context, private val stages:List<StagePoint>, private val target:String, private val tone:Int, private val startMs:Long, private val endMs:Long):View(context){
+    private val p=Paint(Paint.ANTI_ALIAS_FLAG)
+    init{setLayerType(LAYER_TYPE_SOFTWARE,null)}
+    override fun onDraw(c:Canvas){
+        super.onDraw(c); if(stages.isEmpty()||endMs<=startMs)return
+        val w=width.toFloat(); val h=height.toFloat(); val span=(endMs-startMs).toFloat()
+        fun x(t:Long)=((t-startMs)/span*w).coerceIn(0f,w)
+        val y=h*.52f; val path=Path(); var drawing=false
+        stages.sortedBy{it.startMs}.forEach { s ->
+            if(s.stageLabel.equals(target,true)){
+                val a=x(s.startMs); val b=x(s.endMs)
+                if(!drawing){path.moveTo(a,y);drawing=true}else path.moveTo(a,y)
+                path.lineTo(b,y)
+            }
+        }
+        p.style=Paint.Style.STROKE;p.strokeWidth=resources.displayMetrics.density*2.6f;p.strokeCap=Paint.Cap.ROUND;p.color=tone
+        p.setShadowLayer(resources.displayMetrics.density*8f,0f,0f,tone);c.drawPath(path,p);p.clearShadowLayer()
+        p.style=Paint.Style.FILL;p.color=Color.argb(35,Color.red(tone),Color.green(tone),Color.blue(tone))
+        stages.filter{it.stageLabel.equals(target,true)}.forEach{s->c.drawRoundRect(x(s.startMs),y+5f,x(s.endMs),h,5f,5f,p)}
+    }
+}
+
 private class BottomNavIconView(context: android.content.Context, private val kind:Int) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE; strokeWidth=resources.displayMetrics.density*2.15f; strokeCap=Paint.Cap.ROUND; strokeJoin=Paint.Join.ROUND }
     var active=false; set(v){field=v; invalidate()}
@@ -532,7 +555,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
-    private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null, series: List<MetricPoint> = emptyList()): MaterialCardView {
+    private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null, series: List<MetricPoint> = emptyList(), sleep: SleepSummary? = null): MaterialCardView {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val tone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;"Puls"->Color.rgb(255,82,126);"SpO₂"->Color.rgb(44,205,255);"Atmung"->Color.rgb(80,225,184);"HRV"->Color.rgb(213,96,255);else->accent}
         val fill=when(label){"Leicht"->Color.rgb(10,32,48);"Tief"->Color.rgb(22,20,56);"REM"->Color.rgb(42,18,58);"Wach"->Color.rgb(54,31,16);"Puls"->Color.rgb(54,18,31);"SpO₂"->Color.rgb(9,37,49);"Atmung"->Color.rgb(10,42,34);"HRV"->Color.rgb(45,17,55);else->Color.rgb(15,18,38)}
@@ -545,7 +568,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(TextView(this@MainActivity).apply{text="$icon   ${label.uppercase()}";textSize=11f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
             addView(valueText)
             if(series.size>=2) addView(MetricSparklineView(this@MainActivity,series,tone,label,valueText).apply{layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(4),0,0)}})
-            else addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(3).toFloat();setColor(tone)};layoutParams=LinearLayout.LayoutParams(dp(38),dp(3)).apply{setMargins(0,dp(4),0,0)}})
+            else if(sleep!=null && label in listOf("Leicht","Tief","REM","Wach")) addView(StageNeonView(this@MainActivity,sleep.stageSeries,label,tone,sleep.startMs,sleep.endMs).apply{layoutParams=LinearLayout.LayoutParams(-1,dp(36)).apply{setMargins(0,dp(5),0,0)}})\n            else addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(3).toFloat();setColor(tone)};layoutParams=LinearLayout.LayoutParams(dp(38),dp(3)).apply{setMargins(0,dp(4),0,0)}})
         }
         return MaterialCardView(this).apply{
             radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(if(light) Color.rgb(248,250,255) else fill)
@@ -729,10 +752,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val stages = GridLayout(this).apply {
             columnCount = 2
             setPadding(0, dp(6), 0, dp(8))
-            addView(metricCard("🌙","Leicht",fmt(s.lightMin), onClick={ showStageTimeline("Leicht", stageLight, s.lightMin, s) }))
-            addView(metricCard("🌑","Tief",fmt(s.deepMin), onClick={ showStageTimeline("Tief", stageDeep, s.deepMin, s) }))
-            addView(metricCard("🧠","REM",fmt(s.remMin), onClick={ showStageTimeline("REM", stageRem, s.remMin, s) }))
-            addView(metricCard("👀","Wach",fmt(s.awakeMin), onClick={ showStageTimeline("Wach", stageAwake, s.awakeMin, s) }))
+            addView(metricCard("🌙","Leicht",fmt(s.lightMin), onClick={ showStageTimeline("Leicht", stageLight, s.lightMin, s) }, sleep=s))
+            addView(metricCard("🌑","Tief",fmt(s.deepMin), onClick={ showStageTimeline("Tief", stageDeep, s.deepMin, s) }, sleep=s))
+            addView(metricCard("🧠","REM",fmt(s.remMin), onClick={ showStageTimeline("REM", stageRem, s.remMin, s) }, sleep=s))
+            addView(metricCard("👀","Wach",fmt(s.awakeMin), onClick={ showStageTimeline("Wach", stageAwake, s.awakeMin, s) }, sleep=s))
         }
         sleepCard.addView(stages)
         sleepCard.addView(View(this).apply {
