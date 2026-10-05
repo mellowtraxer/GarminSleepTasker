@@ -701,11 +701,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight) { showPrivacySettings() }
         setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
         sleepCard.addView(settingsGrid)
-        actionsTitle.text="WERKZEUGE"; actionsTitle.setTextColor(stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
+        actionsTitle.text="DIAGNOSE"; actionsTitle.setTextColor(if(settingsLight) Color.rgb(98,112,142) else stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
+        actionsTitle.setPadding(0,dp(14),0,dp(4))
         listOf(0,1,2,3,4).forEach { i ->
             val b=actionsBox.getChildAt(i) as? MaterialButton ?: return@forEach
-            b.cornerRadius=dp(18); b.setTextColor(Color.rgb(220,224,244))
-            b.backgroundTintList=ColorStateList.valueOf(Color.rgb(14,17,34)); b.strokeWidth=dp(1); b.strokeColor=ColorStateList.valueOf(Color.rgb(48,55,89))
+            b.cornerRadius=dp(16)
+            b.textSize=12f
+            b.minHeight=dp(46)
+            b.setTextColor(if(settingsLight) Color.rgb(55,65,92) else Color.rgb(220,224,244))
+            b.backgroundTintList=ColorStateList.valueOf(if(settingsLight) Color.argb(205,242,246,255) else Color.rgb(14,17,34))
+            b.strokeWidth=dp(1)
+            b.strokeColor=ColorStateList.valueOf(if(settingsLight) Color.argb(105,125,150,210) else Color.rgb(48,55,89))
+            b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply { height=dp(46) }
         }
     }
 
