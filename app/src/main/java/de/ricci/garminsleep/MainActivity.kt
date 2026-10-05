@@ -714,6 +714,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             b.strokeColor=ColorStateList.valueOf(if(settingsLight) Color.argb(175,105,132,190) else Color.rgb(48,55,89))
             b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply { height=dp(46) }
         }
+        // showSettings() can be opened repeatedly; keep exactly one footer.
+        while(actionsBox.childCount>5) actionsBox.removeViewAt(actionsBox.childCount-1)
         actionsBox.addView(TextView(this).apply {
             text="😴\nSleep well."
             textSize=12f
