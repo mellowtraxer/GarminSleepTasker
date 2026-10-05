@@ -589,6 +589,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("⚡","Automatik","Hintergrund-Sync & Kalender",stageAwake) { showAutomationSettings() }
         setting("✦","Darstellung","$selectedThemeLabel · SleepSync",accent) { showAppearanceSettings() }
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight) { showPrivacySettings() }
+        setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
         sleepCard.addView(settingsGrid)
         actionsTitle.text="WERKZEUGE"; actionsTitle.setTextColor(stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
         listOf(0,1,2,3,4).forEach { i ->
@@ -659,6 +660,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 AlertDialog.Builder(this).setTitle("Lokalen Verlauf löschen?").setMessage("Der lokal zwischengespeicherte SleepSync-Verlauf wird gelöscht. Daten bei Garmin, Health Connect und im Kalender bleiben erhalten.").setPositiveButton("Löschen") { _,_ -> getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().clear().apply(); sleepHistory=emptyList(); showSettings() }.setNegativeButton("Abbrechen",null).show()
             }
             .setNegativeButton("Schließen",null)
+            .show()
+    }
+
+    private fun showAboutSettings() {
+        val info=packageManager.getPackageInfo(packageName,0)
+        val versionName=info.versionName ?: "–"
+        val versionCode=info.longVersionCode
+        val installed=runCatching { DateTimeFormatter.ofPattern("dd.MM.yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(info.lastUpdateTime)) }.getOrDefault("–")
+        AlertDialog.Builder(this)
+            .setTitle("Über SleepSync")
+            .setMessage("SleepSync\nDein Schlaf. Klar, automatisch, im Kalender.\n\nEntwickelt von Riccardo Hoff\n© 2026\n\nVersion: $versionName\nBuild: $versionCode\nPaket: $packageName\nInstallierter Build: $installed\n\nGarmin → Health Connect → SleepSync → Kalender\n\nSleepSync ist ein unabhängiges Projekt und steht in keiner offiziellen Verbindung zu Garmin.")
+            .setPositiveButton("OK",null)
+            .setNeutralButton("App-Signatur") { _,_ -> showAppSignature() }
             .show()
     }
 
