@@ -350,7 +350,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(Color.argb(70,25,32,58))}
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                         addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                        addView(TextView(this@MainActivity).apply { text=(s.totalMin/60)+" h "+(s.totalMin%60)+" min"; textSize=14f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                        addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
                     })
                     addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(135,150,180)); setPadding(0,dp(2),0,dp(7)) })
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
