@@ -714,6 +714,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             b.strokeColor=ColorStateList.valueOf(if(settingsLight) Color.argb(175,105,132,190) else Color.rgb(48,55,89))
             b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply { height=dp(46) }
         }
+        actionsBox.addView(TextView(this).apply {
+            text="😴\nSleep well."
+            textSize=12f
+            gravity=android.view.Gravity.CENTER
+            setTextColor(if(settingsLight) Color.argb(135,58,72,105) else Color.argb(125,175,185,215))
+            setPadding(0,dp(28),0,dp(24))
+        })
     }
 
     private fun showGarminSettings() {
