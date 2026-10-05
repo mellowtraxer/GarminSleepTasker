@@ -170,11 +170,28 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         items.forEach{item->list.addView(TextView(this).apply{text=item.second+"\n"+item.third;textSize=14f;setTextColor(Color.WHITE);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(Color.argb(120,40,29,70))};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
         shell.addView(list);dialog.setOnShowListener{dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))};dialog.show()
     }
+    private fun calendarPrefs()=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE)
+    private fun calendarAutoEnabled()=calendarPrefs().getBoolean("auto_enabled",true)
+    private fun calendarEventExists(s:SleepSummary):Boolean {
+        if(!calendarPermissionReady())return false
+        val id=calendarPrefs().getLong("calendar_id",-1);if(id<0)return false
+        val projection=arrayOf(CalendarContract.Events._ID)
+        val selection=CalendarContract.Events.CALENDAR_ID+"=? AND "+CalendarContract.Events.DTSTART+"=? AND "+CalendarContract.Events.DTEND+"=? AND "+CalendarContract.Events.TITLE+"=?"
+        val args=arrayOf(id.toString(),s.startMs.toString(),s.endMs.toString(),"💤 Garmin Schlaf")
+        return contentResolver.query(CalendarContract.Events.CONTENT_URI,projection,selection,args,null)?.use{it.moveToFirst()}==true
+    }
     private fun insertNightIntoCalendar(s:SleepSummary):Boolean {
         if(!calendarPermissionReady())return false
-        val p=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE);val id=p.getLong("calendar_id",-1);if(id<0)return false
+        val p=calendarPrefs();val id=p.getLong("calendar_id",-1);if(id<0)return false
+        if(calendarEventExists(s))return true
         val zone=ZoneId.systemDefault();val values=android.content.ContentValues().apply{put(CalendarContract.Events.CALENDAR_ID,id);put(CalendarContract.Events.TITLE,"💤 Garmin Schlaf");put(CalendarContract.Events.DTSTART,s.startMs);put(CalendarContract.Events.DTEND,s.endMs);put(CalendarContract.Events.EVENT_TIMEZONE,zone.id);put(CalendarContract.Events.DESCRIPTION,"SleepSync · Gesamt "+(s.totalMin/60)+" h "+(s.totalMin%60)+" min · Leicht "+s.lightMin+" min · Tief "+s.deepMin+" min · REM "+s.remMin+" min · Wach "+s.awakeMin+" min")}
-        return contentResolver.insert(CalendarContract.Events.CONTENT_URI,values)!=null
+        val ok=contentResolver.insert(CalendarContract.Events.CONTENT_URI,values)!=null
+        if(ok)p.edit().putLong("last_inserted_end",s.endMs).apply()
+        return ok
+    }
+    private fun syncLatestNightToCalendar(s:SleepSummary){
+        if(!calendarAutoEnabled()||!calendarPermissionReady()||calendarPrefs().getLong("calendar_id",-1)<0)return
+        runCatching{insertNightIntoCalendar(s)}
     }
     private val permissionLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { refresh() }
 
@@ -366,6 +383,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             saveCachedHistory(history)
             val s = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
             renderDashboard(s)
+            withContext(Dispatchers.IO) { syncLatestNightToCalendar(s) }
             refresh()
         } catch (t: Throwable) {
             sleepCard.removeAllViews()
@@ -473,8 +491,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(card("⚡  AUTOMATIK","Neue Nächte selbstständig eintragen",Color.rgb(74,224,181)){
             addView(LinearLayout(this@MainActivity).apply{gravity=android.view.Gravity.CENTER_VERTICAL
-                addView(TextView(this@MainActivity).apply{text="Automatisch eintragen\nAktiv";textSize=14f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
-                addView(android.widget.Switch(this@MainActivity).apply{isChecked=true})
+                addView(TextView(this@MainActivity).apply{text="Automatisch eintragen\n"+if(calendarAutoEnabled()) "Aktiv" else "Aus";textSize=14f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                addView(android.widget.Switch(this@MainActivity).apply{isChecked=calendarAutoEnabled();setOnCheckedChangeListener{_,checked->calendarPrefs().edit().putBoolean("auto_enabled",checked).apply();showCalendarPlaceholder()}})
             })
         })
         sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
