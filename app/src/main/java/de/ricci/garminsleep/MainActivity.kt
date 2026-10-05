@@ -328,6 +328,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         lastSummary?.let { renderDashboard(it) }
     }
 
+    private fun historyLoadingView(): View = LinearLayout(this).apply {
+        orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(18,18,18,18)
+        val spin=ProgressBar(this@MainActivity).apply { isIndeterminate=true }
+        addView(spin,LinearLayout.LayoutParams(42,42).apply{marginEnd=18})
+        addView(TextView(this@MainActivity).apply { text="Nächte werden synchronisiert …"; textSize=13f; setTextColor(Color.rgb(170,205,230)) })
+    }
+
     private fun showHistoryPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
@@ -338,7 +345,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val dateFmt=DateTimeFormatter.ofPattern("EEE, d. MMM",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault())
         val weekFields=java.time.temporal.WeekFields.ISO
         val nights=(if(sleepHistory.isNotEmpty()) sleepHistory else listOfNotNull(lastSummary)).sortedByDescending { it.endMs }
-        if(nights.isEmpty()){ sleepCard.addView(TextView(this).apply { text="Noch keine Garmin-Nächte geladen."; textSize=14f; setTextColor(Color.rgb(170,180,205)); setPadding(0,dp(18),0,dp(18)) }); return }
+        if(nights.isEmpty()){ sleepCard.addView(historyLoadingView()); return }
         val grouped=nights.groupBy { s -> val z=Instant.ofEpochMilli(s.endMs).atZone(ZoneId.systemDefault()).toLocalDate(); (z.get(weekFields.weekBasedYear())*100)+z.get(weekFields.weekOfWeekBasedYear()) }
         grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
             val year=key/100; val kw=key%100; val avg=items.map{it.totalMin}.average().toLong()
