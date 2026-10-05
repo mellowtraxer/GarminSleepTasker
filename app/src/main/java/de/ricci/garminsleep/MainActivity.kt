@@ -789,13 +789,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             append("\nLetzter automatischer Eintrag: ").append(if(lastAuto>0) fmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
             append("\n\nSleepSync prüft selbstständig im Hintergrund auf neue Schlafdaten. Tasker wird dafür nicht benötigt.")
         }
-        AlertDialog.Builder(this)
+        val dialog=AlertDialog.Builder(this)
             .setTitle("Automatik & Kalender")
             .setMessage(msg)
             .setPositiveButton(if(calendarAutoEnabled()) "Automatik ausschalten" else "Automatik einschalten") { _,_ -> p.edit().putBoolean("auto_enabled",!calendarAutoEnabled()).apply(); showSettings() }
             .setNeutralButton("Zielkalender") { _,_ -> chooseCalendar() }
             .setNegativeButton("Schließen",null)
-            .show()
+            .create()
+        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.show()
     }
 
     private fun showPrivacySettings() {
