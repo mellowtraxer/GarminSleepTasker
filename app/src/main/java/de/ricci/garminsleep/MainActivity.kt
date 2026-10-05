@@ -469,13 +469,45 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         if(viewingHistoryNight) showHistoryPlaceholder() else super.onBackPressed()
     }
 
+    private fun metricPointsToJson(points:List<MetricPoint>)=JSONArray().apply { points.forEach { put(JSONArray().put(it.timeMs).put(it.value)) } }
+    private fun stagePointsToJson(points:List<StagePoint>)=JSONArray().apply { points.forEach { put(JSONArray().put(it.startMs).put(it.endMs).put(it.stageLabel)) } }
+    private fun metricPointsFromJson(a:JSONArray?):List<MetricPoint> = if(a==null) emptyList() else (0 until a.length()).mapNotNull { i -> runCatching { val p=a.getJSONArray(i); MetricPoint(p.getLong(0),p.getDouble(1)) }.getOrNull() }
+    private fun stagePointsFromJson(a:JSONArray?):List<StagePoint> = if(a==null) emptyList() else (0 until a.length()).mapNotNull { i -> runCatching { val p=a.getJSONArray(i); StagePoint(p.getLong(0),p.getLong(1),p.getString(2)) }.getOrNull() }
+
     private fun saveCachedHistory(items:List<SleepSummary>) {
-        val arr=JSONArray(); items.forEach { s -> arr.put(JSONObject().put("start",s.startMs).put("end",s.endMs).put("total",s.totalMin).put("light",s.lightMin).put("deep",s.deepMin).put("rem",s.remMin).put("awake",s.awakeMin).put("sleeping",s.sleepingMin).put("hr",s.avgHr).put("spo2",s.avgSpo2).put("resp",s.avgResp).put("minSpo2",s.minSpo2).put("minResp",s.minResp).put("hrv",s.avgHrv)) }; getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().putString("nights",arr.toString()).apply()
+        val arr=JSONArray()
+        items.forEach { s ->
+            arr.put(JSONObject()
+                .put("start",s.startMs).put("end",s.endMs).put("total",s.totalMin)
+                .put("light",s.lightMin).put("deep",s.deepMin).put("rem",s.remMin).put("awake",s.awakeMin).put("sleeping",s.sleepingMin)
+                .put("hr",s.avgHr).put("spo2",s.avgSpo2).put("resp",s.avgResp).put("minSpo2",s.minSpo2).put("minResp",s.minResp).put("hrv",s.avgHrv)
+                .put("source",s.source).put("calendarText",s.calendarText)
+                .put("heartSeries",metricPointsToJson(s.heartRateSeries))
+                .put("spo2Series",metricPointsToJson(s.spo2Series))
+                .put("respSeries",metricPointsToJson(s.respirationSeries))
+                .put("hrvSeries",metricPointsToJson(s.hrvSeries))
+                .put("stageSeries",stagePointsToJson(s.stageSeries)))
+        }
+        getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().putString("nights",arr.toString()).apply()
     }
 
     private fun loadCachedHistory() {
         val raw=getSharedPreferences("sleepsync_history",MODE_PRIVATE).getString("nights",null) ?: return
-        sleepHistory=runCatching { val a=JSONArray(raw); (0 until a.length()).map { i -> val o=a.getJSONObject(i); SleepSummary(o.getLong("start"),o.getLong("end"),o.getLong("total"),o.getLong("light"),o.getLong("deep"),o.getLong("rem"),o.getLong("awake"),o.getLong("sleeping"),o.optDouble("hr").takeUnless{it.isNaN()},o.optDouble("spo2").takeUnless{it.isNaN()},o.optDouble("resp").takeUnless{it.isNaN()},o.optDouble("minSpo2").takeUnless{it.isNaN()},o.optDouble("minResp").takeUnless{it.isNaN()},o.optDouble("hrv").takeUnless{it.isNaN()},"cache","") } }.getOrDefault(emptyList())
+        sleepHistory=runCatching {
+            val a=JSONArray(raw)
+            (0 until a.length()).map { i ->
+                val o=a.getJSONObject(i)
+                SleepSummary(
+                    o.getLong("start"),o.getLong("end"),o.getLong("total"),o.getLong("light"),o.getLong("deep"),o.getLong("rem"),o.getLong("awake"),o.getLong("sleeping"),
+                    o.optDouble("hr").takeUnless{it.isNaN()},o.optDouble("spo2").takeUnless{it.isNaN()},o.optDouble("resp").takeUnless{it.isNaN()},
+                    o.optDouble("minSpo2").takeUnless{it.isNaN()},o.optDouble("minResp").takeUnless{it.isNaN()},o.optDouble("hrv").takeUnless{it.isNaN()},
+                    o.optString("source","cache"),o.optString("calendarText",""),
+                    metricPointsFromJson(o.optJSONArray("heartSeries")),metricPointsFromJson(o.optJSONArray("spo2Series")),
+                    metricPointsFromJson(o.optJSONArray("respSeries")),metricPointsFromJson(o.optJSONArray("hrvSeries")),
+                    stagePointsFromJson(o.optJSONArray("stageSeries"))
+                )
+            }
+        }.getOrDefault(emptyList())
         lastSummary=sleepHistory.maxByOrNull{it.endMs}
         lastSummary?.let { renderDashboard(it) }
     }
