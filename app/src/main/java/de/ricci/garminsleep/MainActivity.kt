@@ -37,6 +37,8 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
 import kotlinx.coroutines.*
+import org.json.JSONArray
+import org.json.JSONObject
 
 private class NightLandscapeView(context: android.content.Context) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
@@ -105,6 +107,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var actionsBox: LinearLayout
     private var lastSummary: SleepSummary? = null
     private var sleepHistory: List<SleepSummary> = emptyList()
+    private var viewingHistoryNight = false
     private val nightBg = Color.rgb(5, 6, 14)
     private val cardBg = Color.argb(222, 10, 16, 36)
     private val accent = Color.rgb(139, 92, 246)
@@ -233,6 +236,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             v.setPadding(0,bars.top,0,bars.bottom); insets
         }
         setContentView(root)
+        loadCachedHistory()
         refresh()
         testRead()
     }
@@ -306,6 +310,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         try {
             val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
             sleepHistory = history
+            saveCachedHistory(history)
             val s = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
             renderDashboard(s)
             refresh()
@@ -326,6 +331,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun showHistoryPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
+        viewingHistoryNight=false
         pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte · nach Kalenderwochen"
         sleepCard.removeAllViews(); sleepCard.background=null
         val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
@@ -362,9 +368,26 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
     private fun showHistoryNight(s: SleepSummary) {
-        pageTitle.text="Nacht"
+        viewingHistoryNight=true
+        pageTitle.text="←  Nacht"
+        pageTitle.setOnClickListener { showHistoryPlaceholder() }
         pageSubtitle.text=java.time.format.DateTimeFormatter.ofPattern("EEEE, d. MMMM yyyy",java.util.Locale.GERMAN).withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))
         renderDashboard(s)
+    }
+
+    override fun onBackPressed() {
+        if(viewingHistoryNight) showHistoryPlaceholder() else super.onBackPressed()
+    }
+
+    private fun saveCachedHistory(items:List<SleepSummary>) {
+        val arr=JSONArray(); items.forEach { s -> arr.put(JSONObject().put("start",s.startMs).put("end",s.endMs).put("total",s.totalMin).put("light",s.lightMin).put("deep",s.deepMin).put("rem",s.remMin).put("awake",s.awakeMin).put("sleeping",s.sleepingMin).put("hr",s.avgHr).put("spo2",s.avgSpo2).put("resp",s.avgResp).put("minSpo2",s.minSpo2).put("minResp",s.minResp).put("hrv",s.avgHrv)) }; getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().putString("nights",arr.toString()).apply()
+    }
+
+    private fun loadCachedHistory() {
+        val raw=getSharedPreferences("sleepsync_history",MODE_PRIVATE).getString("nights",null) ?: return
+        sleepHistory=runCatching { val a=JSONArray(raw); (0 until a.length()).map { i -> val o=a.getJSONObject(i); SleepSummary(o.getLong("start"),o.getLong("end"),o.getLong("total"),o.getLong("light"),o.getLong("deep"),o.getLong("rem"),o.getLong("awake"),o.getLong("sleeping"),o.optDouble("hr").takeUnless{it.isNaN()},o.optDouble("spo2").takeUnless{it.isNaN()},o.optDouble("resp").takeUnless{it.isNaN()},o.optDouble("minSpo2").takeUnless{it.isNaN()},o.optDouble("minResp").takeUnless{it.isNaN()},o.optDouble("hrv").takeUnless{it.isNaN()},"cache","") } }.getOrDefault(emptyList())
+        lastSummary=sleepHistory.maxByOrNull{it.endMs}
+        lastSummary?.let { renderDashboard(it) }
     }
 
     private fun showCalendarPlaceholder() {
@@ -616,10 +639,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val tf = java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault())
         sleepCard.removeAllViews()
         sleepCard.background = null
+        val historical=viewingHistoryNight
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(2),0,dp(2),dp(8))
             addView(TextView(this@MainActivity).apply {
-                text="LETZTE NACHT"; textSize=11f; letterSpacing=.16f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD)
+                text=if(historical) "HISTORISCHE NACHT" else "LETZTE NACHT"; textSize=11f; letterSpacing=.16f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD)
                 layoutParams=LinearLayout.LayoutParams(0,-2,1f)
             })
             addView(TextView(this@MainActivity).apply {
