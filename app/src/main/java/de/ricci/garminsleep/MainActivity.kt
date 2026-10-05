@@ -736,6 +736,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             .show()
     }
 
+    private fun styleSleepSyncDialog(dialog:AlertDialog) {
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
+        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val light=theme=="light" || (theme=="system" && !sysDark)
+        if(!light)return
+        val d=resources.displayMetrics.density
+        fun dp(v:Int)=(v*d).toInt()
+        dialog.window?.setBackgroundDrawable(GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+            Color.argb(250,250,252,255),Color.argb(248,239,247,255),Color.argb(248,244,240,255)
+        )).apply { cornerRadius=dp(26).toFloat(); setStroke(dp(1),Color.argb(185,128,104,235)) })
+        dialog.findViewById<TextView>(android.R.id.alertTitle)?.apply { setTextColor(Color.rgb(24,29,48)); setTypeface(typeface,Typeface.BOLD) }
+        dialog.findViewById<TextView>(android.R.id.message)?.apply { setTextColor(Color.rgb(55,64,88)); textSize=16f }
+        listOf(AlertDialog.BUTTON_POSITIVE,AlertDialog.BUTTON_NEGATIVE,AlertDialog.BUTTON_NEUTRAL).forEach { which ->
+            dialog.getButton(which)?.apply { setTextColor(Color.rgb(118,82,205)); setTypeface(typeface,Typeface.BOLD) }
+        }
+    }
+
     private fun showHealthSettings() {
         launch {
             val sdk=HealthConnectClient.getSdkStatus(this@MainActivity)
@@ -745,12 +762,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
             val granted=HealthConnectClient.getOrCreate(this@MainActivity).permissionController.getGrantedPermissions()
             val ok=granted.containsAll(permissions)
-            AlertDialog.Builder(this@MainActivity)
+            val dialog=AlertDialog.Builder(this@MainActivity)
                 .setTitle("Health Connect")
                 .setMessage((if(ok) "✓ Alle benötigten Berechtigungen sind erteilt." else "SleepSync benötigt noch Berechtigungen.")+"\n\nGelesen werden Schlaf, Herzfrequenz, Sauerstoffsättigung und Atemfrequenz. Die Daten werden lokal verarbeitet.")
                 .setPositiveButton("Berechtigungen") { _,_ -> permissionLauncher.launch(permissions) }
                 .setNegativeButton("Schließen",null)
-                .show()
+                .create()
+            dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+            dialog.show()
         }
     }
 
