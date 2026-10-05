@@ -71,9 +71,9 @@ private class MetricSparklineView(context:android.content.Context, private val p
     }
     override fun performClick():Boolean{super.performClick();return true}
     private fun fmt(v:Double)=when(label){"Puls"->String.format(java.util.Locale.GERMANY,"%.0f bpm",v);"SpO₂"->String.format(java.util.Locale.GERMANY,"%.1f %%",v);"Atmung"->String.format(java.util.Locale.GERMANY,"%.1f /min",v);"HRV"->String.format(java.util.Locale.GERMANY,"%.0f ms",v);else->String.format(java.util.Locale.GERMANY,"%.1f",v)}
-    private fun selectedIndex():Int{if(points.size<2||width<=0)return 0;val first=points.first().timeMs;val last=points.last().timeMs;val target=first+((touchX/width)*(last-first)).toLong();return points.indices.minByOrNull{ kotlin.math.abs(points[it].timeMs-target) }?:0}
+    private fun selectedIndex():Int{if(points.size<2||width<=0)return 0;return ((touchX/width)*(points.size-1)).toInt().coerceIn(0,points.lastIndex)}
     private fun updateReadout(){if(points.isEmpty()||width<=0)return;val q=points[selectedIndex()];val tm=java.time.Instant.ofEpochMilli(q.timeMs).atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));valueText.text=fmt(q.value)+"  ·  "+tm}
-    override fun onDraw(c:Canvas){super.onDraw(c);if(points.size<2)return;val w=width.toFloat();val h=height.toFloat();val min=points.minOf{it.value};val max=points.maxOf{it.value};val span=(max-min).coerceAtLeast(.01);val t0=points.first().timeMs;val ts=(points.last().timeMs-t0).coerceAtLeast(1L);fun x(i:Int):Float{return ((points[i].timeMs-t0).toFloat()/ts)*w};fun y(v:Double):Float{return h*.82f-((v-min)/span).toFloat()*h*.58f}
+    override fun onDraw(c:Canvas){super.onDraw(c);if(points.size<2)return;val w=width.toFloat();val h=height.toFloat();val min=points.minOf{it.value};val max=points.maxOf{it.value};val span=(max-min).coerceAtLeast(.01);fun x(i:Int):Float{return i*w/(points.size-1)};fun y(v:Double):Float{return h*.82f-((v-min)/span).toFloat()*h*.58f}
         val path=Path();points.forEachIndexed{i,q->if(i==0)path.moveTo(x(i),y(q.value))else path.lineTo(x(i),y(q.value))}
         val lastX=x(points.lastIndex);val firstX=x(0)
         p.style=Paint.Style.FILL;p.color=Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone));val area=Path(path);area.lineTo(lastX,h);area.lineTo(firstX,h);area.close();c.drawPath(area,p)
