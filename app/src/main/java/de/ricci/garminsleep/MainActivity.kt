@@ -727,13 +727,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     private fun showGarminSettings() {
         val linked=garminClient.isLinked()
-        AlertDialog.Builder(this)
+        val dialog=AlertDialog.Builder(this)
             .setTitle("Garmin Connect")
             .setMessage(if(linked) "Garmin Connect ist verbunden. Du kannst Schlafdaten jetzt neu synchronisieren oder die Verbindung trennen." else "Verbinde SleepSync mit Garmin Connect, damit deine Schlafdaten synchronisiert werden können.")
             .setPositiveButton(if(linked) "Schlafdaten laden" else "Verbinden") { _,_ -> if(linked) testRead() else showGarminLogin() }
             .setNeutralButton(if(linked) "Trennen" else null) { _,_ -> garminClient.logout(); refresh(); showSettings() }
             .setNegativeButton("Schließen",null)
-            .show()
+            .create()
+        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.show()
     }
 
     private fun styleSleepSyncDialog(dialog:AlertDialog) {
