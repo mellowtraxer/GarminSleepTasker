@@ -567,8 +567,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             orientation=LinearLayout.VERTICAL;setPadding(dp(15),dp(14),dp(15),dp(12))
             addView(TextView(this@MainActivity).apply{text="$icon   ${label.uppercase()}";textSize=11f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
             addView(valueText)
-            if(series.size>=2) addView(MetricSparklineView(this@MainActivity,series,tone,label,valueText).apply{layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(4),0,0)}})
-            else if(sleep!=null && label in listOf("Leicht","Tief","REM","Wach")) addView(StageNeonView(this@MainActivity,sleep.stageSeries,label,tone,sleep.startMs,sleep.endMs).apply{layoutParams=LinearLayout.LayoutParams(-1,dp(36)).apply{setMargins(0,dp(5),0,0)}})\n            else addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(3).toFloat();setColor(tone)};layoutParams=LinearLayout.LayoutParams(dp(38),dp(3)).apply{setMargins(0,dp(4),0,0)}})
+            if(series.size>=2) {
+                addView(MetricSparklineView(this@MainActivity,series,tone,label,valueText).apply {
+                    layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply { setMargins(0,dp(4),0,0) }
+                })
+            } else if(sleep!=null && label in listOf("Leicht","Tief","REM","Wach")) {
+                addView(StageNeonView(this@MainActivity,sleep.stageSeries,label,tone,sleep.startMs,sleep.endMs).apply {
+                    layoutParams=LinearLayout.LayoutParams(-1,dp(36)).apply { setMargins(0,dp(5),0,0) }
+                })
+            } else {
+                addView(View(this@MainActivity).apply {
+                    background=GradientDrawable().apply { cornerRadius=dp(3).toFloat(); setColor(tone) }
+                    layoutParams=LinearLayout.LayoutParams(dp(38),dp(3)).apply { setMargins(0,dp(4),0,0) }
+                })
+            }
         }
         return MaterialCardView(this).apply{
             radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(if(light) Color.rgb(248,250,255) else fill)
