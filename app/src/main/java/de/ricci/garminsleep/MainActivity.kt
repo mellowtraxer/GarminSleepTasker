@@ -104,6 +104,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private lateinit var actionsTitle: TextView
     private lateinit var actionsBox: LinearLayout
     private var lastSummary: SleepSummary? = null
+    private var sleepHistory: List<SleepSummary> = emptyList()
     private val nightBg = Color.rgb(5, 6, 14)
     private val cardBg = Color.argb(222, 10, 16, 36)
     private val accent = Color.rgb(139, 92, 246)
@@ -303,7 +304,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun testRead() = launch {
         status.text = "Lese Garmin-Schlaf…"
         try {
-            val s = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).latestGarminSleep() }
+            val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
+            sleepHistory = history
+            val s = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
             renderDashboard(s)
             refresh()
         } catch (t: Throwable) {
@@ -323,39 +326,40 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun showHistoryPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
-        pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte im Vergleich"
+        pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte · nach Kalenderwochen"
         sleepCard.removeAllViews(); sleepCard.background=null
-        val s=lastSummary
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(100,139,92,246); setCardBackgroundColor(Color.argb(180,12,16,31))
-            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(11),dp(14),dp(11))
-                addView(TextView(this@MainActivity).apply { text="⌚"; textSize=19f; setPadding(0,0,dp(9),0) })
-                addView(TextView(this@MainActivity).apply { text="Garmin Connect"; textSize=13f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                addView(TextView(this@MainActivity).apply { text="● SYNCHRONISIERT"; textSize=10f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD) })
-            })
-        })
-        sleepCard.addView(TextView(this).apply { text="LETZTE NACHT"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(16),0,dp(10)) })
-        if(s==null) {
-            sleepCard.addView(TextView(this).apply { text="Noch keine echte Nacht geladen."; textSize=14f; setTextColor(Color.rgb(170,180,205)); setPadding(dp(4),dp(16),0,dp(16)) })
-            return
-        }
         val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
         val dateFmt=DateTimeFormatter.ofPattern("EEE, d. MMM",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault())
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(22).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(100,120,105,220); setCardBackgroundColor(Color.argb(188,10,15,31))
-            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
-                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                    addView(TextView(this@MainActivity).apply { text="Heute · "+dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=14f; setTextColor(Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                    addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=17f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+        val weekFields=java.time.temporal.WeekFields.ISO
+        val nights=(if(sleepHistory.isNotEmpty()) sleepHistory else listOfNotNull(lastSummary)).sortedByDescending { it.endMs }
+        if(nights.isEmpty()){ sleepCard.addView(TextView(this).apply { text="Noch keine Garmin-Nächte geladen."; textSize=14f; setTextColor(Color.rgb(170,180,205)); setPadding(0,dp(18),0,dp(18)) }); return }
+        val grouped=nights.groupBy { s -> val z=Instant.ofEpochMilli(s.endMs).atZone(ZoneId.systemDefault()).toLocalDate(); (z.get(weekFields.weekBasedYear())*100)+z.get(weekFields.weekOfWeekBasedYear()) }
+        grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
+            val year=key/100; val kw=key%100; val avg=items.map{it.totalMin}.average().toLong()
+            val shell=MaterialCardView(this).apply { radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(115,91,176,255); setCardBackgroundColor(Color.argb(190,9,15,32)); layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))} }
+            val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+            val rows=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; visibility=View.GONE }
+            val head=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
+                val title=TextView(this@MainActivity).apply { text="KW "+kw+" · "+year; textSize=16f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) }
+                addView(title,LinearLayout.LayoutParams(0,-2,1f))
+                addView(TextView(this@MainActivity).apply { text="Ø "+(avg/60)+" h "+(avg%60)+" min  ·  "+items.size+" Nächte"; textSize=11f; setTextColor(Color.rgb(160,205,235)) })
+                addView(TextView(this@MainActivity).apply { text="  ▾"; textSize=18f; setTextColor(accent2) })
+                setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
+            }
+            items.sortedByDescending{it.endMs}.forEach { s ->
+                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(Color.argb(70,25,32,58))}
+                    addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
+                        addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                        addView(TextView(this@MainActivity).apply { text=(s.totalMin/60)+" h "+(s.totalMin%60)+" min"; textSize=14f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                    })
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(135,150,180)); setPadding(0,dp(2),0,dp(7)) })
+                    addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
+                        listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach { pair -> addView(View(this@MainActivity).apply { background=GradientDrawable().apply{cornerRadius=dp(4).toFloat();setColor(pair.second)} },LinearLayout.LayoutParams(0,dp(8),pair.first.toFloat()).apply{setMargins(0,0,dp(2),0)}) }
+                    })
                 })
-                addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=11f; setTextColor(Color.rgb(140,150,180)); setPadding(0,dp(3),0,dp(10)) })
-                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                    val vals=listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake)
-                    vals.filter { it.first>0 }.forEach { pair -> addView(View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(4).toFloat(); setColor(pair.second) }; layoutParams=LinearLayout.LayoutParams(0,dp(9),pair.first.toFloat()).apply { setMargins(0,0,dp(2),0) } }) }
-                })
-            })
-        })
-        sleepCard.addView(TextView(this).apply { text="Weitere Nächte erscheinen hier, sobald wir eine echte lokale Verlaufsspeicherung eingebaut haben."; textSize=11f; setTextColor(Color.rgb(130,140,170)); setPadding(dp(3),dp(12),dp(3),0) })
+            }
+            box.addView(head); box.addView(rows); shell.addView(box); sleepCard.addView(shell)
+        }
     }
     private fun showCalendarPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
