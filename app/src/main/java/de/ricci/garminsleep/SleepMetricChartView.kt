@@ -53,8 +53,7 @@ class SleepMetricChartView(
     private fun updateSelection(xPos: Float) {
         val d=resources.displayMetrics.density; val l=36*d; val r=width-10*d
         val fraction=((xPos-l)/(r-l)).coerceIn(0f,1f)
-        val target=startMs+((endMs-startMs)*fraction).toLong()
-        selectedIndex=points.indices.minByOrNull { kotlin.math.abs(points[it].timeMs-target) }
+        selectedIndex=((fraction*(points.size-1)).toInt()).coerceIn(0,points.lastIndex)
         selectedAtMs=selectedIndex?.let { points[it].timeMs }
         touchX=xPos
     }
@@ -78,7 +77,7 @@ class SleepMetricChartView(
         if(points.size >= 2) {
             val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
             points.forEachIndexed { i,pt ->
-                val x=l+(r-l)*((pt.timeMs-startMs).toDouble()/(endMs-startMs).coerceAtLeast(1)).coerceIn(0.0,1.0).toFloat()
+                val x=l+(r-l)*(i.toFloat()/(points.size-1))
                 val normalized=((pt.value-minV)/span).toFloat()
                 val y=bottom-(bottom-top)*(.08f+normalized*.84f)
                 if(i==0) path.moveTo(x,y) else path.lineTo(x,y)
@@ -92,7 +91,7 @@ class SleepMetricChartView(
             val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
             val step=(points.size/24).coerceAtLeast(1)
             points.forEachIndexed { i,pt -> if(i%step==0) {
-                val x=l+(r-l)*((pt.timeMs-startMs).toDouble()/(endMs-startMs).coerceAtLeast(1)).coerceIn(0.0,1.0).toFloat()
+                val x=l+(r-l)*(i.toFloat()/(points.size-1))
                 val y=bottom-(bottom-top)*(.08f+((pt.value-minV)/span).toFloat()*.84f)
                 c.drawCircle(x,y,1.35f*d,pointPaint)
             }}
@@ -121,7 +120,7 @@ class SleepMetricChartView(
         }
         selectedIndex?.takeIf { dragging && it in points.indices && points.size>=2 }?.let { idx ->
             val pt=points[idx]; val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
-            val x=l+(r-l)*((pt.timeMs-startMs).toDouble()/(endMs-startMs).coerceAtLeast(1)).coerceIn(0.0,1.0).toFloat()
+            val x=l+(r-l)*(i.toFloat()/(points.size-1))
             val y=bottom-(bottom-top)*(.08f+((pt.value-minV)/span).toFloat()*.84f)
             p.strokeWidth=d; p.color=Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)); c.drawLine(x,top,x,bottom,p)
             p.style=Paint.Style.FILL; p.color=tone; c.drawCircle(x,y,5*d,p); p.color=Color.WHITE; c.drawCircle(x,y,2*d,p)
