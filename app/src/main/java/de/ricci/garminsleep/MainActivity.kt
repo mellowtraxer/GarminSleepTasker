@@ -42,6 +42,10 @@ import androidx.health.connect.client.records.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 private class NightLandscapeView(context: android.content.Context) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
@@ -195,8 +199,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
     private val permissionLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { refresh() }
 
+    private fun scheduleBackgroundSleepSync(){
+        val request=PeriodicWorkRequestBuilder<SleepSyncWorker>(30,TimeUnit.MINUTES).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork("sleepsync_background",ExistingPeriodicWorkPolicy.UPDATE,request)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        scheduleBackgroundSleepSync()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
