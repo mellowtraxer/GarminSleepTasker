@@ -495,6 +495,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(android.widget.Switch(this@MainActivity).apply{isChecked=calendarAutoEnabled();setOnCheckedChangeListener{_,checked->calendarPrefs().edit().putBoolean("auto_enabled",checked).apply();showCalendarPlaceholder()}})
             })
         })
+        sleepCard.addView(MaterialButton(this).apply{
+            text="⚡  JETZT EINTRAGEN";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
+            setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(Color.rgb(64,63,205))
+            cornerRadius=dp(18);layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}
+            setOnClickListener{
+                val latest=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
+                when {
+                    latest==null -> { text="⚠  Keine Nacht vorhanden" }
+                    !calendarPermissionReady() -> requestCalendarPermission()
+                    calendarPrefs().getLong("calendar_id",-1)<0 -> chooseCalendar()
+                    calendarEventExists(latest) -> { text="✓  BEREITS EINGETRAGEN";setTextColor(Color.rgb(120,245,190)) }
+                    insertNightIntoCalendar(latest) -> { text="✓  EINGETRAGEN";setTextColor(Color.rgb(120,245,190)) }
+                    else -> text="⚠  Eintrag fehlgeschlagen"
+                }
+            }
+        })
         sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
             val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ›";textSize=16f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(Color.argb(150,45,29,73))};isClickable=true;setOnClickListener{chooseCalendar()}})
             addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere Android-Kalender können hier später ausgewählt werden.";textSize=11f;setTextColor(Color.rgb(165,175,205));setPadding(0,dp(10),0,0)})
