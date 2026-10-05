@@ -420,6 +420,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     private fun showHistoryPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
+        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val light=theme=="light" || (theme=="system" && !sysDark)
+        val primary=if(light) Color.rgb(24,29,48) else Color.WHITE
+        val secondary=if(light) Color.rgb(83,96,123) else Color.rgb(160,205,235)
+        val muted=if(light) Color.rgb(104,116,143) else Color.rgb(135,150,180)
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         viewingHistoryNight=false
         pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte · nach Kalenderwochen"
@@ -432,23 +438,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val grouped=nights.groupBy { s -> val z=Instant.ofEpochMilli(s.endMs).atZone(ZoneId.systemDefault()).toLocalDate(); (z.get(weekFields.weekBasedYear())*100)+z.get(weekFields.weekOfWeekBasedYear()) }
         grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
             val year=key/100; val kw=key%100; val avg=items.map{it.totalMin}.average().toLong()
-            val shell=MaterialCardView(this).apply { radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(115,91,176,255); setCardBackgroundColor(Color.argb(190,9,15,32)); layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))} }
+            val shell=MaterialCardView(this).apply { radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(115,91,176,255); setCardBackgroundColor(if(light) Color.argb(224,247,250,255) else Color.argb(190,9,15,32)); layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))} }
             val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
             val rows=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; visibility=View.GONE }
             val head=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
-                val title=TextView(this@MainActivity).apply { text="KW "+kw+" · "+year; textSize=16f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) }
+                val title=TextView(this@MainActivity).apply { text="KW "+kw+" · "+year; textSize=16f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) }
                 addView(title,LinearLayout.LayoutParams(0,-2,1f))
-                addView(TextView(this@MainActivity).apply { text="Ø "+(avg/60)+" h "+(avg%60)+" min  ·  "+items.size+" Nächte"; textSize=11f; setTextColor(Color.rgb(160,205,235)) })
+                addView(TextView(this@MainActivity).apply { text="Ø "+(avg/60)+" h "+(avg%60)+" min  ·  "+items.size+" Nächte"; textSize=11f; setTextColor(secondary) })
                 addView(TextView(this@MainActivity).apply { text="  ▾"; textSize=18f; setTextColor(accent2) })
                 setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
             }
             items.sortedByDescending{it.endMs}.forEach { s ->
-                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(Color.argb(70,25,32,58))}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
+                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(if(light) Color.argb(92,224,237,250) else Color.argb(70,25,32,58))}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                        addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                        addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                        addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(if(light) Color.rgb(42,51,75) else Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                        addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) })
                     })
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(Color.rgb(135,150,180)); setPadding(0,dp(2),0,dp(7)) })
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(muted); setPadding(0,dp(2),0,dp(7)) })
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                         listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach { pair -> val bar=View(this@MainActivity).apply { background=GradientDrawable().apply{cornerRadius=dp(4).toFloat();setColor(pair.second)} }; addView(bar,LinearLayout.LayoutParams(0,dp(8),pair.first.toFloat()).apply{setMargins(0,0,dp(2),0)}) }
                     })
