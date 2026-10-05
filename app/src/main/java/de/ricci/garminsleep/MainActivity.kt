@@ -423,28 +423,40 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun showCalendarPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
-        pageTitle.text="Kalendereintrag"; pageSubtitle.text="So landet deine Nacht im Kalender"
+        pageTitle.text="Kalender"; pageSubtitle.text="Deine Nächte · automatisch dort, wo du sie willst"
         sleepCard.removeAllViews(); sleepCard.background=null
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(106,70,220); setCardBackgroundColor(Color.rgb(24,17,48))
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(17),dp(18),dp(17))
-                addView(TextView(this@MainActivity).apply { text="🗓  GARMIN SCHLAF  💤"; textSize=13f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD) })
-                addView(TextView(this@MainActivity).apply { text="00:29 – 09:19 Uhr"; textSize=14f; setTextColor(Color.rgb(174,180,207)); setPadding(0,dp(5),0,dp(14)) })
-                addView(TextView(this@MainActivity).apply { text="🌙  Gesamt   8 h 50 min\n🌙  Leicht     4 h 40 min\n🌑  Tief          1 h 38 min\n🧠  REM         1 h 46 min\n👀  Wach        0 h 46 min"; textSize=15f; setTextColor(Color.WHITE); setPadding(0,0,0,dp(12)) })
-                addView(TextView(this@MainActivity).apply { text="❤️  Ø Puls 71,4 bpm     🩸 SpO₂ 98,0 %\n🫁  Atmung 15,0/min    💓 HRV 33,0 ms"; textSize=13f; setTextColor(Color.rgb(205,190,235)) })
+        fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit)=MaterialCardView(this).apply{
+            radius=dp(23).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(Color.argb(225,12,18,40))
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
+            addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
+                addView(TextView(this@MainActivity).apply{text=title;textSize=12f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
+                addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(Color.rgb(150,165,195));setPadding(0,dp(3),0,dp(12))});body()
+            })
+        }
+        val s=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
+        sleepCard.addView(card("✦  NÄCHSTER KALENDEREINTRAG","Vorschau deiner synchronisierten Nacht",accent2){
+            if(s!=null){val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault());val fmt={m:Long->(m/60).toString()+" h "+(m%60).toString()+" min"}
+                addView(TextView(this@MainActivity).apply{text="🌙  "+fmt(s.totalMin)+"     "+tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs));textSize=22f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)})
+                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(13),0,dp(8));listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach{q->addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(q.second)}},LinearLayout.LayoutParams(0,dp(9),q.first.toFloat()).apply{setMargins(0,0,dp(2),0)})}})
+                addView(TextView(this@MainActivity).apply{text="Leicht "+fmt(s.lightMin)+"  ·  Tief "+fmt(s.deepMin)+"  ·  REM "+fmt(s.remMin)+"  ·  Wach "+fmt(s.awakeMin);textSize=11f;setTextColor(Color.rgb(190,200,225))})
+            } else addView(TextView(this@MainActivity).apply{text="Noch keine Nacht synchronisiert";setTextColor(Color.WHITE)})
+        })
+        sleepCard.addView(card("⚡  AUTOMATIK","Neue Nächte selbstständig eintragen",Color.rgb(74,224,181)){
+            addView(LinearLayout(this@MainActivity).apply{gravity=android.view.Gravity.CENTER_VERTICAL
+                addView(TextView(this@MainActivity).apply{text="Automatisch eintragen\nAktiv";textSize=14f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                addView(android.widget.Switch(this@MainActivity).apply{isChecked=true})
             })
         })
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(22).toFloat(); strokeWidth=dp(1); strokeColor=Color.rgb(33,104,126); setCardBackgroundColor(Color.rgb(8,31,42))
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
-                addView(TextView(this@MainActivity).apply { text="⚡"; textSize=24f; layoutParams=LinearLayout.LayoutParams(dp(42),-2) })
-                addView(TextView(this@MainActivity).apply { text="AUTOMATISCH EINTRAGEN\nAktiv · Garmin Schlaf"; textSize=13f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                addView(TextView(this@MainActivity).apply { text="●"; textSize=25f; setTextColor(Color.rgb(86,230,166)) })
-            })
-            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
+        sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
+            addView(TextView(this@MainActivity).apply{text="Garmin Schlaf  ›";textSize=16f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(Color.argb(150,45,29,73))}})
+            addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere Android-Kalender können hier später ausgewählt werden.";textSize=11f;setTextColor(Color.rgb(165,175,205));setPadding(0,dp(10),0,0)})
         })
+        sleepCard.addView(card("◷  LETZTE EINTRÄGE","Zuletzt synchronisierte Nächte",stageLight){
+            val recent=sleepHistory.sortedByDescending{it.endMs}.take(4)
+            if(recent.isEmpty()) addView(TextView(this@MainActivity).apply{text="Noch keine Einträge";setTextColor(Color.rgb(180,190,215))})
+            recent.forEach{s0->val df=DateTimeFormatter.ofPattern("EEE, dd.MM.",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault());addView(TextView(this@MainActivity).apply{text=df.format(Instant.ofEpochMilli(s0.endMs))+"     "+(s0.totalMin/60)+" h "+(s0.totalMin%60)+" min     ✓";textSize=14f;setTextColor(Color.WHITE);setPadding(dp(4),dp(10),dp(4),dp(10))})}
+        })
+        sleepCard.addView(TextView(this).apply{text="●  Bereit · nächster Eintrag nach der nächsten synchronisierten Nacht";textSize=11f;setTextColor(Color.rgb(88,220,183));gravity=android.view.Gravity.CENTER;setPadding(0,dp(4),0,dp(12))})
     }
     private fun showSettings() {
         val d = resources.displayMetrics.density
