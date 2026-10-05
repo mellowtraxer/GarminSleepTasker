@@ -120,7 +120,7 @@ class SleepMetricChartView(
         }
         selectedIndex?.takeIf { dragging && it in points.indices && points.size>=2 }?.let { idx ->
             val pt=points[idx]; val minV=points.minOf { it.value }; val maxV=points.maxOf { it.value }; val span=(maxV-minV).coerceAtLeast(1.0)
-            val x=l+(r-l)*(i.toFloat()/(points.size-1))
+            val x=l+(r-l)*(idx.toFloat()/(points.size-1))
             val y=bottom-(bottom-top)*(.08f+((pt.value-minV)/span).toFloat()*.84f)
             p.strokeWidth=d; p.color=Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)); c.drawLine(x,top,x,bottom,p)
             p.style=Paint.Style.FILL; p.color=tone; c.drawCircle(x,y,5*d,p); p.color=Color.WHITE; c.drawCircle(x,y,2*d,p)
