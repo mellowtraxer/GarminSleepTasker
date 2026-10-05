@@ -667,7 +667,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0) }
         val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
         val selectedTheme=prefs.getString("theme","dark") ?: "dark"
-        val selectedThemeLabel=when(selectedTheme) { "light"->"Hell"; "system"->"Automatisch"; else->"OLED Night" }
+        val selectedThemeLabel=when(selectedTheme) { "light"->"Neon Sunrise"; "system"->"Automatisch"; else->"OLED Night" }
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
@@ -780,7 +780,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val cached=sleepHistory.size
         AlertDialog.Builder(this)
             .setTitle("Datenschutz & Diagnose")
-            .setMessage("SleepSync verarbeitet deine Schlaf- und Gesundheitsdaten lokal auf diesem Gerät. Garmin-Anmeldedaten werden nicht gespeichert; gespeichert werden nur die für die Verbindung benötigten OAuth-Tokens.\n\nLokaler Verlauf: $cached Nächte\nPaket: $packageName\n\nÜber „Diagnose“ kannst du die installierte App-Signatur anzeigen.")
+            .setMessage("SleepSync verarbeitet deine Schlaf- und Gesundheitsdaten lokal auf diesem Gerät. Garmin-Anmeldedaten werden nicht gespeichert; gespeichert werden nur die für die Verbindung benötigten OAuth-Tokens.\n\nLokaler Verlauf: $cached Nächte\nPaket: $packageName\n\nUnter Diagnose findest du technische Informationen zur installierten App.")
             .setPositiveButton("Diagnose") { _,_ -> showAppSignature() }
             .setNeutralButton("Verlauf löschen") { _,_ ->
                 AlertDialog.Builder(this).setTitle("Lokalen Verlauf löschen?").setMessage("Der lokal zwischengespeicherte SleepSync-Verlauf wird gelöscht. Daten bei Garmin, Health Connect und im Kalender bleiben erhalten.").setPositiveButton("Löschen") { _,_ -> getSharedPreferences("sleepsync_history",MODE_PRIVATE).edit().clear().apply(); sleepHistory=emptyList(); showSettings() }.setNegativeButton("Abbrechen",null).show()
@@ -797,7 +797,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         AlertDialog.Builder(this)
             .setTitle("Über SleepSync")
             .setMessage("SleepSync\nDein Schlaf. Klar, automatisch, im Kalender.\n\nEntwickelt von Riccardo Hoff\n© 2026\n\nVersion: $versionName\nBuild: $versionCode\nPaket: $packageName\nInstallierter Build: $installed\n\nGarmin → Health Connect → SleepSync → Kalender\n\nSleepSync ist ein unabhängiges Projekt und steht in keiner offiziellen Verbindung zu Garmin.")
-            .setPositiveButton("OK",null)
+            .setPositiveButton("Schließen",null)
             .setNeutralButton("App-Signatur") { _,_ -> showAppSignature() }
             .show()
     }
@@ -806,7 +806,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         pageTitle.text="Wähle dein Design"; pageSubtitle.text="SleepSync so, wie du es magst"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
-        sleepCard.addView(TextView(this).apply { text="‹  Zurück zu Einstellungen"; textSize=12f; setTextColor(accent); setPadding(dp(2),dp(8),0,dp(18)); setOnClickListener { showSettings() } })
+        sleepCard.addView(TextView(this).apply { text="‹  Zurück zu Einstellungen"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(18)); setOnClickListener { showSettings() } })
         val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE); val current=prefs.getString("theme","dark") ?: "dark"
         val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         fun choice(key:String,title:String,sub:String,icon:String,bg:Int):MaterialCardView = MaterialCardView(this).apply {
@@ -822,10 +822,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setOnClickListener { prefs.edit().putString("theme",key).apply(); recreate() }
         }
         row.addView(choice("dark","Dunkel","OLED Night","🌙",Color.rgb(10,15,34)))
-        row.addView(choice("light","Hell","Weiß","☀️",Color.rgb(239,242,250)))
+        row.addView(choice("light","Hell","Neon Sunrise","☀️",Color.rgb(239,242,250)))
         row.addView(choice("system","Automatisch","System","◐",Color.rgb(24,27,45)))
         sleepCard.addView(row)
-        sleepCard.addView(TextView(this).apply { text="Die Auswahl wird gespeichert. Die vollständige Theme-Umschaltung wird als nächster Schritt auf alle SleepSync-Flächen angewendet."; textSize=11f; setTextColor(Color.rgb(155,165,195)); setPadding(dp(8),dp(18),dp(8),0) })
+        sleepCard.addView(TextView(this).apply { text="Deine Auswahl gilt für die gesamte App."; textSize=11f; setTextColor(Color.rgb(155,165,195)); setPadding(dp(8),dp(18),dp(8),0) })
     }
 
     private fun sleepStageStrip(s: SleepSummary): LinearLayout {
