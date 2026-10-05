@@ -768,27 +768,33 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
     private fun showStageTimeline(label:String, tone:Int, minutes:Long, s:SleepSummary) {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
+        val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
+        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val light=theme=="light" || (theme=="system" && !sysDark)
+        val primary=if(light) Color.rgb(22,27,45) else Color.WHITE
+        val secondary=if(light) Color.rgb(78,88,112) else Color.rgb(165,175,205)
+        val timeColor=if(light) Color.rgb(91,104,132) else Color.rgb(135,147,180)
         pageTitle.text="Schlafphasen"; pageSubtitle.text=label+" · Verlauf dieser Nacht"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
         sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
         val intervals=s.stageSeries.filter { it.stageLabel==label }
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=tone; setCardBackgroundColor(Color.argb(190,9,15,31))
+            radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=tone; setCardBackgroundColor(if(light) Color.argb(238,246,250,255) else Color.argb(190,9,15,31))
             addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
                 addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
-                addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(4)) })
+                addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(4)) })
                 val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
-                addView(TextView(this@MainActivity).apply { text=pct.toString()+" % der Nacht · "+intervals.size+" Abschnitte"; textSize=11f; setTextColor(Color.rgb(165,175,205)); setPadding(0,0,0,dp(14)) })
+                addView(TextView(this@MainActivity).apply { text=pct.toString()+" % der Nacht · "+intervals.size+" Abschnitte"; textSize=11f; setTextColor(secondary); setPadding(0,0,0,dp(14)) })
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                     val duration=(s.endMs-s.startMs).coerceAtLeast(1); var cursor=s.startMs
-                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(if(active) tone else Color.argb(38,120,130,160)) }; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 18),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(dp(1),0,dp(1),0) } }
+                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(if(active) tone else if(light) Color.argb(72,120,135,165) else Color.argb(38,120,130,160)) }; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 18),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(dp(1),0,dp(1),0) } }
                     intervals.sortedBy { it.startMs }.forEach { st -> if(st.startMs>cursor) addView(seg(st.startMs-cursor,false)); addView(seg(st.endMs-st.startMs,true)); cursor=st.endMs }; if(cursor<s.endMs) addView(seg(s.endMs-cursor,false))
                 })
                 val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,0)
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(Color.rgb(135,147,180)); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2)); textSize=10f; gravity=android.view.Gravity.CENTER; setTextColor(Color.rgb(135,147,180)); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; gravity=android.view.Gravity.END; setTextColor(Color.rgb(135,147,180)); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(timeColor); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2)); textSize=10f; gravity=android.view.Gravity.CENTER; setTextColor(timeColor); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
+                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; gravity=android.view.Gravity.END; setTextColor(timeColor); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
                 })
             })
         })
