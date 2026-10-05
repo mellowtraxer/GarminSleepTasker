@@ -347,7 +347,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
             }
             items.sortedByDescending{it.endMs}.forEach { s ->
-                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(Color.argb(70,25,32,58))}
+                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(Color.argb(70,25,32,58))}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                         addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                         addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
@@ -361,6 +361,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             box.addView(head); box.addView(rows); shell.addView(box); sleepCard.addView(shell)
         }
     }
+    private fun showHistoryNight(s: SleepSummary) {
+        pageTitle.text="Nacht"
+        pageSubtitle.text=java.time.format.DateTimeFormatter.ofPattern("EEEE, d. MMMM yyyy",java.util.Locale.GERMAN).withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))
+        renderDashboard(s)
+    }
+
     private fun showCalendarPlaceholder() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
