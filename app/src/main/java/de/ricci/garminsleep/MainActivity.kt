@@ -1024,10 +1024,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun dashboardGlass(radius:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(78,255,255,255),Color.argb(30,176,215,255),Color.argb(22,135,105,205),Color.argb(54,255,190,226))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(1),Color.argb(82,104,156,215)) },
-        GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(205,255,255,255),Color.argb(68,255,255,255),Color.TRANSPARENT,Color.argb(58,61,100,174))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(1),Color.argb(150,255,255,255)) },
-        GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(190,220,255,255),Color.argb(38,255,255,255),Color.TRANSPARENT,Color.argb(42,157,122,255),Color.argb(165,238,174,255))).apply { cornerRadius=dp(radius).toFloat() },
-        GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(125,53,116,215),Color.TRANSPARENT,Color.argb(118,255,158,215))).apply { cornerRadius=dp(radius).toFloat() }
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(72,255,255,255),Color.argb(22,190,218,245),Color.argb(16,165,145,218),Color.argb(38,245,214,238))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(1),Color.argb(72,120,164,205)) },
+        GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(190,255,255,255),Color.argb(58,255,255,255),Color.TRANSPARENT,Color.argb(48,70,105,165))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(1),Color.argb(138,255,255,255)) },
+        GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(145,230,255,255),Color.argb(26,255,255,255),Color.TRANSPARENT,Color.argb(24,175,155,245),Color.argb(92,244,204,245))).apply { cornerRadius=dp(radius).toFloat() },
+        GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(72,72,132,205),Color.TRANSPARENT,Color.argb(68,245,190,225))).apply { cornerRadius=dp(radius).toFloat() }
     ))
 
     private fun renderDashboard(s: SleepSummary) {
