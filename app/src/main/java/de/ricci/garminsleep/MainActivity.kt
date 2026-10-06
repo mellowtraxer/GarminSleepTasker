@@ -1065,8 +1065,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
             addView(TextView(this@MainActivity).apply {
                 text = "$quality%\nEFFIZIENZ"; gravity = android.view.Gravity.CENTER; textSize = 12f; setTypeface(typeface, Typeface.BOLD)
-                setTextColor(Color.WHITE); setPadding(dp(14),dp(12),dp(14),dp(12))
-                background = GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(22,94,120),Color.rgb(77,45,145))).apply { cornerRadius=dp(22).toFloat(); setStroke(dp(1),Color.rgb(83,205,229)) }
+                setTextColor(if(light) Color.rgb(36,58,96) else Color.WHITE); setPadding(dp(14),dp(12),dp(14),dp(12))
+                background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(232,244,252,255),Color.argb(226,242,235,255))).apply { cornerRadius=dp(22).toFloat(); setStroke(dp(1),Color.rgb(116,126,224)) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(22,94,120),Color.rgb(77,45,145))).apply { cornerRadius=dp(22).toFloat(); setStroke(dp(1),Color.rgb(83,205,229)) }
             })
         })
         sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(18),0,dp(8)) })
