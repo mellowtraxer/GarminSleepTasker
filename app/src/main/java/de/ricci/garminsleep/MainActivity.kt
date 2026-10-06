@@ -928,7 +928,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }
         return MaterialCardView(this).apply{
-            radius=dp(21).toFloat();cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat();strokeWidth=if(light) 0 else dp(1);strokeColor=tone;setCardBackgroundColor(if(light) Color.TRANSPARENT else fill);if(light) foreground=dashboardGlass(21,::dp)
+            radius=dp(21).toFloat();cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat();strokeWidth=if(light) 0 else dp(1);strokeColor=tone;setCardBackgroundColor(Color.TRANSPARENT);if(light) background=dashboardGlass(21,::dp) else setCardBackgroundColor(fill)
             layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))}
             addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
@@ -1104,7 +1104,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
         val remPct = (s.remMin * 100 / sleepOnly).toInt()
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(20).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(116,91,207); setCardBackgroundColor(if(light) Color.TRANSPARENT else Color.rgb(19,15,39)); if(light){ foreground=dashboardGlass(20,::dp); cardElevation=dp(12).toFloat() }
+            radius=dp(20).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=dashboardGlass(20,::dp); cardElevation=dp(12).toFloat() } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
                 addView(TextView(this@MainActivity).apply { text="SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(88,74,150) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
@@ -1155,7 +1155,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         sleepCard.addView(vitals)
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=if(light) dp(10).toFloat() else 0f; strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(if(light) Color.TRANSPARENT else Color.rgb(7,25,31)); if(light) foreground=dashboardGlass(18,::dp)
+            radius=dp(18).toFloat(); cardElevation=if(light) dp(10).toFloat() else 0f; strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=dashboardGlass(18,::dp) else setCardBackgroundColor(Color.rgb(7,25,31))
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(10),dp(14),dp(10))
@@ -1174,7 +1174,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(if(light) Color.TRANSPARENT else Color.rgb(19,15,39)); if(light) foreground=dashboardGlass(24,::dp)
+            radius=dp(24).toFloat(); cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=dashboardGlass(24,::dp) else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
                 addView(TextView(this@MainActivity).apply {
