@@ -814,16 +814,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     onSuccess={ latest ->
                         val remote=latest.getLong("versionCode")
                         val remoteName=latest.optString("versionName","Build $remote")
+                        val apkUrl=latest.optString("apk")
                         val newer=remote>current
-                        val dialog=AlertDialog.Builder(this@MainActivity)
+                        val builder=AlertDialog.Builder(this@MainActivity)
                             .setTitle(if(newer) "Update verfügbar ✨" else "SleepSync ist aktuell ✓")
                             .setMessage(if(newer)
                                 "Installiert: $currentName (Build $current)\nNeu: $remoteName (Build $remote)\n\nEine neue SleepSync-Version ist verfügbar."
                             else
                                 "Installiert: $currentName (Build $current)\nNeuester Build: $remoteName (Build $remote)\n\nDu verwendest bereits die aktuelle Version."
                             )
-                            .setPositiveButton("OK",null)
-                            .create()
+                        if(newer && apkUrl.isNotBlank()) {
+                            builder.setPositiveButton("HERUNTERLADEN & INSTALLIEREN") { _,_ -> downloadPreviewUpdate(apkUrl,remoteName) }
+                            builder.setNegativeButton("SPÄTER",null)
+                        } else builder.setPositiveButton("OK",null)
+                        val dialog=builder.create()
                         dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
                         dialog.show()
                     },
@@ -839,6 +843,31 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 )
             }
         }
+    }
+
+    private fun downloadPreviewUpdate(apkUrl:String,versionName:String) {
+        val request=android.app.DownloadManager.Request(android.net.Uri.parse(apkUrl))
+            .setTitle("SleepSync $versionName")
+            .setDescription("Update wird heruntergeladen …")
+            .setMimeType("application/vnd.android.package-archive")
+            .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalFilesDir(this,android.os.Environment.DIRECTORY_DOWNLOADS,"SleepSync-update.apk")
+        val manager=getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
+        val id=manager.enqueue(request)
+        val receiver=object:android.content.BroadcastReceiver(){
+            override fun onReceive(context:android.content.Context,intent:android.content.Intent){
+                if(intent.getLongExtra(android.app.DownloadManager.EXTRA_DOWNLOAD_ID,-1L)!=id)return
+                unregisterReceiver(this)
+                val uri=manager.getUriForDownloadedFile(id) ?: return
+                val install=android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri,"application/vnd.android.package-archive")
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(install)
+            }
+        }
+        androidx.core.content.ContextCompat.registerReceiver(this,receiver,android.content.IntentFilter(android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE),androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
+        android.widget.Toast.makeText(this,"SleepSync-Update wird heruntergeladen …",android.widget.Toast.LENGTH_LONG).show()
     }
 
     private fun showGarminSettings() {
