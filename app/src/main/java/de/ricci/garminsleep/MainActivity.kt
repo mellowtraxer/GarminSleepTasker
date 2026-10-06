@@ -760,7 +760,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("⚡","Automatik","Hintergrund-Sync & Kalender",stageAwake) { showAutomationSettings() }
         setting("✦","Darstellung","$selectedThemeLabel · SleepSync",accent) { showAppearanceSettings() }
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight) { showPrivacySettings() }
-        setting("↻","Updates","Nach neuer SleepSync-Version suchen",Color.rgb(70,205,225)) { checkForPreviewUpdate() }\n        setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
+        setting("↻","Updates","Nach neuer SleepSync-Version suchen",Color.rgb(70,205,225)) { checkForPreviewUpdate() }
+        setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
         sleepCard.addView(settingsGrid)
         actionsTitle.text="DIAGNOSE"; actionsTitle.setTextColor(if(settingsLight) Color.rgb(98,112,142) else stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
         actionsTitle.setPadding(0,dp(14),0,dp(4))
