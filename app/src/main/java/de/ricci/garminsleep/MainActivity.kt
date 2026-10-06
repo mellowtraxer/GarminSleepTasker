@@ -760,7 +760,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("⚡","Automatik","Hintergrund-Sync & Kalender",stageAwake) { showAutomationSettings() }
         setting("✦","Darstellung","$selectedThemeLabel · SleepSync",accent) { showAppearanceSettings() }
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight) { showPrivacySettings() }
-        setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
+        setting("↻","Updates","Nach neuer SleepSync-Version suchen",Color.rgb(70,205,225)) { checkForPreviewUpdate() }\n        setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
         sleepCard.addView(settingsGrid)
         actionsTitle.text="DIAGNOSE"; actionsTitle.setTextColor(if(settingsLight) Color.rgb(98,112,142) else stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
         actionsTitle.setPadding(0,dp(14),0,dp(4))
@@ -784,6 +784,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setTextColor(if(settingsLight) Color.argb(135,58,72,105) else Color.argb(125,175,185,215))
             setPadding(0,dp(28),0,dp(24))
         })
+    }
+
+    private fun checkForPreviewUpdate() {
+        val info=packageManager.getPackageInfo(packageName,0)
+        val current=info.longVersionCode
+        val currentName=info.versionName ?: "unbekannt"
+        val dialog=AlertDialog.Builder(this)
+            .setTitle("SleepSync Updates")
+            .setMessage("Installiert: $currentName\nBuild: $current\n\n✓ Update-Checker ist bereit.\n\nIm nächsten Schritt verbinden wir ihn mit der Preview-Updatequelle. Dein privates GitHub-Token wird dabei nicht in der App gespeichert.")
+            .setPositiveButton("OK",null)
+            .create()
+        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.show()
     }
 
     private fun showGarminSettings() {
