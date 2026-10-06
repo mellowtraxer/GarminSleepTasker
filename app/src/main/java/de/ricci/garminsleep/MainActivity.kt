@@ -345,11 +345,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
         val cert = info.signingInfo?.apkContentsSigners?.firstOrNull()?.toByteArray()
         val sha = cert?.let { MessageDigest.getInstance("SHA-256").digest(it).joinToString("") { b -> "%02x".format(b) } } ?: "unbekannt"
-        AlertDialog.Builder(this)
+        val dialog=AlertDialog.Builder(this)
             .setTitle("Installierte App-Signatur")
             .setMessage("Paket: $packageName\nVersion: ${info.longVersionCode}\nSHA-256:\n$sha")
-            .setPositiveButton("OK", null)
-            .show()
+            .setPositiveButton("Schließen", null)
+            .create()
+        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.show()
     }
 
     private fun showGarminLogin() {
