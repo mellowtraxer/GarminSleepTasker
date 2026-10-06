@@ -791,13 +791,54 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val info=packageManager.getPackageInfo(packageName,0)
         val current=info.longVersionCode
         val currentName=info.versionName ?: "unbekannt"
-        val dialog=AlertDialog.Builder(this)
+        val loading=AlertDialog.Builder(this)
             .setTitle("SleepSync Updates")
-            .setMessage("Installiert: $currentName\nBuild: $current\n\n✓ Update-Checker ist bereit.\n\nIm nächsten Schritt verbinden wir ihn mit der Preview-Updatequelle. Dein privates GitHub-Token wird dabei nicht in der App gespeichert.")
-            .setPositiveButton("OK",null)
+            .setMessage("Suche nach einer neuen Preview-Version …")
+            .setNegativeButton("Abbrechen",null)
             .create()
-        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
-        dialog.show()
+        loading.setOnShowListener { styleSleepSyncDialog(loading) }
+        loading.show()
+
+        launch(Dispatchers.IO) {
+            val result=runCatching {
+                val connection=java.net.URL("https://raw.githubusercontent.com/mellowtraxer/SleepSync-Updates/main/latest.json").openConnection() as java.net.HttpURLConnection
+                connection.connectTimeout=8000
+                connection.readTimeout=8000
+                connection.setRequestProperty("Cache-Control","no-cache")
+                connection.inputStream.bufferedReader().use { JSONObject(it.readText()) }
+            }
+            withContext(Dispatchers.Main) {
+                if(!loading.isShowing) return@withContext
+                loading.dismiss()
+                result.fold(
+                    onSuccess={ latest ->
+                        val remote=latest.getLong("versionCode")
+                        val remoteName=latest.optString("versionName","Build $remote")
+                        val newer=remote>current
+                        val dialog=AlertDialog.Builder(this@MainActivity)
+                            .setTitle(if(newer) "Update verfügbar ✨" else "SleepSync ist aktuell ✓")
+                            .setMessage(if(newer)
+                                "Installiert: $currentName (Build $current)\nNeu: $remoteName (Build $remote)\n\nEine neue SleepSync-Version ist verfügbar."
+                            else
+                                "Installiert: $currentName (Build $current)\nNeuester Build: $remoteName (Build $remote)\n\nDu verwendest bereits die aktuelle Version."
+                            )
+                            .setPositiveButton("OK",null)
+                            .create()
+                        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+                        dialog.show()
+                    },
+                    onFailure={
+                        val dialog=AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Update-Suche fehlgeschlagen")
+                            .setMessage("Die Preview-Updatequelle konnte gerade nicht erreicht werden. Bitte versuche es später noch einmal.")
+                            .setPositiveButton("OK",null)
+                            .create()
+                        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+                        dialog.show()
+                    }
+                )
+            }
+        }
     }
 
     private fun showGarminSettings() {
