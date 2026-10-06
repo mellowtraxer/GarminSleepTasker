@@ -271,7 +271,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageTitle.setTextColor(if(bootLight) Color.rgb(16,32,72) else Color.WHITE); pageTitle.textSize=31f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.025f
         pageTitle.background=null
         pageTitle.setPadding(0,0,0,0)
-        pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.clearShadowLayer()
+        pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(0f,0f,0f,Color.TRANSPARENT)
         status.setTextColor(if(bootLight) Color.rgb(31,100,119) else Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         brandGlow = View(this).apply {
