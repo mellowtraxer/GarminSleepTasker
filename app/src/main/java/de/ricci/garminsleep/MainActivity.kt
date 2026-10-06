@@ -943,7 +943,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val timeColor=if(light) Color.rgb(91,104,132) else Color.rgb(135,147,180)
         pageTitle.text="Schlafphasen"; pageSubtitle.text=label+" · Verlauf dieser Nacht"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
-        sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
+        sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
         val intervals=s.stageSeries.filter { it.stageLabel==label }
         sleepCard.addView(MaterialCardView(this).apply {
             radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=tone; setCardBackgroundColor(if(light) Color.argb(238,246,250,255) else Color.argb(190,9,15,31))
@@ -977,7 +977,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
         sleepCard.addView(TextView(this).apply {
-            text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(tone); setPadding(px(2),px(8),0,px(12))
+            text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(px(2),px(8),0,px(12))
             setOnClickListener { showOverview() }
         })
         fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>) =
