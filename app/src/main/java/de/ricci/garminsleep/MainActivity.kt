@@ -846,6 +846,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun downloadPreviewUpdate(apkUrl:String,versionName:String) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+            startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,android.net.Uri.parse("package:$packageName")))
+            android.widget.Toast.makeText(this,"Bitte „Aus dieser Quelle zulassen“ aktivieren und das Update danach erneut starten.",android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
         val request=android.app.DownloadManager.Request(android.net.Uri.parse(apkUrl))
             .setTitle("SleepSync $versionName")
             .setDescription("Update wird heruntergeladen …")
@@ -858,12 +863,28 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             override fun onReceive(context:android.content.Context,intent:android.content.Intent){
                 if(intent.getLongExtra(android.app.DownloadManager.EXTRA_DOWNLOAD_ID,-1L)!=id)return
                 unregisterReceiver(this)
-                val uri=manager.getUriForDownloadedFile(id) ?: return
-                val install=android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                    setDataAndType(uri,"application/vnd.android.package-archive")
-                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                val status=manager.query(android.app.DownloadManager.Query().setFilterById(id)).use { cursor ->
+                    if(cursor.moveToFirst()) cursor.getInt(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_STATUS)) else -1
                 }
-                startActivity(install)
+                if(status!=android.app.DownloadManager.STATUS_SUCCESSFUL){
+                    android.widget.Toast.makeText(this@MainActivity,"Update-Download fehlgeschlagen.",android.widget.Toast.LENGTH_LONG).show()
+                    return
+                }
+                val uri=manager.getUriForDownloadedFile(id) ?: run {
+                    android.widget.Toast.makeText(this@MainActivity,"Update-Datei konnte nicht geöffnet werden.",android.widget.Toast.LENGTH_LONG).show()
+                    return
+                }
+                val install=android.content.Intent(android.content.Intent.ACTION_INSTALL_PACKAGE).apply {
+                    data=uri
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    putExtra(android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE,true)
+                    putExtra(android.content.Intent.EXTRA_RETURN_RESULT,false)
+                }
+                try {
+                    startActivity(install)
+                } catch(e:Exception) {
+                    android.widget.Toast.makeText(this@MainActivity,"Android-Installer konnte nicht geöffnet werden.",android.widget.Toast.LENGTH_LONG).show()
+                }
             }
         }
         androidx.core.content.ContextCompat.registerReceiver(this,receiver,android.content.IntentFilter(android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE),androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
