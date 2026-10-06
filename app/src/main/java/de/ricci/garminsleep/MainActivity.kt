@@ -1053,7 +1053,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=dp(8).toFloat()
-            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, if(light) intArrayOf(Color.rgb(248,245,255),Color.rgb(229,241,255),Color.rgb(221,250,249)) else intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, if(light) intArrayOf(Color.argb(150,255,255,255),Color.argb(104,228,241,255),Color.argb(86,255,238,250)) else intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(if(light) dp(2) else dp(1),if(light) Color.argb(215,255,255,255) else Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
