@@ -946,7 +946,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
         val intervals=s.stageSeries.filter { it.stageLabel==label }
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); strokeWidth=dp(1); strokeColor=tone; setCardBackgroundColor(if(light) Color.argb(238,246,250,255) else Color.argb(190,9,15,31))
+            radius=dp(24).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=tone; setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=dashboardGlass(24,::dp); cardElevation=dp(14).toFloat() } else { setCardBackgroundColor(Color.argb(190,9,15,31)); cardElevation=dp(3).toFloat() }
             addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
                 addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
                 addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(4)) })
