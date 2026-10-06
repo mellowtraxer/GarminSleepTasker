@@ -67,19 +67,6 @@ private class MotionGlassDrawable(private val context:android.content.Context, p
         val b=bounds; if(b.isEmpty)return
         val d=context.resources.displayMetrics.density; val l=b.left.toFloat(); val t=b.top.toFloat(); val r=b.right.toFloat(); val bot=b.bottom.toFloat(); val w=b.width().toFloat(); val h=b.height().toFloat()
         fun rr(inset:Float,rad:Float)=Path().apply{addRoundRect(l+inset,t+inset,r-inset,bot-inset,rad,rad,Path.Direction.CW)}
-        c.save()
-        val shadowX=x*4.5f*d
-        val shadowY=(6f+y*3.5f)*d
-        p.style=Paint.Style.FILL; p.shader=null
-        p.setShadowLayer(12*d,shadowX,shadowY,Color.argb(78,8,18,42))
-        p.color=Color.argb(22,8,18,42)
-        c.drawRoundRect(l+7*d,t+7*d,r-7*d,bot-7*d,radius-7*d,radius-7*d,p)
-        p.clearShadowLayer()
-        p.setShadowLayer(4*d,shadowX*.4f,shadowY*.4f,Color.argb(88,10,18,38))
-        p.color=Color.argb(18,10,18,38)
-        c.drawRoundRect(l+4*d,t+4*d,r-4*d,bot-4*d,radius-4*d,radius-4*d,p)
-        p.clearShadowLayer()
-        c.restore()
         c.save(); c.clipPath(rr(0f,radius)); p.style=Paint.Style.FILL
         p.shader=LinearGradient(l,t,r,bot,intArrayOf(Color.argb(80,6,18,38),Color.argb(35,12,36,60),Color.argb(58,35,14,52),Color.argb(74,5,25,43)),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
         val glowX=l+w*(.5f+x*.48f); val glowY=t+h*(.5f+y*.34f)
@@ -1132,7 +1119,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(22).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(7).toFloat() else 0f
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(28).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(10).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             background = if(light) LayerDrawable(arrayOf(GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(78,255,255,255),Color.argb(30,176,215,255),Color.argb(22,135,105,205),Color.argb(54,255,190,226))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(82,104,156,215)) },GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(205,255,255,255),Color.argb(68,255,255,255),Color.TRANSPARENT,Color.argb(58,61,100,174))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(150,255,255,255)) },GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(190,220,255,255),Color.argb(38,255,255,255),Color.TRANSPARENT,Color.argb(42,157,122,255),Color.argb(165,238,174,255))).apply { cornerRadius=dp(30).toFloat() },GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(125,53,116,215),Color.TRANSPARENT,Color.argb(118,255,158,215))).apply { cornerRadius=dp(30).toFloat() },MotionGlassDrawable(this@MainActivity,dp(30).toFloat()))) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
