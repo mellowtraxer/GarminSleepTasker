@@ -298,10 +298,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(android.widget.ImageView(this@MainActivity).apply {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
                 setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
-                alpha=if(useLight) .34f else 1f
+                alpha=if(useLight) .62f else 1f
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
-                background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(72,255,255,255),Color.argb(28,240,247,255),Color.argb(58,225,245,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
+                background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(34,255,255,255),Color.argb(12,240,247,255),Color.argb(24,225,245,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
@@ -1053,7 +1053,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=dp(8).toFloat()
-            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, if(light) intArrayOf(Color.argb(150,255,255,255),Color.argb(104,228,241,255),Color.argb(86,255,238,250)) else intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(if(light) dp(2) else dp(1),if(light) Color.argb(215,255,255,255) else Color.rgb(107,82,190)) }
+            background = GradientDrawable(GradientDrawable.Orientation.TL_BR, if(light) intArrayOf(Color.argb(126,255,255,255),Color.argb(70,215,235,255),Color.argb(50,238,218,255),Color.argb(84,255,255,255)) else intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(if(light) dp(2) else dp(1),if(light) Color.argb(245,255,255,255) else Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
