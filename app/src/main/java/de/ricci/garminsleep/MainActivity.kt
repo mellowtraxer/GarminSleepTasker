@@ -65,7 +65,8 @@ private class RefractedDayDrawable(private val context:android.content.Context, 
         val b=bounds; if(b.isEmpty||bitmap.width<=0||bitmap.height<=0)return
         val w=b.width().toFloat(); val h=b.height().toFloat()
         val srcAspect=bitmap.width.toFloat()/bitmap.height; val dstAspect=w/h
-        val src=if(srcAspect>dstAspect){ val sw=bitmap.height*dstAspect; val x=(bitmap.width-sw)/2f; RectF(x,0f,x+sw,bitmap.height.toFloat()) } else { val sh=bitmap.width/dstAspect; val y=(bitmap.height-sh)/2f; RectF(0f,y,bitmap.width.toFloat(),y+sh) }
+        val srcF=if(srcAspect>dstAspect){ val sw=bitmap.height*dstAspect; val x=(bitmap.width-sw)/2f; RectF(x,0f,x+sw,bitmap.height.toFloat()) } else { val sh=bitmap.width/dstAspect; val y=(bitmap.height-sh)/2f; RectF(0f,y,bitmap.width.toFloat(),y+sh) }
+        val src=android.graphics.Rect(srcF.left.toInt(),srcF.top.toInt(),srcF.right.toInt(),srcF.bottom.toInt())
         val dst=RectF(b.left.toFloat(),b.top.toFloat(),b.right.toFloat(),b.bottom.toFloat())
         c.save(); c.clipPath(Path().apply{addRoundRect(dst,radius,radius,Path.Direction.CW)})
         // Optical lens: slightly magnified/offset copy makes scenery visibly bend through the glass.
