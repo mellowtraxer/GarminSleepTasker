@@ -64,7 +64,7 @@ private class LocalRefraction(private val ctx:android.content.Context,private va
  override fun draw(c:Canvas){val b=bounds;val v=host?:return;val root=v.rootView;if(b.isEmpty||root.width<1||root.height<1)return
   val a=IntArray(2);val z=IntArray(2);v.getLocationOnScreen(a);root.getLocationOnScreen(z);val x=(a[0]-z[0]).toFloat();val y=(a[1]-z[1]).toFloat()
   val sc=maxOf(root.width.toFloat()/bm.width,root.height.toFloat()/bm.height);val cx=(bm.width*sc-root.width)/2f;val cy=(bm.height*sc-root.height)/2f
-  fun sx(q:Float)=((q+cx)/sc).toInt();fun sy(q:Float)=((q+cy)/sc).toInt()
+  fun sx(q:Float):Int { return ((q+cx)/sc).toInt() }\n  fun sy(q:Float):Int { return ((q+cy)/sc).toInt() }
   val src=Rect(sx(x).coerceIn(0,bm.width-1),sy(y).coerceIn(0,bm.height-1),sx(x+v.width).coerceIn(1,bm.width),sy(y+v.height).coerceIn(1,bm.height));if(src.right<=src.left||src.bottom<=src.top)return
   val d=RectF(b);c.save();c.clipPath(Path().apply{addRoundRect(d,rad,rad,Path.Direction.CW)});val ix=v.width*.018f;val iy=v.height*.028f;c.drawBitmap(bm,src,RectF(d.left-ix,d.top-iy,d.right+ix,d.bottom+iy),p);c.restore()
  }
