@@ -53,3 +53,32 @@ jobs:
           name: ${{ github.ref == 'refs/heads/v2-store-ui' && 'SleepSync-v2-preview' || 'GarminSleepTasker-v1.1-debug' }}
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Private-repo bridge: CI publishes only the signed preview APK + tiny version manifest
+      # to the public updater branch. No GitHub credential is ever embedded in SleepSync.
+      - name: Publish SleepSync preview update channel
+        if: github.ref == 'refs/heads/v2-store-ui' && github.event_name == 'push'
+        env:
+          UPDATE_CHANNEL_TOKEN: ${{ secrets.SLEEPSYNC_UPDATE_CHANNEL_TOKEN }}
+          RUN_NUMBER: ${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          test -n "$UPDATE_CHANNEL_TOKEN"
+          rm -rf /tmp/sleepsync-updates
+          git clone "https://x-access-token:${UPDATE_CHANNEL_TOKEN}@github.com/mellowtraxer/SleepSync-Updates.git" /tmp/sleepsync-updates
+          cp app/build/outputs/apk/debug/app-debug.apk /tmp/sleepsync-updates/SleepSync-preview.apk
+          cat > /tmp/sleepsync-updates/latest.json <<EOF
+          {
+            "versionCode": ${RUN_NUMBER},
+            "versionName": "0.1.0-v2-dev.${RUN_NUMBER}",
+            "commit": "${COMMIT_SHA}",
+            "apk": "https://github.com/mellowtraxer/SleepSync-Updates/raw/main/SleepSync-preview.apk"
+          }
+          EOF
+          cd /tmp/sleepsync-updates
+          git config user.name "SleepSync Update Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add SleepSync-preview.apk latest.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Publish SleepSync preview build ${RUN_NUMBER}"
+          git push origin main
