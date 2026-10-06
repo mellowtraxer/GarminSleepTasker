@@ -66,9 +66,9 @@ private class MotionGlassDrawable(private val context:android.content.Context, p
         if(e.sensor.type!=Sensor.TYPE_ROTATION_VECTOR)return
         val r=FloatArray(9); val o=FloatArray(3)
         SensorManager.getRotationMatrixFromVector(r,e.values); SensorManager.getOrientation(r,o)
-        val nx=(o[2]/.42f).coerceIn(-1f,1f)
-        val ny=(-o[1]/.42f).coerceIn(-1f,1f)
-        x+=(nx-x)*.045f; y+=(ny-y)*.045f
+        val nx=(o[2]/.30f).coerceIn(-1f,1f)
+        val ny=(-o[1]/.30f).coerceIn(-1f,1f)
+        x+=(nx-x)*.075f; y+=(ny-y)*.075f
         invalidateSelf()
     }
     override fun draw(c:Canvas){
@@ -76,14 +76,14 @@ private class MotionGlassDrawable(private val context:android.content.Context, p
         val w=b.width().toFloat(); val h=b.height().toFloat(); val d=context.resources.displayMetrics.density
         val path=Path().apply{addRoundRect(b.left.toFloat(),b.top.toFloat(),b.right.toFloat(),b.bottom.toFloat(),radius,radius,Path.Direction.CW)}
         c.save(); c.clipPath(path); p.style=Paint.Style.FILL
-        val sx=b.left+w*(.5f+x*.43f); val sy=b.top+h*(.5f+y*.43f)
-        p.shader=android.graphics.RadialGradient(sx,sy,maxOf(w,h)*.88f,intArrayOf(Color.argb(115,255,255,255),Color.argb(45,226,245,255),Color.argb(12,255,255,255),Color.TRANSPARENT),floatArrayOf(0f,.24f,.62f,1f),Shader.TileMode.CLAMP); c.drawRect(b,p)
+        val sx=b.left+w*(.5f+x*.55f); val sy=b.top+h*(.5f+y*.55f)
+        p.shader=android.graphics.RadialGradient(sx,sy,maxOf(w,h)*.72f,intArrayOf(Color.argb(155,255,255,255),Color.argb(68,226,245,255),Color.argb(18,255,255,255),Color.TRANSPARENT),floatArrayOf(0f,.22f,.60f,1f),Shader.TileMode.CLAMP); c.drawRect(b,p)
         val leftA=(55+95*((-x+1f)/2f)).toInt(); val rightA=(55+95*((x+1f)/2f)).toInt()
         p.shader=LinearGradient(b.left.toFloat(),0f,b.right.toFloat(),0f,intArrayOf(Color.argb(leftA,170,235,255),Color.TRANSPARENT,Color.TRANSPARENT,Color.argb(rightA,255,175,238)),floatArrayOf(0f,.20f,.80f,1f),Shader.TileMode.CLAMP); c.drawRect(b,p)
         val topA=(50+115*((-y+1f)/2f)).toInt(); val bottomA=(50+115*((y+1f)/2f)).toInt()
         p.shader=LinearGradient(0f,b.top.toFloat(),0f,b.bottom.toFloat(),intArrayOf(Color.argb(topA,255,255,255),Color.TRANSPARENT,Color.TRANSPARENT,Color.argb(bottomA,180,220,255)),floatArrayOf(0f,.24f,.76f,1f),Shader.TileMode.CLAMP); c.drawRect(b,p)
-        val bandX=b.left+w*(.5f+x*.38f); val bandY=b.top+h*(.5f+y*.38f)
-        p.shader=android.graphics.RadialGradient(bandX,bandY,maxOf(42*d,h*.62f),intArrayOf(Color.argb(82,255,255,255),Color.argb(24,180,225,255),Color.TRANSPARENT),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
+        val bandX=b.left+w*(.5f+x*.52f); val bandY=b.top+h*(.5f+y*.52f)
+        p.shader=android.graphics.RadialGradient(bandX,bandY,maxOf(58*d,h*.82f),intArrayOf(Color.argb(120,255,255,255),Color.argb(42,180,225,255),Color.TRANSPARENT),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
         p.shader=null; p.style=Paint.Style.STROKE; p.strokeWidth=.8f*d
         p.color=Color.argb(topA.coerceAtMost(150),255,255,255); c.drawRoundRect(b.left+1f*d,b.top+1f*d,b.right-1f*d,b.bottom-1f*d,radius,radius,p)
         p.style=Paint.Style.FILL; c.restore()
