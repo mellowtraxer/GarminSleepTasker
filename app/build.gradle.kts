@@ -20,8 +20,10 @@ android {
         applicationId = "de.ricci.sleepsync.dev"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0-v2-dev"
+        // CI builds get a monotonically increasing version so SleepSync can compare updates reliably.
+        val ciRun = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
+        versionCode = ciRun ?: 1
+        versionName = if (ciRun != null) "0.1.0-v2-dev.$ciRun" else "0.1.0-v2-dev"
     }
 
     compileOptions {
