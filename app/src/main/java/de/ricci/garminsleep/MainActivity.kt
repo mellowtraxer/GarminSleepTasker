@@ -982,8 +982,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>) =
             MaterialCardView(this).apply {
-                radius=px(24).toFloat(); strokeWidth=px(1); strokeColor=Color.argb(180,Color.red(color),Color.green(color),Color.blue(color))
-                setCardBackgroundColor(if(light) Color.argb(224,244,248,255) else Color.argb(188,9,15,31)); cardElevation=px(3).toFloat()
+                radius=px(24).toFloat(); strokeWidth=if(light) 0 else px(1); strokeColor=Color.argb(180,Color.red(color),Color.green(color),Color.blue(color))
+                setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=dashboardGlass(24,::px); cardElevation=px(14).toFloat() } else { setCardBackgroundColor(Color.argb(188,9,15,31)); cardElevation=px(3).toFloat() }
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(14)) }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.VERTICAL; setPadding(px(16),px(15),px(16),px(12))
