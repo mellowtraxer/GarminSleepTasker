@@ -73,10 +73,16 @@ private class MotionGlassDrawable(private val context:android.content.Context, p
         p.shader=android.graphics.RadialGradient(glowX,glowY,maxOf(w*.52f,h*1.45f),intArrayOf(Color.argb(70,255,255,255),Color.argb(18,210,240,255),Color.TRANSPARENT),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
         val left=(70+120*((-x+1)/2)).toInt(); val right=(70+120*((x+1)/2)).toInt(); val top=(60+125*((-y+1)/2)).toInt(); val bottom=(60+125*((y+1)/2)).toInt()
         p.style=Paint.Style.STROKE
-        p.strokeWidth=9*d; p.shader=LinearGradient(l,t,r,bot,intArrayOf(Color.argb(left,75,210,255),Color.argb(top,255,255,255),Color.argb(right,255,80,220),Color.argb(bottom,90,180,255)),floatArrayOf(0f,.32f,.72f,1f),Shader.TileMode.CLAMP); c.drawPath(rr(5*d,radius-5*d),p)
-        p.strokeWidth=4.2f*d; p.shader=LinearGradient(l,0f,r,0f,intArrayOf(Color.argb(left,80,220,255),Color.argb(175,245,252,255),Color.argb(right,255,75,218)),floatArrayOf(0f,.48f,1f),Shader.TileMode.CLAMP); c.drawPath(rr(2.5f*d,radius-2*d),p)
-        p.strokeWidth=1.25f*d; p.shader=LinearGradient(0f,t,0f,bot,intArrayOf(Color.argb(top,255,255,255),Color.argb(95,225,245,255),Color.argb(bottom,255,195,238)),null,Shader.TileMode.CLAMP); c.drawPath(rr(1.1f*d,radius-1*d),p)
-        p.shader=null; p.strokeWidth=1.2f*d; p.color=Color.argb(135,0,8,20); c.drawPath(rr(12*d,(radius-12*d).coerceAtLeast(4*d)),p)
+        // Thick optical rim: broad translucent refraction, then a softer inner bevel.
+        p.strokeWidth=15*d; p.shader=LinearGradient(l,t,r,bot,intArrayOf(Color.argb((left*.72f).toInt(),70,220,255),Color.argb((top*.70f).toInt(),245,252,255),Color.argb((right*.72f).toInt(),255,75,220),Color.argb((bottom*.72f).toInt(),95,205,255)),floatArrayOf(0f,.30f,.72f,1f),Shader.TileMode.CLAMP); c.drawPath(rr(7.5f*d,radius-7*d),p)
+        p.strokeWidth=7*d; p.shader=LinearGradient(l,0f,r,0f,intArrayOf(Color.argb(left,95,230,255),Color.argb(205,250,253,255),Color.argb(right,255,95,225)),floatArrayOf(0f,.48f,1f),Shader.TileMode.CLAMP); c.drawPath(rr(3.8f*d,radius-3*d),p)
+        p.strokeWidth=2.0f*d; p.shader=LinearGradient(0f,t,0f,bot,intArrayOf(Color.argb(top,255,255,255),Color.argb(110,230,247,255),Color.argb(bottom,255,205,240)),null,Shader.TileMode.CLAMP); c.drawPath(rr(1.2f*d,radius-1*d),p)
+        // Inner depth line deliberately soft and translucent: shadow under the glass, not a drawn border.
+        p.shader=null; p.strokeWidth=3.5f*d; p.color=Color.argb(42,0,10,30); c.drawPath(rr(14*d,(radius-14*d).coerceAtLeast(4*d)),p)
+        // Gyro-driven specular streaks hug the rim and sell the curved glass surface.
+        val specX=l+w*(.5f+x*.43f); val specY=t+h*(.5f+y*.38f)
+        p.strokeWidth=2.8f*d; p.shader=android.graphics.RadialGradient(specX,specY,maxOf(w*.32f,h*.95f),intArrayOf(Color.argb(245,255,255,255),Color.argb(145,235,250,255),Color.TRANSPARENT),floatArrayOf(0f,.30f,1f),Shader.TileMode.CLAMP); c.drawPath(rr(2.0f*d,radius-2*d),p)
+        p.strokeWidth=1.15f*d; p.shader=android.graphics.RadialGradient(specX,specY,maxOf(w*.22f,h*.70f),intArrayOf(Color.WHITE,Color.argb(175,255,255,255),Color.TRANSPARENT),floatArrayOf(0f,.24f,1f),Shader.TileMode.CLAMP); c.drawPath(rr(.8f*d,radius-.8f*d),p)
         p.style=Paint.Style.FILL
         val shineX=l+w*(.5f+x*.42f); val half=w*.20f
         p.shader=LinearGradient(shineX-half,0f,shineX+half,0f,intArrayOf(Color.TRANSPARENT,Color.argb(22,255,255,255),Color.argb(105,255,255,255),Color.argb(18,255,255,255),Color.TRANSPARENT),floatArrayOf(0f,.32f,.5f,.68f,1f),Shader.TileMode.CLAMP); c.drawRect(b,p)
