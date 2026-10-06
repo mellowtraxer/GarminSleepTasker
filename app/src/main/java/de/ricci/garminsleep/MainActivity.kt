@@ -39,6 +39,10 @@ import android.graphics.Path
 import android.graphics.LinearGradient
 import android.graphics.Shader
 import android.content.res.ColorStateList
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -50,6 +54,22 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
+
+private class MotionGlassDrawable(private val context:android.content.Context, private val radius:Float) : android.graphics.drawable.Drawable(), SensorEventListener {
+    private val sm=context.getSystemService(android.content.Context.SENSOR_SERVICE) as SensorManager
+    private val sensor=sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+    private val p=Paint(Paint.ANTI_ALIAS_FLAG)
+    private var x=0f; private var y=0f
+    init { sensor?.let { sm.registerListener(this,it,SensorManager.SENSOR_DELAY_GAME) } }
+    override fun onAccuracyChanged(sensor:Sensor?,accuracy:Int){}
+    override fun onSensorChanged(e:SensorEvent){ if(e.sensor.type!=Sensor.TYPE_ROTATION_VECTOR)return; val r=FloatArray(9); val o=FloatArray(3); SensorManager.getRotationMatrixFromVector(r,e.values); SensorManager.getOrientation(r,o); x+=(o[2].coerceIn(-.55f,.55f)/.55f-x)*.09f; y+=((-o[1]).coerceIn(-.55f,.55f)/.55f-y)*.09f; invalidateSelf() }
+    override fun draw(c:Canvas){ val b=bounds; if(b.isEmpty)return; val w=b.width().toFloat(); val h=b.height().toFloat(); val d=context.resources.displayMetrics.density; val path=Path().apply{addRoundRect(b.left.toFloat(),b.top.toFloat(),b.right.toFloat(),b.bottom.toFloat(),radius,radius,Path.Direction.CW)}; c.save(); c.clipPath(path)
+        p.style=Paint.Style.FILL; val sx=b.left+w*(.5f+x*.34f); val sy=b.top+h*(.46f+y*.34f); p.shader=android.graphics.RadialGradient(sx,sy,maxOf(w,h)*.72f,intArrayOf(Color.argb(92,255,255,255),Color.argb(18,255,255,255),Color.TRANSPARENT),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
+        val ex=if(x>=0)b.right.toFloat() else b.left.toFloat(); val ix=if(x>=0)ex-34*d else ex+34*d; p.shader=LinearGradient(ex,0f,ix,0f,intArrayOf(Color.argb(145,255,255,255),Color.argb(45,112,210,255),Color.TRANSPARENT),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
+        val ey=if(y>=0)b.bottom.toFloat() else b.top.toFloat(); val iy=if(y>=0)ey-28*d else ey+28*d; p.shader=LinearGradient(0f,ey,0f,iy,intArrayOf(Color.argb(118,255,185,235),Color.argb(35,160,215,255),Color.TRANSPARENT),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
+        p.shader=null; p.style=Paint.Style.STROKE; p.strokeWidth=1.05f*d; p.color=Color.argb(90+(45*kotlin.math.abs(x)).toInt(),255,255,255); c.drawRoundRect(b.left+1f*d,b.top+1f*d,b.right-1f*d,b.bottom-1f*d,radius,radius,p); p.style=Paint.Style.FILL; c.restore() }
+    override fun setAlpha(alpha:Int){}; override fun setColorFilter(cf:android.graphics.ColorFilter?){}; @Suppress("DEPRECATION") override fun getOpacity()=android.graphics.PixelFormat.TRANSLUCENT
+}
 
 private class NightLandscapeView(context: android.content.Context) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
@@ -1060,7 +1080,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(22).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(7).toFloat() else 0f
-            background = if(light) LayerDrawable(arrayOf(GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(78,255,255,255),Color.argb(30,176,215,255),Color.argb(22,135,105,205),Color.argb(54,255,190,226))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(82,104,156,215)) },GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(205,255,255,255),Color.argb(68,255,255,255),Color.TRANSPARENT,Color.argb(58,61,100,174))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(150,255,255,255)) },GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(190,220,255,255),Color.argb(38,255,255,255),Color.TRANSPARENT,Color.argb(42,157,122,255),Color.argb(165,238,174,255))).apply { cornerRadius=dp(30).toFloat() },GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(125,53,116,215),Color.TRANSPARENT,Color.argb(118,255,158,215))).apply { cornerRadius=dp(30).toFloat() })) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
+            background = if(light) LayerDrawable(arrayOf(GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(78,255,255,255),Color.argb(30,176,215,255),Color.argb(22,135,105,205),Color.argb(54,255,190,226))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(82,104,156,215)) },GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(205,255,255,255),Color.argb(68,255,255,255),Color.TRANSPARENT,Color.argb(58,61,100,174))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(150,255,255,255)) },GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(190,220,255,255),Color.argb(38,255,255,255),Color.TRANSPARENT,Color.argb(42,157,122,255),Color.argb(165,238,174,255))).apply { cornerRadius=dp(30).toFloat() },GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(125,53,116,215),Color.TRANSPARENT,Color.argb(118,255,158,215))).apply { cornerRadius=dp(30).toFloat() },MotionGlassDrawable(this@MainActivity,dp(30).toFloat()))) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
