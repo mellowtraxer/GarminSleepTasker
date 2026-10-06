@@ -269,10 +269,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         pageTitle.setTextColor(if(bootLight) Color.rgb(16,32,72) else Color.WHITE); pageTitle.textSize=31f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.025f
-        pageTitle.setShadowLayer(10f,0f,dp(1).toFloat(),Color.argb(165,3,7,28))
         pageTitle.background=null
         pageTitle.setPadding(0,0,0,0)
-        pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(6f,0f,dp(1).toFloat(),Color.argb(190,2,5,20))
+        pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.clearShadowLayer()
         status.setTextColor(if(bootLight) Color.rgb(31,100,119) else Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         brandGlow = View(this).apply {
