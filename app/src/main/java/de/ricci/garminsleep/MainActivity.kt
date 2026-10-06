@@ -1172,7 +1172,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
                 addView(TextView(this@MainActivity).apply {
                     text="✦"; textSize=20f; gravity=android.view.Gravity.CENTER; setTextColor(accent2); setPadding(0,dp(5),0,dp(5))
-                    background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(17,62,78),Color.rgb(55,29,91))).apply { shape=GradientDrawable.OVAL; setStroke(dp(1),Color.rgb(48,151,177)) }
+                    background=if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(238,245,252,255),Color.argb(230,240,235,255))).apply { shape=GradientDrawable.OVAL; setStroke(dp(1),Color.rgb(116,126,224)) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(17,62,78),Color.rgb(55,29,91))).apply { shape=GradientDrawable.OVAL; setStroke(dp(1),Color.rgb(48,151,177)) }
                     layoutParams=LinearLayout.LayoutParams(dp(36),dp(36)).apply { marginEnd=dp(11) }
                 })
                 addView(TextView(this@MainActivity).apply {
