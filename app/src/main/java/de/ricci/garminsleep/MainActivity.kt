@@ -67,6 +67,19 @@ private class MotionGlassDrawable(private val context:android.content.Context, p
         val b=bounds; if(b.isEmpty)return
         val d=context.resources.displayMetrics.density; val l=b.left.toFloat(); val t=b.top.toFloat(); val r=b.right.toFloat(); val bot=b.bottom.toFloat(); val w=b.width().toFloat(); val h=b.height().toFloat()
         fun rr(inset:Float,rad:Float)=Path().apply{addRoundRect(l+inset,t+inset,r-inset,bot-inset,rad,rad,Path.Direction.CW)}
+        c.save()
+        val shadowX=x*4.5f*d
+        val shadowY=(6f+y*3.5f)*d
+        p.style=Paint.Style.FILL; p.shader=null
+        p.setShadowLayer(12*d,shadowX,shadowY,Color.argb(78,8,18,42))
+        p.color=Color.argb(22,8,18,42)
+        c.drawRoundRect(l+7*d,t+7*d,r-7*d,bot-7*d,radius-7*d,radius-7*d,p)
+        p.clearShadowLayer()
+        p.setShadowLayer(4*d,shadowX*.4f,shadowY*.4f,Color.argb(88,10,18,38))
+        p.color=Color.argb(18,10,18,38)
+        c.drawRoundRect(l+4*d,t+4*d,r-4*d,bot-4*d,radius-4*d,radius-4*d,p)
+        p.clearShadowLayer()
+        c.restore()
         c.save(); c.clipPath(rr(0f,radius)); p.style=Paint.Style.FILL
         p.shader=LinearGradient(l,t,r,bot,intArrayOf(Color.argb(80,6,18,38),Color.argb(35,12,36,60),Color.argb(58,35,14,52),Color.argb(74,5,25,43)),null,Shader.TileMode.CLAMP); c.drawRect(b,p)
         val glowX=l+w*(.5f+x*.48f); val glowY=t+h*(.5f+y*.34f)
