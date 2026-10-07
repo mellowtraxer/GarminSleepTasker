@@ -359,7 +359,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
                 adjustViewBounds=false
                 setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
-                alpha=if(useLight) .62f else 1f
+                alpha=1f
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
                 background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(34,255,255,255),Color.argb(12,240,247,255),Color.argb(24,225,245,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
