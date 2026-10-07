@@ -281,7 +281,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun button(label: String, action: () -> Unit) = MaterialButton(this).apply {
             text = label; isAllCaps = false; textSize = 15f; minHeight = dp(56); setOnClickListener { action() }
         }
-        status = TextView(this).apply { textSize = 14f; setPadding(dp(18),dp(14),dp(18),dp(14)) }
+        status = TextView(this).apply { textSize = 14f; setPadding(dp(12),dp(7),dp(12),dp(7)); gravity=android.view.Gravity.CENTER_VERTICAL }
         sleepCard = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18)) }
         val bootTheme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
         val bootSystemDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -340,7 +340,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             elevation=dp(6).toFloat()
             outlineAmbientShadowColor=Color.rgb(49,216,255)
             outlineSpotShadowColor=Color.rgb(49,216,255)
-            status.setPadding(dp(12),dp(7),dp(12),dp(7))
             addView(status)
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
@@ -448,10 +447,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sdk = HealthConnectClient.getSdkStatus(this@MainActivity)
         if (sdk != HealthConnectClient.SDK_AVAILABLE) { status.text = "Health Connect ist auf diesem Gerät nicht verfügbar."; return@launch }
         val granted = HealthConnectClient.getOrCreate(this@MainActivity).permissionController.getGrantedPermissions()
-        val hc = if (granted.containsAll(permissions)) "✅ Health Connect bereit." else "⚠️ Bitte Health-Connect-Berechtigungen erteilen."
-        val gc = if (garminClient.isLinked()) "GARMIN  ●" else "GARMIN  ○"
-        val hcShort = if (granted.containsAll(permissions)) "HEALTH CONNECT  ●" else "HEALTH CONNECT  ○"
-        status.text = "$gc        $hcShort"
+        val garminReady = garminClient.isLinked()
+        val healthReady = granted.containsAll(permissions)
+        val gcDot = if (garminReady) "●" else "○"
+        val hcDot = if (healthReady) "●" else "○"
+        val gcColor = if (garminReady) Color.rgb(49,216,255) else Color.rgb(150,160,180)
+        val hcColor = if (healthReady) Color.rgb(86,235,170) else Color.rgb(150,160,180)
+        val text = android.text.SpannableString("GARMIN  $gcDot     HEALTH CONNECT  $hcDot")
+        val gcStart = text.toString().indexOf(gcDot)
+        val hcStart = text.toString().lastIndexOf(hcDot)
+        text.setSpan(android.text.style.ForegroundColorSpan(gcColor),gcStart,gcStart+1,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        text.setSpan(android.text.style.ForegroundColorSpan(hcColor),hcStart,hcStart+1,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        status.text = text
     }
 
 
@@ -561,7 +568,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun testRead() = launch {
-        status.text = "Lese Garmin-Schlaf…"
+        status.text = "GARMIN  ●     HEALTH CONNECT  ●                              Schlafdaten werden geladen …"
         setLoadingGlow(true)
         try {
             val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
