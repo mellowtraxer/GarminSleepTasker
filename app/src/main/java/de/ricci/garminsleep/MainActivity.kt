@@ -380,11 +380,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             radius=dp(18).toFloat()
             cardElevation=0f
             strokeWidth=dp(2)
-            strokeColor=Color.rgb(70,205,225)
+            strokeColor=Color.rgb(255,70,82)
             setCardBackgroundColor(if(useLight) Color.argb(190,52,67,94) else Color.argb(230,6,12,25))
-            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(18).toFloat() }
+            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,255,70,82),Color.TRANSPARENT,Color.argb(24,255,70,82))).apply { cornerRadius=dp(18).toFloat() }
             setLayerType(View.LAYER_TYPE_SOFTWARE,null)
-            setShadowLayer(dp(10).toFloat(),0f,0f,Color.argb(165,70,205,225))
+            setShadowLayer(dp(10).toFloat(),0f,0f,Color.argb(175,255,70,82))
             addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(68)).apply { setMargins(dp(18),dp(4),dp(18),dp(8)) }
         }
