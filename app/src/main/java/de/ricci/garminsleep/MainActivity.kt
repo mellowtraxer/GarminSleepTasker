@@ -369,12 +369,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         settingsBlurTarget=blurTarget
         val scene = android.widget.FrameLayout(this).apply {
-            addView(blurTarget, android.widget.FrameLayout.LayoutParams(-1,-1))
+            // Wallpaper is owned by the full-screen root below. Keep this scene
+            // transparent so the same image remains visible behind content.
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
         val scroll = ScrollView(this).apply {
-            isFillViewport=true; clipToPadding=false; background=nightAtmosphere; addView(scene)
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
+            isFillViewport=true
+            clipToPadding=false
+            background=ColorDrawable(Color.TRANSPARENT)
+            addView(scene)
+            layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
         }
         val navShell = MaterialCardView(this).apply {
             radius=dp(18).toFloat()
@@ -389,17 +393,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(68)).apply { setMargins(dp(18),dp(4),dp(18),dp(8)) }
         }
-        val root = LinearLayout(this).apply {
+        val contentColumn=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
-            background=if(useLight)
-                GradientDrawable().apply { setColor(Color.rgb(8,20,40)) }
-            else
-                GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg))
-            addView(scroll); addView(navShell)
+            background=ColorDrawable(Color.TRANSPARENT)
+            addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+            addView(navShell)
         }
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+        val root=android.widget.FrameLayout(this).apply {
+            // One continuous wallpaper, including underneath the app nav and
+            // Android's transparent system navigation area.
+            addView(blurTarget,android.widget.FrameLayout.LayoutParams(-1,-1))
+            addView(contentColumn,android.widget.FrameLayout.LayoutParams(-1,-1))
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-            v.setPadding(0,bars.top,0,0)
+            contentColumn.setPadding(0,bars.top,0,0)
             (navShell.layoutParams as? LinearLayout.LayoutParams)?.let { lp ->
                 lp.bottomMargin=bars.bottom+dp(8)
                 navShell.layoutParams=lp
