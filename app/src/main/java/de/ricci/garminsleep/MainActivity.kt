@@ -1515,7 +1515,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
-    private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null, series: List<MetricPoint> = emptyList(), sleep: SleepSummary? = null): MaterialCardView {
+    private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null, series: List<MetricPoint> = emptyList(), sleep: SleepSummary? = null): android.view.View {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val tone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;"Puls"->Color.rgb(255,82,126);"SpO₂"->Color.rgb(44,205,255);"Atmung"->Color.rgb(80,225,184);"HRV"->Color.rgb(213,96,255);else->accent}
         val fill=when(label){"Leicht"->Color.rgb(10,32,48);"Tief"->Color.rgb(22,20,56);"REM"->Color.rgb(42,18,58);"Wach"->Color.rgb(54,31,16);"Puls"->Color.rgb(54,18,31);"SpO₂"->Color.rgb(9,37,49);"Atmung"->Color.rgb(10,42,34);"HRV"->Color.rgb(45,17,55);else->Color.rgb(15,18,38)}
@@ -1542,11 +1542,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
             }
         }
-        return MaterialCardView(this).apply{
+        val card=MaterialCardView(this).apply{
             radius=dp(21).toFloat();cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.TRANSPARENT);if(light){background=neonGlowGlass(21,tone,::dp);outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone}else setCardBackgroundColor(fill)
-            layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))}
+            layoutParams=android.widget.FrameLayout.LayoutParams(-1,-1)
             addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
+        return if(light) neonWrap(card,tone,21,::dp).apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 178 else 124);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(0,0,0,0)} } else card.apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))} }
     }
     private fun showStageTimeline(label:String, tone:Int, minutes:Long, s:SleepSummary) {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
@@ -1637,6 +1638,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         cards.forEach { sleepCard.addView(it) }
         cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
     }
+
+    private class NeonGlowFrame(context: android.content.Context, private val tone:Int, private val radiusPx:Float): android.widget.FrameLayout(context) {
+        private val glow=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            style=android.graphics.Paint.Style.STROKE
+            strokeWidth=3f*resources.displayMetrics.density
+            color=tone
+            maskFilter=android.graphics.BlurMaskFilter(9f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
+        }
+        init { setWillNotDraw(false); setLayerType(android.view.View.LAYER_TYPE_SOFTWARE,null); clipChildren=false; clipToPadding=false }
+        override fun onDraw(c:android.graphics.Canvas) {
+            val inset=7f*resources.displayMetrics.density
+            c.drawRoundRect(inset,inset,width-inset,height-inset,radiusPx,radiusPx,glow)
+            super.onDraw(c)
+        }
+    }
+
+    private fun neonWrap(view:android.view.View,tone:Int,radius:Int,dp:(Int)->Int):android.view.View =
+        NeonGlowFrame(this,tone,dp(radius).toFloat()).apply {
+            setPadding(dp(7),dp(7),dp(7),dp(7))
+            addView(view,android.widget.FrameLayout.LayoutParams(-1,-1))
+        }
 
     private fun neonGlowGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
         GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(172,18,29,54),Color.argb(142,27,39,66),Color.argb(118,14,24,48))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(30,Color.red(tone),Color.green(tone),Color.blue(tone))) },
