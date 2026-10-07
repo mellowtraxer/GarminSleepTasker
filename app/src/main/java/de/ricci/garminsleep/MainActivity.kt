@@ -399,12 +399,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-            v.setPadding(0,bars.top,0,bars.bottom); insets
+            v.setPadding(0,bars.top,0,0)
+            navShell.updateLayoutParams<LinearLayout.LayoutParams> {
+                bottomMargin=bars.bottom+dp(8)
+            }
+            insets
         }
-        window.navigationBarColor=Color.rgb(8,20,40)
-        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            window.decorView.systemUiVisibility = window.decorView.systemUiVisibility and android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
-        }
+        // Edge-to-edge at the bottom: let SleepSync continue behind Android's
+        // navigation controls instead of painting a separate dark system bar.
+        window.navigationBarColor=Color.TRANSPARENT
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window,false)
+        androidx.core.view.WindowInsetsControllerCompat(window,window.decorView).isAppearanceLightNavigationBars=false
         setContentView(root)
         loadCachedHistory()
         refresh()
