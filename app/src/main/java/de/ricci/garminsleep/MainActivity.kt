@@ -714,10 +714,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val host=android.widget.FrameLayout(this).apply{clipChildren=false;clipToPadding=false;layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}}
             if(light) host.addView(object:View(this){private val p=Paint(Paint.ANTI_ALIAS_FLAG);init{setLayerType(View.LAYER_TYPE_SOFTWARE,null)};override fun onDraw(c:Canvas){val q=dp(1).toFloat();p.style=Paint.Style.STROKE;p.strokeWidth=dp(3).toFloat();p.color=Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone));p.maskFilter=android.graphics.BlurMaskFilter(dp(14).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER);c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p);p.maskFilter=null;p.strokeWidth=dp(2).toFloat();p.color=tone;c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p)}},android.widget.FrameLayout.LayoutParams(-1,-1))
             val shell=(if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply{
+                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 background=LayerDrawable(arrayOf(GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40));setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}))
                 if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}}
             }
-            val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+            val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2) }
             val rows=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; visibility=View.GONE }
             val head=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
                 val title=TextView(this@MainActivity).apply { text="KW "+kw+" · "+year; textSize=16f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) }
