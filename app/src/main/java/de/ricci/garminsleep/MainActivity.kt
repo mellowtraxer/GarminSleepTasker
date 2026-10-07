@@ -747,9 +747,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
                     if(settingsLight) background=null
                     addView(TextView(this@MainActivity).apply {
-                        text=icon; textSize=23f; gravity=android.view.Gravity.CENTER; setTextColor(color); setPadding(dp(6),dp(6),dp(6),dp(6))
-                        background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(Color.argb(42,Color.red(color),Color.green(color),Color.blue(color))) }
-                        layoutParams=LinearLayout.LayoutParams(dp(48),dp(48)).apply { setMargins(0,0,dp(12),0) }
+                        text=icon; textSize=25f; gravity=android.view.Gravity.CENTER; setTextColor(color); setPadding(dp(6),dp(6),dp(6),dp(6))
+                        background=GradientDrawable().apply { cornerRadius=dp(15).toFloat(); setColor(Color.argb(110,Color.red(color),Color.green(color),Color.blue(color))); setStroke(dp(1),Color.argb(180,255,255,255)) }
+                        layoutParams=LinearLayout.LayoutParams(dp(50),dp(50)).apply { setMargins(0,0,dp(12),0) }
                     })
                     addView(LinearLayout(this@MainActivity).apply {
                         orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
