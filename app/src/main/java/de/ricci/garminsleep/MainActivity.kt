@@ -742,7 +742,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
-                    if(settingsLight) background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.argb(78,72,105,142),Color.argb(62,88,92,132),Color.argb(72,112,91,124))).apply { cornerRadius=dp(22).toFloat() }
+                    if(settingsLight) background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.argb(38,72,105,142),Color.argb(28,88,92,132),Color.argb(34,112,91,124))).apply { cornerRadius=dp(22).toFloat() }
                     addView(TextView(this@MainActivity).apply {
                         text=icon; textSize=23f; gravity=android.view.Gravity.CENTER; setTextColor(color); setPadding(dp(6),dp(6),dp(6),dp(6))
                         background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(Color.argb(42,Color.red(color),Color.green(color),Color.blue(color))) }
