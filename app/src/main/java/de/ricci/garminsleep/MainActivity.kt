@@ -380,16 +380,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             radius=dp(18).toFloat()
             cardElevation=0f
             strokeWidth=dp(2)
-            strokeColor=Color.rgb(255,70,82)
+            strokeColor=Color.rgb(70,205,225)
             setCardBackgroundColor(if(useLight) Color.argb(190,52,67,94) else Color.argb(230,6,12,25))
-            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,255,70,82),Color.TRANSPARENT,Color.argb(24,255,70,82))).apply { cornerRadius=dp(18).toFloat() }
-            setLayerType(View.LAYER_TYPE_SOFTWARE,null)
-            setShadowLayer(dp(10).toFloat(),0f,0f,Color.argb(175,255,70,82))
+            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(22,70,205,225),Color.TRANSPARENT,Color.argb(26,120,170,255))).apply { cornerRadius=dp(18).toFloat() }
+            elevation=dp(8).toFloat()
+            outlineAmbientShadowColor=Color.rgb(70,205,225)
+            outlineSpotShadowColor=Color.rgb(70,205,225)
             addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(68)).apply { setMargins(dp(18),dp(4),dp(18),dp(8)) }
         }
         val root = LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL; background=if(useLight) Color.rgb(8,20,40) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
+            orientation=LinearLayout.VERTICAL
+            background=if(useLight)
+                GradientDrawable().apply { setColor(Color.rgb(8,20,40)) }
+            else
+                GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg))
+            addView(scroll); addView(navShell)
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
