@@ -653,8 +653,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         try {
             val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
-            sleepHistory = history
-            saveCachedHistory(history)
+            sleepHistory = mergeHistory(sleepHistory, history)
+            saveCachedHistory(sleepHistory)
             val s = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
             renderDashboard(s)
             withContext(Dispatchers.IO) { syncLatestNightToCalendar(s) }
@@ -695,9 +695,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
-        val primary=if(light) Color.rgb(24,29,48) else Color.WHITE
-        val secondary=if(light) Color.rgb(83,96,123) else Color.rgb(160,205,235)
-        val muted=if(light) Color.rgb(104,116,143) else Color.rgb(135,150,180)
+        val primary=Color.WHITE
+        val secondary=if(light) Color.rgb(225,232,248) else Color.rgb(160,205,235)
+        val muted=if(light) Color.rgb(215,225,245) else Color.rgb(135,150,180)
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         viewingHistoryNight=false
         pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte · nach Kalenderwochen"
@@ -710,7 +710,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val grouped=nights.groupBy { s -> val z=Instant.ofEpochMilli(s.endMs).atZone(ZoneId.systemDefault()).toLocalDate(); (z.get(weekFields.weekBasedYear())*100)+z.get(weekFields.weekOfWeekBasedYear()) }
         grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
             val year=key/100; val kw=key%100; val avg=items.map{it.totalMin}.average().toLong()
-            val shell=MaterialCardView(this).apply { radius=dp(20).toFloat(); strokeWidth=dp(1); strokeColor=Color.argb(115,91,176,255); setCardBackgroundColor(if(light) Color.argb(224,247,250,255) else Color.argb(190,9,15,32)); layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))} }
+            val tone=if(kw%2==0) accent2 else stageRem
+            val host=android.widget.FrameLayout(this).apply{clipChildren=false;clipToPadding=false;layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}}
+            if(light) host.addView(object:View(this){private val p=Paint(Paint.ANTI_ALIAS_FLAG);init{setLayerType(View.LAYER_TYPE_SOFTWARE,null)};override fun onDraw(c:Canvas){val q=dp(1).toFloat();p.style=Paint.Style.STROKE;p.strokeWidth=dp(3).toFloat();p.color=Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone));p.maskFilter=android.graphics.BlurMaskFilter(dp(14).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER);c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p);p.maskFilter=null;p.strokeWidth=dp(2).toFloat();p.color=tone;c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p)}},android.widget.FrameLayout.LayoutParams(-1,-1))
+            val shell=(if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply{
+                background=LayerDrawable(arrayOf(GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40));setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}))
+                if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}}
+            }
             val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
             val rows=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; visibility=View.GONE }
             val head=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
@@ -732,7 +738,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     })
                 })
             }
-            box.addView(head); box.addView(rows); shell.addView(box); sleepCard.addView(shell)
+            box.addView(head); box.addView(rows); shell.addView(box); host.addView(shell); sleepCard.addView(host)
         }
     }
     private fun showHistoryNight(s: SleepSummary) {
@@ -751,6 +757,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun stagePointsToJson(points:List<StagePoint>)=JSONArray().apply { points.forEach { put(JSONArray().put(it.startMs).put(it.endMs).put(it.stageLabel)) } }
     private fun metricPointsFromJson(a:JSONArray?):List<MetricPoint> = if(a==null) emptyList() else (0 until a.length()).mapNotNull { i -> runCatching { val p=a.getJSONArray(i); MetricPoint(p.getLong(0),p.getDouble(1)) }.getOrNull() }
     private fun stagePointsFromJson(a:JSONArray?):List<StagePoint> = if(a==null) emptyList() else (0 until a.length()).mapNotNull { i -> runCatching { val p=a.getJSONArray(i); StagePoint(p.getLong(0),p.getLong(1),p.getString(2)) }.getOrNull() }
+
+    private fun mergeHistory(existing:List<SleepSummary>, fresh:List<SleepSummary>):List<SleepSummary> =
+        (existing + fresh).groupBy { it.startMs to it.endMs }.values.map { group ->
+            group.maxByOrNull { it.heartRateSeries.size + it.spo2Series.size + it.respirationSeries.size + it.hrvSeries.size + it.stageSeries.size } ?: group.first()
+        }.sortedByDescending { it.endMs }
 
     private fun saveCachedHistory(items:List<SleepSummary>) {
         val arr=JSONArray()
