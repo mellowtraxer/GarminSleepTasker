@@ -1391,6 +1391,31 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         dialog.show()
     }
 
+    private fun showDesignStudio() {
+        val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
+        val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
+        val keys=arrayOf("accent","accent2","stage_light","stage_deep","stage_rem","stage_awake","heart","spo2","resp","hrv")
+        val defaults=intArrayOf(accent,accent2,stageLight,stageDeep,stageRem,stageAwake,Color.rgb(255,86,120),Color.rgb(44,218,255),Color.rgb(70,224,181),Color.rgb(183,99,255))
+        val palette=intArrayOf(Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,86,120),Color.rgb(255,164,91),Color.rgb(70,224,181),Color.rgb(255,220,80),Color.WHITE,Color.rgb(150,160,185))
+        val paletteNames=arrayOf("Cyan","Blau","Indigo","Violett","Pink","Orange","Mint","Gelb","Weiß","Slate")
+        fun pick(index:Int){
+            val dlg=AlertDialog.Builder(this).setTitle(names[index]).setItems(paletteNames){_,which->
+                p.edit().putInt(keys[index],palette[which]).putBoolean("custom_enabled",true).apply(); showDesignStudio()
+            }.setNegativeButton("Abbrechen",null).create()
+            dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
+        }
+        val lines=names.indices.map{i->"●  "+names[i]+"   ·   "+String.format("#%06X",0xFFFFFF and p.getInt(keys[i],defaults[i]))}.toTypedArray()
+        val dlg=AlertDialog.Builder(this)
+            .setTitle("🎨 Design Studio")
+            .setMessage("Dein SleepSync, deine Farben. Wähle einen Bereich und passe seine Akzentfarbe an. Eigene Farben werden als persönliches Design gespeichert.\n\nHintergrund & Effekte")
+            .setItems(lines){_,which->pick(which)}
+            .setPositiveButton("Eigenes Design aktivieren"){_,_->p.edit().putBoolean("custom_enabled",true).apply();recreate()}
+            .setNeutralButton("Zurücksetzen"){_,_->p.edit().clear().apply();recreate()}
+            .setNegativeButton("Schließen",null)
+            .create()
+        dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
+    }
+
     private fun showAppearanceSettings() {
         val d=resources.displayMetrics.density
         fun dp(v:Int)=(v*d).toInt()
@@ -1520,6 +1545,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         choice("dark","Dunkel","OLED Night","Dunkles Design für beste Lesbarkeit bei Nacht.","☾",Color.rgb(91,92,255))
         choice("light","Hell","Neon Sunrise","Helles Design mit freundlichen Farben für den Tag.","☀",Color.rgb(255,166,46))
         choice("system","Automatisch","System","Wechselt automatisch zwischen hell und dunkel – je nach Tageszeit.","◐",Color.rgb(49,216,255))
+
+        val studio=MaterialCardView(this).apply {
+            radius=dp(22).toFloat(); strokeWidth=dp(2); strokeColor=Color.rgb(255,92,205); setCardBackgroundColor(Color.argb(178,72,88,112))
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(10),dp(4),dp(7))}
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL;setPadding(dp(16),dp(15),dp(16),dp(15))
+                addView(TextView(this@MainActivity).apply{text="🎨";textSize=30f;gravity=android.view.Gravity.CENTER;layoutParams=LinearLayout.LayoutParams(dp(58),dp(58))})
+                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),0,0,0);addView(TextView(this@MainActivity).apply{text="Design Studio";textSize=17f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)});addView(TextView(this@MainActivity).apply{text="Farben frei personalisieren";textSize=12f;setTextColor(Color.rgb(220,226,242));setPadding(0,dp(3),0,0)})},LinearLayout.LayoutParams(0,-2,1f))
+                addView(TextView(this@MainActivity).apply{text="›";textSize=30f;setTextColor(Color.rgb(255,92,205))})
+            })
+            setOnClickListener{showDesignStudio()}
+        }
+        sleepCard.addView(studio)
 
         sleepCard.addView(TextView(this).apply {
             text="ⓘ   Deine Auswahl gilt für die gesamte App."
