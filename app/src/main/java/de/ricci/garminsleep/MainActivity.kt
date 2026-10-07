@@ -319,10 +319,64 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     addView(TextView(this@MainActivity).apply { text=label; textSize=9f; gravity=android.view.Gravity.CENTER },LinearLayout.LayoutParams(-1,dp(18)))
                 }); setOnClickListener { activate(this); action() }; tabs.add(this)
             }
-            val home=tab(0,"Übersicht"){showOverview()}; addView(home)
-            addView(tab(1,"Verlauf"){showHistoryPlaceholder()})
-            addView(tab(2,"Kalender"){showCalendarPlaceholder()})
-            addView(tab(3,"Einstellungen"){showSettings()})
+            fun openPage(index:Int, animate:Boolean=true) {
+                if(index !in tabs.indices) return
+                val oldIndex=tabs.indexOfFirst { it.strokeWidth>0 }
+                activate(tabs[index])
+                val direction=if(oldIndex<0 || index>=oldIndex) 1f else -1f
+                val action={
+                    when(index) {
+                        0 -> showOverview()
+                        1 -> showHistoryPlaceholder()
+                        2 -> showCalendarPlaceholder()
+                        else -> showSettings()
+                    }
+                }
+                if(!animate) { action(); return }
+                sleepCard.animate().cancel()
+                pageTitle.animate().cancel()
+                pageSubtitle.animate().cancel()
+                sleepCard.animate().alpha(0f).translationX(-direction*dp(22).toFloat()).setDuration(105).withEndAction {
+                    action()
+                    sleepCard.translationX=direction*dp(30).toFloat(); sleepCard.alpha=0f
+                    sleepCard.animate().alpha(1f).translationX(0f).setDuration(190).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                }.start()
+                pageTitle.alpha=.55f; pageSubtitle.alpha=.55f
+                pageTitle.animate().alpha(1f).setDuration(220).start()
+                pageSubtitle.animate().alpha(1f).setDuration(220).start()
+            }
+            val home=tab(0,"Übersicht"){}; addView(home)
+            addView(tab(1,"Verlauf"){})
+            addView(tab(2,"Kalender"){})
+            addView(tab(3,"Einstellungen"){})
+            tabs.forEachIndexed { index,card -> card.setOnClickListener { openPage(index) } }
+            var swipeDownX=0f
+            var swipeDownY=0f
+            var swipeTracking=false
+            val swipeSlop=dp(18)
+            scroll.setOnTouchListener { _,event ->
+                when(event.actionMasked) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        swipeDownX=event.x; swipeDownY=event.y; swipeTracking=true; false
+                    }
+                    android.view.MotionEvent.ACTION_UP -> {
+                        if(!swipeTracking) return@setOnTouchListener false
+                        swipeTracking=false
+                        val dx=event.x-swipeDownX
+                        val dy=event.y-swipeDownY
+                        if(kotlin.math.abs(dx)>dp(72) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*1.35f && kotlin.math.abs(dy)<dp(120)) {
+                            val current=tabs.indexOfFirst { it.strokeWidth>0 }.coerceAtLeast(0)
+                            val next=if(dx<0) current+1 else current-1
+                            if(next in tabs.indices) {
+                                openPage(next)
+                                true
+                            } else false
+                        } else false
+                    }
+                    android.view.MotionEvent.ACTION_CANCEL -> { swipeTracking=false; false }
+                    else -> false
+                }
+            }
             post { activate(home) }
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
