@@ -328,10 +328,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
-        pageTitle.setTextColor(if(bootLight) Color.rgb(16,32,72) else Color.WHITE); pageTitle.textSize=31f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.025f
+        pageTitle.setTextColor(Color.WHITE); pageTitle.textSize=31f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.025f
         pageTitle.background=null
         pageTitle.setPadding(0,0,0,0)
-        pageSubtitle.setTextColor(if(bootLight) Color.rgb(74,92,130) else Color.rgb(211,218,242)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(0f,0f,0f,Color.TRANSPARENT)
+        pageSubtitle.setTextColor(Color.rgb(235,240,255)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(0f,0f,0f,Color.TRANSPARENT)
         status.setTextColor(if(bootLight) Color.rgb(31,100,119) else Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         brandGlow = View(this).apply {
@@ -764,7 +764,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("↻","Updates","Nach neuer SleepSync-Version suchen",Color.rgb(70,205,225)) { checkForPreviewUpdate() }
         setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
         sleepCard.addView(settingsGrid)
-        actionsTitle.text="DIAGNOSE"; actionsTitle.setTextColor(if(settingsLight) Color.rgb(98,112,142) else stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
+        actionsTitle.text="DIAGNOSE"; actionsTitle.setTextColor(if(settingsLight) Color.rgb(215,225,245) else stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
         actionsTitle.setPadding(0,dp(14),0,dp(4))
         listOf(0,1,2,3,4).forEach { i ->
             val b=actionsBox.getChildAt(i) as? MaterialButton ?: return@forEach
