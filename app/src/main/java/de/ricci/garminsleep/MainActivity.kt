@@ -1642,13 +1642,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     private class NeonGlowFrame(context: android.content.Context, private val tone:Int, private val radiusPx:Float): android.widget.FrameLayout(context) {
         private val halo=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            style=android.graphics.Paint.Style.STROKE; strokeWidth=5f*resources.displayMetrics.density
-            color=android.graphics.Color.argb(150,android.graphics.Color.red(tone),android.graphics.Color.green(tone),android.graphics.Color.blue(tone))
-            maskFilter=android.graphics.BlurMaskFilter(13f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
+            style=android.graphics.Paint.Style.STROKE; strokeWidth=7f*resources.displayMetrics.density
+            color=android.graphics.Color.argb(190,android.graphics.Color.red(tone),android.graphics.Color.green(tone),android.graphics.Color.blue(tone))
+            maskFilter=android.graphics.BlurMaskFilter(15f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
         }
         private val core=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            style=android.graphics.Paint.Style.STROKE; strokeWidth=1.6f*resources.displayMetrics.density; color=tone
-            maskFilter=android.graphics.BlurMaskFilter(3f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
+            style=android.graphics.Paint.Style.STROKE; strokeWidth=2.0f*resources.displayMetrics.density; color=android.graphics.Color.argb(245,android.graphics.Color.red(tone),android.graphics.Color.green(tone),android.graphics.Color.blue(tone))
+            maskFilter=android.graphics.BlurMaskFilter(2.2f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
         }
         init { setWillNotDraw(false); setLayerType(android.view.View.LAYER_TYPE_SOFTWARE,null); clipChildren=false; clipToPadding=false }
         override fun onDraw(c:android.graphics.Canvas) {
@@ -1666,15 +1666,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
 
     private fun neonGlowGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(172,18,29,54),Color.argb(142,27,39,66),Color.argb(118,14,24,48))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(30,Color.red(tone),Color.green(tone),Color.blue(tone))) },
-        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(4),Color.argb(80,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(138,8,25,48),Color.argb(112,24,36,66),Color.argb(96,18,18,48))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(30,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(5),Color.argb(125,Color.red(tone),Color.green(tone),Color.blue(tone))) },
         GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
     ))
 
     private fun heroNeonGlass(radius:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(184,16,35,62),Color.argb(154,29,38,72),Color.argb(142,31,26,70))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(8),Color.argb(34,50,225,255)) },
-        GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(80,35,225,255),Color.argb(15,35,225,255),Color.argb(15,220,72,255),Color.argb(76,220,72,255))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(3),Color.argb(145,100,225,255)) },
-        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),Color.rgb(80,235,255)) }
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(150,8,32,58),Color.argb(126,22,34,68),Color.argb(118,45,20,68))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(8),Color.argb(34,50,225,255)) },
+        GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(110,35,225,255),Color.argb(18,35,225,255),Color.argb(18,235,70,255),Color.argb(105,235,70,255))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(5),Color.argb(110,100,225,255)) },
+        GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(65,235,255),Color.rgb(70,225,255),Color.rgb(220,75,255))).apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),Color.rgb(80,235,255)) }
     ))
 
     private fun overviewNeonGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
