@@ -290,7 +290,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageSubtitle = TextView(this).apply { text = "Dein Schlaf. Klar, automatisch, im Kalender."; textSize = 15f; setTextColor(if(bootLight) Color.rgb(85,94,122) else Color.rgb(184,194,224)); alpha = .82f; setPadding(0,dp(4),0,dp(16)) }
         val sleepShell = MaterialCardView(this).apply {
             radius=0f; cardElevation=0f; strokeWidth=0
-            setCardBackgroundColor(Color.TRANSPARENT); addView(sleepCard)
+            setCardBackgroundColor(Color.TRANSPARENT)
+            addView(sleepCard,android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+            ))
+            layoutParams=LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
         val nav = LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER; setPadding(dp(6),dp(6),dp(6),dp(6))
