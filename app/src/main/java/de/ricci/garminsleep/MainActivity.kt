@@ -1265,7 +1265,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             gravity=android.view.Gravity.CENTER
                         })
                     },LinearLayout.LayoutParams(dp(72),-1))
-                })
+                },android.widget.FrameLayout.LayoutParams(
+                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                    android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+                ))
             }
             host.addView(card,android.widget.FrameLayout.LayoutParams(-1,-2))
             sleepCard.addView(host)
