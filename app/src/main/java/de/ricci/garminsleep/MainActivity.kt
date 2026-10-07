@@ -416,9 +416,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         // Edge-to-edge at the bottom: let SleepSync continue behind Android's
         // navigation controls instead of painting a separate dark system bar.
+        window.statusBarColor=Color.TRANSPARENT
         window.navigationBarColor=Color.TRANSPARENT
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window,false)
-        androidx.core.view.WindowInsetsControllerCompat(window,window.decorView).isAppearanceLightNavigationBars=false
+        androidx.core.view.WindowInsetsControllerCompat(window,window.decorView).apply {
+            isAppearanceLightStatusBars=false
+            isAppearanceLightNavigationBars=false
+        }
         setContentView(root)
         loadCachedHistory()
         refresh()
