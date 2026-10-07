@@ -727,9 +727,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
             }
             items.sortedByDescending{it.endMs}.forEach { s ->
-                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(if(light) Color.argb(92,224,237,250) else Color.argb(70,25,32,58))}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
+                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(9),dp(15),dp(11)); background=GradientDrawable().apply{setColor(if(light) Color.argb(82,38,49,72) else Color.argb(70,25,32,58));setStroke(dp(1),if(light) Color.argb(42,210,225,250) else Color.TRANSPARENT)}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                        addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(if(light) Color.rgb(42,51,75) else Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                        addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(if(light) Color.rgb(242,246,255) else Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                         addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) })
                     })
                     addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(muted); setPadding(0,dp(2),0,dp(7)) })
