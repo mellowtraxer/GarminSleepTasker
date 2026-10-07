@@ -794,13 +794,42 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         pageTitle.text="Kalender"; pageSubtitle.text="Deine Nächte · automatisch dort, wo du sie willst"
         sleepCard.removeAllViews(); sleepCard.background=null
-        fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit)=MaterialCardView(this).apply{
-            radius=dp(23).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(glass);cardElevation=dp(2).toFloat();setLayerType(View.LAYER_TYPE_SOFTWARE,null);outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone
-            layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
-            addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
-                addView(TextView(this@MainActivity).apply{text=title;textSize=12f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
-                addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(if(light) Color.argb(215,245,248,255) else secondary);setPadding(0,dp(3),0,dp(12))});body()
-            })
+        fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit):View {
+            val fill=if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40)
+            val host=android.widget.FrameLayout(this).apply {
+                clipChildren=false;clipToPadding=false
+                layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
+            }
+            if(light) host.addView(object:View(this){
+                private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeJoin=Paint.Join.ROUND}
+                init{setLayerType(View.LAYER_TYPE_SOFTWARE,null)}
+                override fun onDraw(c:Canvas){
+                    val q=dp(1).toFloat();p.strokeWidth=dp(3).toFloat();p.color=Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone))
+                    p.maskFilter=android.graphics.BlurMaskFilter(dp(14).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER)
+                    c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p)
+                    p.maskFilter=null;p.strokeWidth=dp(2).toFloat();p.color=tone
+                    c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p)
+                }
+            },android.widget.FrameLayout.LayoutParams(-1,-1))
+            val glassCard=(if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply{
+                background=if(light) LayerDrawable(arrayOf(
+                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(fill);setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},
+                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}
+                )) else GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(fill);setStroke(dp(1),tone)}
+                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
+                if(light && this is eightbitlab.com.blurview.BlurView){
+                    outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
+                    settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}
+                }
+                addView(LinearLayout(this@MainActivity).apply{
+                    orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16));background=null
+                    addView(TextView(this@MainActivity).apply{text=title;textSize=12f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
+                    addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(if(light) Color.argb(215,245,248,255) else secondary);setPadding(0,dp(3),0,dp(12))})
+                    body()
+                })
+            }
+            host.addView(glassCard)
+            return host
         }
         val s=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
         sleepCard.addView(card("✦  NÄCHSTER KALENDEREINTRAG","Vorschau deiner synchronisierten Nacht",accent2){
