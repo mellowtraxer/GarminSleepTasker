@@ -17,6 +17,14 @@ class SleepSyncWorker(appContext: Context, params: WorkerParameters) : Coroutine
         val prefs=ctx.getSharedPreferences("sleepsync_calendar",Context.MODE_PRIVATE)
         prefs.edit().putLong("last_background_check",System.currentTimeMillis()).apply()
         if(!prefs.getBoolean("auto_enabled",true)) return Result.success()
+        // Respect the user's sleep-detection window. This also supports windows
+        // crossing midnight (for example 22:00 -> 06:00).
+        val now=java.time.ZonedDateTime.now()
+        val nowMin=now.hour*60+now.minute
+        val startMin=prefs.getInt("check_start_min",4*60).coerceIn(0,1439)
+        val endMin=prefs.getInt("check_end_min",10*60).coerceIn(0,1439)
+        val insideWindow=if(startMin==endMin) true else if(startMin<endMin) nowMin in startMin until endMin else nowMin>=startMin || nowMin<endMin
+        if(!insideWindow) return Result.success()
         val calendarId=prefs.getLong("calendar_id",-1)
         if(calendarId<0 || ctx.checkSelfPermission(Manifest.permission.READ_CALENDAR)!=PackageManager.PERMISSION_GRANTED || ctx.checkSelfPermission(Manifest.permission.WRITE_CALENDAR)!=PackageManager.PERMISSION_GRANTED) return Result.success()
         return try {
