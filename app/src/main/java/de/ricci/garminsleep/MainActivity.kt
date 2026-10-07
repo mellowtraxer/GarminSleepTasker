@@ -819,7 +819,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(MaterialButton(this).apply{
             text="⚡  JETZT EINTRAGEN";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
             setTextColor(Color.WHITE)
-            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(205,46,62,150) else Color.rgb(64,63,205))
+            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(145,46,62,150) else Color.rgb(64,63,205))
             strokeWidth=dp(2)
             strokeColor=ColorStateList.valueOf(if(light) Color.rgb(95,125,255) else Color.TRANSPARENT)
             cornerRadius=dp(18);layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}
