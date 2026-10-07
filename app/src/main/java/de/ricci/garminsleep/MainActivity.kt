@@ -854,13 +854,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             )
             b.strokeWidth=dp(2)
             b.strokeColor=ColorStateList.valueOf(diagnosticRed)
-            // Diagnostics deliberately use one warning-red neon language.
-            // Software layer + OUTER BlurMaskFilter gives the same diffuse aura
-            // as the light-theme settings-card glow.
+            // Keep the MaterialButton paint untouched so its label stays crisp.
+            // Use Android's software shadow only for the red outer aura.
             b.setLayerType(View.LAYER_TYPE_SOFTWARE,null)
-            b.paint.maskFilter=android.graphics.BlurMaskFilter(
+            b.paint.maskFilter=null
+            b.setShadowLayer(
                 dp(8).toFloat(),
-                android.graphics.BlurMaskFilter.Blur.OUTER
+                0f,
+                0f,
+                Color.argb(190,Color.red(diagnosticRed),Color.green(diagnosticRed),Color.blue(diagnosticRed))
             )
             b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply {
                 height=dp(48)
