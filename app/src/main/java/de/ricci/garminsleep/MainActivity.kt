@@ -207,12 +207,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private var viewingHistoryNight = false
     private val nightBg = Color.rgb(5, 6, 14)
     private val cardBg = Color.argb(222, 10, 16, 36)
-    private val accent = Color.rgb(139, 92, 246)
-    private val accent2 = Color.rgb(34, 211, 238)
-    private val stageLight = Color.rgb(99, 190, 255)
-    private val stageDeep = Color.rgb(95, 75, 220)
-    private val stageRem = Color.rgb(183, 99, 255)
-    private val stageAwake = Color.rgb(255, 164, 91)
+    private fun designColor(key:String,fallback:Int):Int {
+        val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
+        return if(p.getBoolean("custom_enabled",false)) p.getInt(key,fallback) else fallback
+    }
+    private val accent get() = designColor("accent",Color.rgb(139,92,246))
+    private val accent2 get() = designColor("accent2",Color.rgb(34,211,238))
+    private val stageLight get() = designColor("stage_light",Color.rgb(99,190,255))
+    private val stageDeep get() = designColor("stage_deep",Color.rgb(95,75,220))
+    private val stageRem get() = designColor("stage_rem",Color.rgb(183,99,255))
+    private val stageAwake get() = designColor("stage_awake",Color.rgb(255,164,91))
     private val garminClient by lazy { GarminConnectClient(this) }
     private val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class),
@@ -1599,7 +1603,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null, series: List<MetricPoint> = emptyList(), sleep: SleepSummary? = null): android.view.View {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
-        val tone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;"Puls"->Color.rgb(255,82,126);"SpO₂"->Color.rgb(44,205,255);"Atmung"->Color.rgb(80,225,184);"HRV"->Color.rgb(213,96,255);else->accent}
+        val tone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;"Puls"->designColor("heart",Color.rgb(255,82,126));"SpO₂"->designColor("spo2",Color.rgb(44,205,255));"Atmung"->designColor("resp",Color.rgb(80,225,184));"HRV"->designColor("hrv",Color.rgb(213,96,255));else->accent}
         val fill=when(label){"Leicht"->Color.rgb(10,32,48);"Tief"->Color.rgb(22,20,56);"REM"->Color.rgb(42,18,58);"Wach"->Color.rgb(54,31,16);"Puls"->Color.rgb(54,18,31);"SpO₂"->Color.rgb(9,37,49);"Atmung"->Color.rgb(10,42,34);"HRV"->Color.rgb(45,17,55);else->Color.rgb(15,18,38)}
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
