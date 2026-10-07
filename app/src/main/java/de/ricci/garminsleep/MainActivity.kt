@@ -1767,7 +1767,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
                 addView(TextView(this@MainActivity).apply { text="〽  SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(225,235,255) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                addView(TextView(this@MainActivity).apply { text="${lightPct}%\nLEICHT"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
+                addView(TextView(this@MainActivity).apply { text="${(s.lightMin*100/s.totalMin.coerceAtLeast(1)).toInt()}%\nLEICHT"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
                 addView(TextView(this@MainActivity).apply { text="$deepPct%\nTIEF"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageDeep); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
                 addView(TextView(this@MainActivity).apply { text="$remPct%\nREM"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
             })
