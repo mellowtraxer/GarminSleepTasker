@@ -761,12 +761,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     override fun onDraw(canvas:Canvas) {
                         super.onDraw(canvas)
                         val inset=dp(1).toFloat()
+                        // Explicit multi-ring aura: unlike Android shadow/elevation this stays
+                        // visible and gives us deterministic neon falloff outside the card.
+                        val rings=arrayOf(
+                            Triple(dp(14).toFloat(),dp(12).toFloat(),22),
+                            Triple(dp(10).toFloat(),dp(9).toFloat(),34),
+                            Triple(dp(7).toFloat(),dp(6).toFloat(),52),
+                            Triple(dp(4).toFloat(),dp(4).toFloat(),78)
+                        )
+                        rings.forEach { (spread,stroke,alpha) ->
+                            glowPaint.clearShadowLayer()
+                            glowPaint.strokeWidth=stroke
+                            glowPaint.color=Color.argb(alpha,Color.red(color),Color.green(color),Color.blue(color))
+                            canvas.drawRoundRect(inset-spread,inset-spread,width-inset+spread,height-inset+spread,dp(22).toFloat()+spread,dp(22).toFloat()+spread,glowPaint)
+                        }
+                        // Keep the crisp neon core exactly on the card edge.
+                        glowPaint.strokeWidth=dp(2).toFloat()
                         glowPaint.color=color
-                        // Same glow recipe as the Dark Theme health curves:
-                        // software-drawn neon core + 7dp coloured shadow halo.
-                        glowPaint.setShadowLayer(dp(14).toFloat(),0f,0f,Color.argb(180,Color.red(color),Color.green(color),Color.blue(color)))
                         canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
-                        glowPaint.clearShadowLayer()
                     }
                 },android.widget.FrameLayout.LayoutParams(-1,-1).apply {
                     setMargins(glowSpace,glowSpace,glowSpace,glowSpace)
