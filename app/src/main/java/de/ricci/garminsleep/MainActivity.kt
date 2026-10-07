@@ -735,8 +735,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
             val fill = if(settingsLight) Color.argb(178,72,88,112) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
-            settingsGrid.addView(LinearLayout(this).apply {
-                orientation=LinearLayout.VERTICAL
+            settingsGrid.addView((if(settingsLight) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
                 background=GradientDrawable().apply {
                     cornerRadius=dp(22).toFloat()
                     setColor(fill)
