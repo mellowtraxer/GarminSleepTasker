@@ -760,7 +760,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         glowPaint.color=color
                         // Same glow recipe as the Dark Theme health curves:
                         // software-drawn neon core + 7dp coloured shadow halo.
-                        glowPaint.setShadowLayer(dp(7).toFloat(),0f,0f,color)
+                        glowPaint.setShadowLayer(dp(14).toFloat(),0f,0f,Color.argb(180,Color.red(color),Color.green(color),Color.blue(color)))
                         canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
                         glowPaint.clearShadowLayer()
                     }
