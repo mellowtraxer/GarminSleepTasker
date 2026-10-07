@@ -752,8 +752,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     })
                     addView(LinearLayout(this@MainActivity).apply {
                         orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
-                        addView(TextView(this@MainActivity).apply { text=title; textSize=15f; setTextColor(if(settingsLight) Color.rgb(24,29,48) else Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
-                        addView(TextView(this@MainActivity).apply { text=sub; textSize=12f; setTextColor(if(settingsLight) Color.rgb(92,101,128) else Color.rgb(166,172,202)); setPadding(0,dp(3),0,0) })
+                        if(!settingsLight) {
+                            addView(TextView(this@MainActivity).apply { text=title; textSize=15f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
+                            addView(TextView(this@MainActivity).apply { text=sub; textSize=12f; setTextColor(Color.rgb(166,172,202)); setPadding(0,dp(3),0,0) })
+                        }
                     })
                     addView(TextView(this@MainActivity).apply { text="›"; textSize=28f; setTextColor(color) })
                 })
