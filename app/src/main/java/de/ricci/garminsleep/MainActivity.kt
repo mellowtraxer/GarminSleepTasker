@@ -192,6 +192,7 @@ private class BottomNavIconView(context: android.content.Context, private val ki
 }
 
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
+    private var settingsBlurTarget: eightbitlab.com.blurview.BlurTarget? = null
     private lateinit var status: TextView
     private lateinit var sleepCard: LinearLayout
     private lateinit var pageTitle: TextView
