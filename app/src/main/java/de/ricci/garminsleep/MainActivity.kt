@@ -761,21 +761,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     override fun onDraw(canvas:Canvas) {
                         super.onDraw(canvas)
                         val inset=dp(1).toFloat()
-                        // Explicit multi-ring aura: unlike Android shadow/elevation this stays
-                        // visible and gives us deterministic neon falloff outside the card.
-                        val rings=arrayOf(
-                            Triple(dp(14).toFloat(),dp(12).toFloat(),22),
-                            Triple(dp(10).toFloat(),dp(9).toFloat(),34),
-                            Triple(dp(7).toFloat(),dp(6).toFloat(),52),
-                            Triple(dp(4).toFloat(),dp(4).toFloat(),78)
+                        // Real neon aura: blur the alpha mask OUTSIDE the card contour.
+                        // This view is software-rendered so BlurMaskFilter is applied reliably.
+                        glowPaint.clearShadowLayer()
+                        glowPaint.style=Paint.Style.STROKE
+                        glowPaint.strokeWidth=dp(3).toFloat()
+                        glowPaint.color=Color.argb(210,Color.red(color),Color.green(color),Color.blue(color))
+                        glowPaint.maskFilter=android.graphics.BlurMaskFilter(
+                            dp(14).toFloat(),
+                            android.graphics.BlurMaskFilter.Blur.OUTER
                         )
-                        rings.forEach { (spread,stroke,alpha) ->
-                            glowPaint.clearShadowLayer()
-                            glowPaint.strokeWidth=stroke
-                            glowPaint.color=Color.argb(alpha,Color.red(color),Color.green(color),Color.blue(color))
-                            canvas.drawRoundRect(inset-spread,inset-spread,width-inset+spread,height-inset+spread,dp(22).toFloat()+spread,dp(22).toFloat()+spread,glowPaint)
-                        }
-                        // Keep the crisp neon core exactly on the card edge.
+                        canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
+
+                        // Crisp neon core over the diffuse outer aura.
+                        glowPaint.maskFilter=null
                         glowPaint.strokeWidth=dp(2).toFloat()
                         glowPaint.color=color
                         canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
