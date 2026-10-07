@@ -300,6 +300,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
+        var currentPageIndex=0
+        lateinit var swipeOpenPage:(Int)->Unit
         val nav = LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER; setPadding(dp(6),dp(6),dp(6),dp(6))
             val tabs=mutableListOf<MaterialCardView>()
@@ -323,6 +325,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 if(index !in tabs.indices) return
                 val oldIndex=tabs.indexOfFirst { it.strokeWidth>0 }
                 activate(tabs[index])
+                currentPageIndex=index
                 val direction=if(oldIndex<0 || index>=oldIndex) 1f else -1f
                 val action={
                     when(index) {
@@ -350,33 +353,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(tab(2,"Kalender"){})
             addView(tab(3,"Einstellungen"){})
             tabs.forEachIndexed { index,card -> card.setOnClickListener { openPage(index) } }
-            var swipeDownX=0f
-            var swipeDownY=0f
-            var swipeTracking=false
-            val swipeSlop=dp(18)
-            scroll.setOnTouchListener { _,event ->
-                when(event.actionMasked) {
-                    android.view.MotionEvent.ACTION_DOWN -> {
-                        swipeDownX=event.x; swipeDownY=event.y; swipeTracking=true; false
-                    }
-                    android.view.MotionEvent.ACTION_UP -> {
-                        if(!swipeTracking) return@setOnTouchListener false
-                        swipeTracking=false
-                        val dx=event.x-swipeDownX
-                        val dy=event.y-swipeDownY
-                        if(kotlin.math.abs(dx)>dp(72) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*1.35f && kotlin.math.abs(dy)<dp(120)) {
-                            val current=tabs.indexOfFirst { it.strokeWidth>0 }.coerceAtLeast(0)
-                            val next=if(dx<0) current+1 else current-1
-                            if(next in tabs.indices) {
-                                openPage(next)
-                                true
-                            } else false
-                        } else false
-                    }
-                    android.view.MotionEvent.ACTION_CANCEL -> { swipeTracking=false; false }
-                    else -> false
-                }
-            }
+            swipeOpenPage={ index -> openPage(index) }
             post { activate(home) }
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
@@ -447,6 +424,28 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             background=ColorDrawable(Color.TRANSPARENT)
             addView(scene)
             layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
+        }
+        var swipeDownX=0f
+        var swipeDownY=0f
+        var swipeTracking=false
+        scroll.setOnTouchListener { _,event ->
+            when(event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    swipeDownX=event.x; swipeDownY=event.y; swipeTracking=true; false
+                }
+                android.view.MotionEvent.ACTION_UP -> {
+                    if(!swipeTracking) return@setOnTouchListener false
+                    swipeTracking=false
+                    val dx=event.x-swipeDownX
+                    val dy=event.y-swipeDownY
+                    if(kotlin.math.abs(dx)>dp(72) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*1.35f && kotlin.math.abs(dy)<dp(120)) {
+                        val next=if(dx<0) currentPageIndex+1 else currentPageIndex-1
+                        if(next in 0..3) { swipeOpenPage(next); true } else false
+                    } else false
+                }
+                android.view.MotionEvent.ACTION_CANCEL -> { swipeTracking=false; false }
+                else -> false
+            }
         }
         val navShell = MaterialCardView(this).apply {
             radius=dp(18).toFloat()
