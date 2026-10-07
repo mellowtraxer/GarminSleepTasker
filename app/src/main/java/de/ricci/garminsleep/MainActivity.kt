@@ -795,7 +795,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageTitle.text="Kalender"; pageSubtitle.text="Deine Nächte · automatisch dort, wo du sie willst"
         sleepCard.removeAllViews(); sleepCard.background=null
         fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit)=MaterialCardView(this).apply{
-            radius=dp(23).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(glass);cardElevation=0f;setLayerType(View.LAYER_TYPE_SOFTWARE,null);setShadowLayer(dp(10).toFloat(),0f,0f,Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)))
+            radius=dp(23).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(glass);cardElevation=dp(2).toFloat();setLayerType(View.LAYER_TYPE_SOFTWARE,null);outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
                 addView(TextView(this@MainActivity).apply{text=title;textSize=12f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
