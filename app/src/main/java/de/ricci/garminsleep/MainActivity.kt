@@ -756,7 +756,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setColor(fill)
                     setStroke(dp(1),color)
                 }
-                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(0,dp(5),0,dp(5))}
+                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
+                if(settingsLight) { elevation=dp(10).toFloat(); translationZ=dp(10).toFloat(); outlineAmbientShadowColor=color; outlineSpotShadowColor=color }
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
                 if(settingsLight && this is eightbitlab.com.blurview.BlurView) { outlineProvider=android.view.ViewOutlineProvider.BACKGROUND; clipToOutline=true; settingsBlurTarget?.let { target -> setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112)) } }
                 addView(LinearLayout(this@MainActivity).apply {
