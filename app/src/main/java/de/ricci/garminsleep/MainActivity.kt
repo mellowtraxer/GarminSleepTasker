@@ -1543,7 +1543,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }
         return MaterialCardView(this).apply{
-            radius=dp(21).toFloat();cardElevation=if(light) dp(9).toFloat() else dp(2).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.TRANSPARENT);if(light){background=overviewNeonGlass(21,tone,::dp);outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone}else setCardBackgroundColor(fill)
+            radius=dp(21).toFloat();cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.TRANSPARENT);if(light){background=neonGlowGlass(21,tone,::dp);outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone}else setCardBackgroundColor(fill)
             layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))}
             addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
@@ -1638,6 +1638,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
     }
 
+    private fun neonGlowGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(172,18,29,54),Color.argb(142,27,39,66),Color.argb(118,14,24,48))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(30,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(4),Color.argb(80,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
+    ))
+
+    private fun heroNeonGlass(radius:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(184,16,35,62),Color.argb(154,29,38,72),Color.argb(142,31,26,70))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(8),Color.argb(34,50,225,255)) },
+        GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(80,35,225,255),Color.argb(15,35,225,255),Color.argb(15,220,72,255),Color.argb(76,220,72,255))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(3),Color.argb(145,100,225,255)) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),Color.rgb(80,235,255)) }
+    ))
+
     private fun overviewNeonGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
         GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(150,38,49,72),Color.argb(112,48,58,84),Color.argb(88,28,37,62))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(5),Color.argb(38,Color.red(tone),Color.green(tone),Color.blue(tone))) },
         GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
@@ -1680,7 +1692,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(28).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(10).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            background = if(light) LayerDrawable(arrayOf(GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(42,255,255,255),Color.argb(16,176,215,255),Color.argb(12,135,105,205),Color.argb(30,255,190,226))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(82,104,156,215)) },GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(205,255,255,255),Color.argb(68,255,255,255),Color.TRANSPARENT,Color.argb(58,61,100,174))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.argb(150,255,255,255)) },GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(190,220,255,255),Color.argb(38,255,255,255),Color.TRANSPARENT,Color.argb(42,157,122,255),Color.argb(165,238,174,255))).apply { cornerRadius=dp(30).toFloat() },GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(125,53,116,215),Color.TRANSPARENT,Color.argb(118,255,158,215))).apply { cornerRadius=dp(30).toFloat() },MotionGlassDrawable(this@MainActivity,dp(30).toFloat()))) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
+            background = if(light) heroNeonGlass(30,::dp) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
@@ -1724,10 +1736,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
         val remPct = (s.remMin * 100 / sleepOnly).toInt()
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=overviewNeonGlass(20,stageRem,::dp); cardElevation=dp(8).toFloat(); outlineAmbientShadowColor=stageRem; outlineSpotShadowColor=stageRem } else setCardBackgroundColor(Color.rgb(19,15,39))
+            radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=neonGlowGlass(20,stageLight,::dp); cardElevation=dp(12).toFloat(); outlineAmbientShadowColor=stageLight; outlineSpotShadowColor=stageLight } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
-                addView(TextView(this@MainActivity).apply { text="SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(88,74,150) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(225,235,255) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                 addView(TextView(this@MainActivity).apply { text="$deepPct%\nTIEF"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageDeep); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
                 addView(TextView(this@MainActivity).apply { text="$remPct%\nREM"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
             })
