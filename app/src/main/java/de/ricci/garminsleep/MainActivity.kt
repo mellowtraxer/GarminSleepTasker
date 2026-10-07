@@ -1256,9 +1256,25 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         dialog.window?.setBackgroundDrawable(GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
             Color.argb(250,250,252,255),Color.argb(248,239,247,255),Color.argb(248,244,240,255)
         )).apply { cornerRadius=dp(26).toFloat(); setStroke(dp(1),Color.argb(185,128,104,235)) })
+        fun recolor(v:View?) {
+            if(v==null)return
+            if(v is TextView) {
+                v.setTextColor(Color.rgb(35,42,62))
+                if(v.textSize < 13f*resources.displayMetrics.scaledDensity) v.textSize=15f
+            }
+            if(v is android.view.ViewGroup) for(i in 0 until v.childCount) recolor(v.getChildAt(i))
+        }
+        // AlertDialog list rows are framework TextViews and are not covered by android.R.id.message.
+        // Recolor the whole content tree first, then restore the stronger title/button styling below.
+        recolor(dialog.window?.decorView)
         val titleId=resources.getIdentifier("alertTitle","id","android")
-        if(titleId!=0) dialog.findViewById<TextView>(titleId)?.apply { setTextColor(Color.rgb(24,29,48)); setTypeface(typeface,Typeface.BOLD) }
+        if(titleId!=0) dialog.findViewById<TextView>(titleId)?.apply { setTextColor(Color.rgb(24,29,48)); setTypeface(typeface,Typeface.BOLD); textSize=20f }
         dialog.findViewById<TextView>(android.R.id.message)?.apply { setTextColor(Color.rgb(55,64,88)); textSize=16f }
+        dialog.listView?.apply {
+            divider=ColorDrawable(Color.argb(38,70,80,110))
+            dividerHeight=dp(1)
+            setBackgroundColor(Color.TRANSPARENT)
+        }
         listOf(AlertDialog.BUTTON_POSITIVE,AlertDialog.BUTTON_NEGATIVE,AlertDialog.BUTTON_NEUTRAL).forEach { which ->
             dialog.getButton(which)?.apply { setTextColor(Color.rgb(118,82,205)); setTypeface(typeface,Typeface.BOLD) }
         }
