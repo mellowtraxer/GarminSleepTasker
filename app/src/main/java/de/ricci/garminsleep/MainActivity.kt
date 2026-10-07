@@ -181,7 +181,7 @@ private class StageNeonView(context:android.content.Context, private val stages:
 private class BottomNavIconView(context: android.content.Context, private val kind:Int) : View(context) {
     private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE; strokeWidth=resources.displayMetrics.density*2.15f; strokeCap=Paint.Cap.ROUND; strokeJoin=Paint.Join.ROUND }
     var active=false; set(v){field=v; invalidate()}
-    override fun onDraw(c:Canvas){ super.onDraw(c); val d=resources.displayMetrics.density; val cx=width/2f; val cy=height/2f; p.color=if(active) Color.WHITE else Color.rgb(155,164,190); p.style=Paint.Style.STROKE
+    override fun onDraw(c:Canvas){ super.onDraw(c); val d=resources.displayMetrics.density; val cx=width/2f; val cy=height/2f; p.color=Color.WHITE; p.alpha=if(active) 255 else 205; p.style=Paint.Style.STROKE
         when(kind){
             0->{ val q=Path(); q.moveTo(cx-9*d,cy); q.lineTo(cx,cy-8*d); q.lineTo(cx+9*d,cy); q.moveTo(cx-6*d,cy-2*d); q.lineTo(cx-6*d,cy+8*d); q.lineTo(cx+6*d,cy+8*d); q.lineTo(cx+6*d,cy-2*d); c.drawPath(q,p) }
             1->{ c.drawRoundRect(cx-9*d,cy-7*d,cx+9*d,cy+7*d,2*d,2*d,p); c.drawLine(cx-5*d,cy-2*d,cx-1*d,cy-2*d,p); c.drawLine(cx-5*d,cy+3*d,cx+4*d,cy+3*d,p); c.drawLine(cx+4*d,cy-4*d,cx+6*d,cy-4*d,p) }
@@ -297,10 +297,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val tabs=mutableListOf<MaterialCardView>()
             fun activate(active:MaterialCardView)=tabs.forEachIndexed { index,card ->
                 val on=card===active; val tone=Color.rgb(111,82,255)
-                card.setCardBackgroundColor(if(on) Color.rgb(38,65,190) else Color.TRANSPARENT)
-                card.strokeWidth=if(on) dp(1) else 0; card.strokeColor=Color.rgb(82,118,255); card.cardElevation=0f
+                card.setCardBackgroundColor(if(on) Color.argb(205,38,65,190) else Color.TRANSPARENT)
+                card.strokeWidth=if(on) dp(2) else 0; card.strokeColor=Color.rgb(82,118,255); card.cardElevation=0f
                 val box=card.getChildAt(0) as LinearLayout; (box.getChildAt(0) as BottomNavIconView).active=on
-                (box.getChildAt(1) as TextView).setTextColor(if(on) Color.WHITE else Color.rgb(150,158,184))
+                (box.getChildAt(1) as TextView).setTextColor(Color.WHITE)
+                (box.getChildAt(1) as TextView).alpha=if(on) 1f else .80f
             }
             fun tab(kind:Int,label:String,action:()->Unit)=MaterialCardView(this@MainActivity).apply {
                 radius=dp(12).toFloat(); setCardBackgroundColor(Color.TRANSPARENT)
@@ -376,18 +377,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0,1f)
         }
         val navShell = MaterialCardView(this).apply {
-            radius=dp(14).toFloat(); cardElevation=dp(4).toFloat(); strokeWidth=dp(1); strokeColor=if(useLight) Color.rgb(116,181,255) else Color.rgb(25,32,51)
-            setCardBackgroundColor(if(useLight) Color.argb(235,248,251,255) else Color.rgb(6,12,25))
-            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(32).toFloat() }
+            radius=dp(18).toFloat()
+            cardElevation=0f
+            strokeWidth=dp(2)
+            strokeColor=Color.rgb(70,205,225)
+            setCardBackgroundColor(if(useLight) Color.argb(190,52,67,94) else Color.argb(230,6,12,25))
+            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(20,34,211,238),Color.TRANSPARENT,Color.argb(24,183,99,255))).apply { cornerRadius=dp(18).toFloat() }
+            setLayerType(View.LAYER_TYPE_SOFTWARE,null)
+            setShadowLayer(dp(10).toFloat(),0f,0f,Color.argb(165,70,205,225))
             addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(68)).apply { setMargins(dp(18),dp(4),dp(18),dp(8)) }
         }
         val root = LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL; background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(248,250,255),Color.rgb(231,243,255),Color.rgb(239,233,255),Color.rgb(222,246,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
+            orientation=LinearLayout.VERTICAL; background=if(useLight) Color.rgb(8,20,40) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(8,12,31),nightBg)); addView(scroll); addView(navShell)
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             v.setPadding(0,bars.top,0,bars.bottom); insets
+        }
+        window.navigationBarColor=Color.rgb(8,20,40)
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            window.decorView.systemUiVisibility = window.decorView.systemUiVisibility and android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
         }
         setContentView(root)
         loadCachedHistory()
