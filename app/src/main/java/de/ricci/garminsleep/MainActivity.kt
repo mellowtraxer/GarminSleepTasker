@@ -1185,27 +1185,31 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
         fun choice(key:String,title:String,sub:String,desc:String,icon:String,tone:Int) {
             val active=current==key
-            val host=android.widget.FrameLayout(this).apply {
-                clipChildren=false
-                clipToPadding=false
-                layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),dp(7),dp(4),dp(7)) }
-            }
-
-            // Diffuse outer aura, same visual language as the settings cards.
-            host.addView(object:View(this) {
-                private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            val host=object:android.widget.FrameLayout(this) {
+                private val glowPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style=Paint.Style.STROKE
                     strokeWidth=dp(if(active) 4 else 3).toFloat()
                 }
-                init { setLayerType(View.LAYER_TYPE_SOFTWARE,null) }
-                override fun onDraw(c:Canvas) {
-                    val inset=dp(2).toFloat()
-                    p.color=Color.argb(if(active) 230 else 170,Color.red(tone),Color.green(tone),Color.blue(tone))
-                    p.maskFilter=android.graphics.BlurMaskFilter(dp(if(active) 14 else 9).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER)
-                    c.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),p)
-                    p.maskFilter=null
+                init {
+                    clipChildren=false
+                    clipToPadding=false
+                    setWillNotDraw(false)
+                    setLayerType(View.LAYER_TYPE_SOFTWARE,null)
                 }
-            },android.widget.FrameLayout.LayoutParams(-1,-1))
+                override fun onDraw(c:Canvas) {
+                    super.onDraw(c)
+                    val inset=dp(3).toFloat()
+                    glowPaint.color=Color.argb(if(active) 230 else 170,Color.red(tone),Color.green(tone),Color.blue(tone))
+                    glowPaint.maskFilter=android.graphics.BlurMaskFilter(
+                        dp(if(active) 14 else 9).toFloat(),
+                        android.graphics.BlurMaskFilter.Blur.OUTER
+                    )
+                    c.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
+                    glowPaint.maskFilter=null
+                }
+            }.apply {
+                layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),dp(7),dp(4),dp(7)) }
+            }
 
             val card=android.widget.FrameLayout(this).apply {
                 background=LayerDrawable(arrayOf(
