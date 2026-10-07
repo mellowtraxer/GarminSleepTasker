@@ -741,10 +741,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
             val fill = if(settingsLight) Color.argb(178,72,88,112) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
+            val glowSpace=if(settingsLight) dp(14) else 0
             val host=android.widget.FrameLayout(this).apply {
                 clipChildren=false
                 clipToPadding=false
-                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
+                setPadding(glowSpace,glowSpace,glowSpace,glowSpace)
+                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{
+                    setMargins(dp(4)-glowSpace,dp(9)-glowSpace,dp(4)-glowSpace,dp(9)-glowSpace)
+                }
             }
             if(settingsLight) {
                 host.addView(object:View(this) {
@@ -764,7 +768,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
                         glowPaint.clearShadowLayer()
                     }
-                },android.widget.FrameLayout.LayoutParams(-1,-1))
+                },android.widget.FrameLayout.LayoutParams(-1,-1).apply {
+                    setMargins(glowSpace,glowSpace,glowSpace,glowSpace)
+                })
             }
             val card=(if(settingsLight) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
                 background=if(settingsLight) LayerDrawable(arrayOf(
@@ -783,7 +789,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setColor(fill)
                     setStroke(dp(1),color)
                 }
-                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
+                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2).apply {
+                    setMargins(glowSpace,glowSpace,glowSpace,glowSpace)
+                }
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
                 if(settingsLight && this is eightbitlab.com.blurview.BlurView) {
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
