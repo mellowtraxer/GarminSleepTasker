@@ -747,7 +747,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
                     if(settingsLight) background=null
                     addView(TextView(this@MainActivity).apply {
-                        text=icon; textSize=25f; gravity=android.view.Gravity.CENTER; setTextColor(color); setPadding(dp(6),dp(6),dp(6),dp(6))
+                        text=icon; textSize=25f; gravity=android.view.Gravity.CENTER; setTextColor(if(settingsLight) Color.WHITE else color); setPadding(dp(6),dp(6),dp(6),dp(6))
                         background=GradientDrawable().apply { cornerRadius=dp(15).toFloat(); setColor(Color.argb(205,Color.red(color),Color.green(color),Color.blue(color))); setStroke(dp(1),Color.argb(230,255,255,255)) }
                         layoutParams=LinearLayout.LayoutParams(dp(50),dp(50)).apply { setMargins(0,0,dp(12),0) }
                     })
