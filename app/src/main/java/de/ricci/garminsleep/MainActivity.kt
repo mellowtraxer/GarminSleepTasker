@@ -736,7 +736,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val fill = if(settingsLight) Color.argb(138,225,235,248) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView(MaterialCardView(this).apply {
                 radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(fill)
-                strokeWidth=dp(1); strokeColor=color
+                strokeWidth=dp(1); strokeColor=if(settingsLight) Color.argb(245,Color.red(color),Color.green(color),Color.blue(color)) else color
+                if(settingsLight) { elevation=dp(5).toFloat(); translationZ=dp(2).toFloat() }
                 layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(0,dp(5),0,dp(5))}
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
                 addView(LinearLayout(this@MainActivity).apply {
