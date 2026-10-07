@@ -1039,10 +1039,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
         launch(Dispatchers.IO) {
             val result=runCatching {
-                val connection=java.net.URL("https://raw.githubusercontent.com/mellowtraxer/SleepSync-Updates/main/latest.json?t=${System.currentTimeMillis()}").openConnection() as java.net.HttpURLConnection
+                val connection=java.net.URL("https://api.github.com/repos/mellowtraxer/SleepSync-Updates/contents/latest.json?ref=main&t=${System.currentTimeMillis()}").openConnection() as java.net.HttpURLConnection
                 connection.connectTimeout=8000
                 connection.readTimeout=8000
-                connection.setRequestProperty("Cache-Control","no-cache")
+                connection.useCaches=false
+                connection.setRequestProperty("Cache-Control","no-cache, no-store, max-age=0")
+                connection.setRequestProperty("Pragma","no-cache")
+                connection.setRequestProperty("Accept","application/vnd.github.raw+json")
+                connection.setRequestProperty("User-Agent","SleepSync-TurboUpdater")
                 connection.inputStream.bufferedReader().use { JSONObject(it.readText()) }
             }
             withContext(Dispatchers.Main) {
