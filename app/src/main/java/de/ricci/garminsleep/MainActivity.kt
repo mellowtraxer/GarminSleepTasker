@@ -842,10 +842,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsTitle.isClickable=true
         actionsTitle.isFocusable=true
 
-        val diagnosticColors=listOf(accent2,stageRem,stageAwake,accent,stageLight)
+        val diagnosticRed=Color.rgb(255,70,82)
         listOf(0,1,2,3,4).forEach { i ->
             val b=actionsBox.getChildAt(i) as? MaterialButton ?: return@forEach
-            val tone=diagnosticColors[i]
             b.cornerRadius=dp(18)
             b.textSize=12f
             b.minHeight=dp(48)
@@ -854,7 +853,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 if(settingsLight) Color.argb(178,72,88,112) else Color.rgb(14,17,34)
             )
             b.strokeWidth=dp(2)
-            b.strokeColor=ColorStateList.valueOf(tone)
+            b.strokeColor=ColorStateList.valueOf(diagnosticRed)
+            // Diagnostics deliberately use one warning-red neon language.
+            // Software layer + OUTER BlurMaskFilter gives the same diffuse aura
+            // as the light-theme settings-card glow.
+            b.setLayerType(View.LAYER_TYPE_SOFTWARE,null)
+            b.paint.maskFilter=android.graphics.BlurMaskFilter(
+                dp(8).toFloat(),
+                android.graphics.BlurMaskFilter.Blur.OUTER
+            )
             b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply {
                 height=dp(48)
                 if(this is LinearLayout.LayoutParams) setMargins(0,dp(5),0,dp(5))
