@@ -1704,7 +1704,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
-        fun glass(vararg rgb:Int)=if(light) Color.argb(178,72,88,112) else Color.rgb(rgb[0],rgb[1],rgb[2])
+        fun glass(vararg rgb:Int)=if(light) Color.argb(168,72,88,112) else Color.rgb(rgb[0],rgb[1],rgb[2])
         val historical=viewingHistoryNight
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(2),0,dp(2),dp(8))
@@ -1718,8 +1718,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(28).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(10).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            background = if(light) heroNeonGlass(30,::dp) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
+            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(10).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(2).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+            background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(182,72,88,112),Color.argb(166,58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
@@ -1763,7 +1763,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
         val remPct = (s.remMin * 100 / sleepOnly).toInt()
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=neonGlowGlass(20,stageLight,::dp); cardElevation=dp(12).toFloat(); outlineAmbientShadowColor=stageLight; outlineSpotShadowColor=stageLight } else setCardBackgroundColor(Color.rgb(19,15,39))
+            radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=GradientDrawable().apply { cornerRadius=dp(20).toFloat(); setColor(Color.argb(174,72,88,112)); setStroke(dp(2),stageLight) }; cardElevation=dp(7).toFloat(); outlineAmbientShadowColor=stageLight; outlineSpotShadowColor=stageLight } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
                 addView(TextView(this@MainActivity).apply { text="〽  SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(225,235,255) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
@@ -1815,7 +1815,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         sleepCard.addView(vitals)
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=if(light) dp(10).toFloat() else 0f; strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=dashboardGlass(18,::dp) else setCardBackgroundColor(Color.rgb(7,25,31))
+            radius=dp(18).toFloat(); cardElevation=if(light) dp(10).toFloat() else 0f; strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=GradientDrawable().apply { cornerRadius=dp(18).toFloat(); setColor(Color.argb(168,72,88,112)); setStroke(dp(1),Color.rgb(76,225,169)) } else setCardBackgroundColor(Color.rgb(7,25,31))
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(10),dp(14),dp(10))
@@ -1834,7 +1834,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=dashboardGlass(24,::dp) else setCardBackgroundColor(Color.rgb(19,15,39))
+            radius=dp(24).toFloat(); cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=GradientDrawable().apply { cornerRadius=dp(24).toFloat(); setColor(Color.argb(168,72,88,112)); setStroke(dp(1),stageRem) } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
                 addView(TextView(this@MainActivity).apply {
@@ -1845,7 +1845,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(TextView(this@MainActivity).apply {
                     layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
                     text=(if (quality >= 90) "Hohe Schlafeffizienz" else if (quality >= 80) "Solide Schlafeffizienz" else "Schlafeffizienz") + "\n" + "$quality% deiner Bettzeit entfielen auf Schlafphasen."
-                    textSize=13f; setTextColor(if(light) Color.rgb(28,39,72) else Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
+                    textSize=13f; setTextColor(if(light) Color.WHITE else Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
                 })
             })
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(4),dp(10),dp(4),0) }
