@@ -1709,7 +1709,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(2),0,dp(2),dp(8))
             addView(TextView(this@MainActivity).apply {
-                text=if(historical) "HISTORISCHE NACHT" else "LETZTE NACHT"; textSize=11f; letterSpacing=.16f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD)
+                text=if(historical) "HISTORISCHE NACHT" else "LETZTE NACHT"; textSize=11f; letterSpacing=.16f; setTextColor(if(light) Color.WHITE else accent2); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK)
                 layoutParams=LinearLayout.LayoutParams(0,-2,1f)
             })
             addView(TextView(this@MainActivity).apply {
@@ -1735,7 +1735,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 background = if(light) overviewNeonGlass(22,accent2,::dp) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(22,94,120),Color.rgb(77,45,145))).apply { cornerRadius=dp(22).toFloat(); setStroke(dp(1),Color.rgb(83,205,229)) }
             })
         })
-        sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); setPadding(dp(4),dp(18),0,dp(8)) })
+        sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else stageLight); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); setPadding(dp(4),dp(18),0,dp(8)) })
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; setPadding(dp(2),dp(5),dp(2),0)
@@ -1775,13 +1775,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(10),0,dp(2))
-            addView(TextView(this@MainActivity).apply { text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply { text="SCHLAFPHASEN"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else stageRem); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
             addView(TextView(this@MainActivity).apply { text=fmt(s.lightMin+s.deepMin+s.remMin); textSize=10f; setTypeface(typeface,Typeface.BOLD); setTextColor(stageRem); setPadding(dp(10),dp(4),dp(10),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(if(light) Color.argb(220,240,230,255) else Color.rgb(35,19,54)); setStroke(dp(1),Color.rgb(86,48,119)) } })
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; setPadding(dp(4),dp(2),dp(4),dp(3))
             fun phase(label:String,minutes:Long,tone:Int)=TextView(this@MainActivity).apply {
-                text="$label  ${(minutes*100/s.totalMin.coerceAtLeast(1)).toInt()}%"; textSize=10f; setTextColor(if(light) Color.WHITE else tone); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(2).toFloat(),0f,0f,tone)
+                text="$label  ${(minutes*100/s.totalMin.coerceAtLeast(1)).toInt()}%"; textSize=10f; setTextColor(if(light) Color.WHITE else tone); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK)
                 gravity=android.view.Gravity.CENTER; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
             }
             addView(phase("LEICHT",s.lightMin,stageLight)); addView(phase("TIEF",s.deepMin,stageDeep)); addView(phase("REM",s.remMin,stageRem)); addView(phase("WACH",s.awakeMin,stageAwake))
@@ -1801,7 +1801,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(8),dp(4),dp(4))
-            addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(accent2); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+            addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else accent2); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
             addView(TextView(this@MainActivity).apply { text="LIVE"; textSize=8f; letterSpacing=.12f; setTextColor(if(light) Color.rgb(18,121,92) else Color.rgb(76,225,169)); setPadding(dp(7),dp(3),dp(7),dp(3)); background=GradientDrawable().apply { cornerRadius=dp(10).toFloat(); setColor(if(light) Color.argb(205,218,250,239) else Color.rgb(7,34,28)); if(light) setStroke(dp(1),Color.rgb(76,205,164)) } })
             addView(View(this@MainActivity).apply { layoutParams=LinearLayout.LayoutParams(dp(7),dp(1)) })
             addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=9f; letterSpacing=.08f; setTextColor(if(light) Color.rgb(15,126,98) else Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(if(light) Color.argb(210,220,249,243) else Color.rgb(8,37,31)); setStroke(dp(1),if(light) Color.rgb(63,194,166) else Color.rgb(24,95,73)) } })
