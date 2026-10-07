@@ -787,19 +787,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
-        val primary=if(light) Color.rgb(24,29,48) else Color.WHITE
-        val secondary=if(light) Color.rgb(82,94,121) else Color.rgb(150,165,195)
-        val muted=if(light) Color.rgb(96,108,136) else Color.rgb(165,175,205)
-        val glass=if(light) Color.argb(224,247,250,255) else Color.argb(225,12,18,40)
+        val primary=Color.WHITE
+        val secondary=if(light) Color.rgb(225,232,248) else Color.rgb(150,165,195)
+        val muted=if(light) Color.rgb(215,225,245) else Color.rgb(165,175,205)
+        val glass=if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40)
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         pageTitle.text="Kalender"; pageSubtitle.text="Deine Nächte · automatisch dort, wo du sie willst"
         sleepCard.removeAllViews(); sleepCard.background=null
         fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit)=MaterialCardView(this).apply{
-            radius=dp(23).toFloat();strokeWidth=dp(1);strokeColor=tone;setCardBackgroundColor(glass);cardElevation=dp(1).toFloat()
+            radius=dp(23).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(glass);cardElevation=0f;setLayerType(View.LAYER_TYPE_SOFTWARE,null);setShadowLayer(dp(10).toFloat(),0f,0f,Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)))
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
                 addView(TextView(this@MainActivity).apply{text=title;textSize=12f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
-                addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(secondary);setPadding(0,dp(3),0,dp(12))});body()
+                addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(if(light) Color.argb(215,245,248,255) else secondary);setPadding(0,dp(3),0,dp(12))});body()
             })
         }
         val s=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
@@ -807,7 +807,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if(s!=null){val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault());val fmt={m:Long->(m/60).toString()+" h "+(m%60).toString()+" min"}
                 addView(TextView(this@MainActivity).apply{text="🌙  "+fmt(s.totalMin)+"     "+tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs));textSize=22f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)})
                 addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(13),0,dp(8));listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach{q->addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(q.second)}},LinearLayout.LayoutParams(0,dp(9),q.first.toFloat()).apply{setMargins(0,0,dp(2),0)})}})
-                addView(TextView(this@MainActivity).apply{text="Leicht "+fmt(s.lightMin)+"  ·  Tief "+fmt(s.deepMin)+"  ·  REM "+fmt(s.remMin)+"  ·  Wach "+fmt(s.awakeMin);textSize=11f;setTextColor(if(light) Color.rgb(77,90,118) else Color.rgb(190,200,225))})
+                addView(TextView(this@MainActivity).apply{text="Leicht "+fmt(s.lightMin)+"  ·  Tief "+fmt(s.deepMin)+"  ·  REM "+fmt(s.remMin)+"  ·  Wach "+fmt(s.awakeMin);textSize=11f;setTextColor(if(light) Color.rgb(235,240,252) else Color.rgb(190,200,225))})
             } else addView(TextView(this@MainActivity).apply{text="Noch keine Nacht synchronisiert";setTextColor(primary)})
         })
         sleepCard.addView(card("⚡  AUTOMATIK","Neue Nächte selbstständig eintragen",Color.rgb(74,224,181)){
@@ -818,10 +818,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(MaterialButton(this).apply{
             text="⚡  JETZT EINTRAGEN";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
-            setTextColor(if(light) Color.rgb(38,52,112) else Color.WHITE)
-            backgroundTintList=ColorStateList.valueOf(if(light) Color.rgb(239,243,255) else Color.rgb(64,63,205))
-            strokeWidth=if(light) dp(1) else 0
-            strokeColor=ColorStateList.valueOf(if(light) Color.rgb(91,104,255) else Color.TRANSPARENT)
+            setTextColor(Color.WHITE)
+            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(205,46,62,150) else Color.rgb(64,63,205))
+            strokeWidth=dp(2)
+            strokeColor=ColorStateList.valueOf(if(light) Color.rgb(95,125,255) else Color.TRANSPARENT)
             cornerRadius=dp(18);layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}
             setOnClickListener{
                 val latest=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
@@ -836,7 +836,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         })
         sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
-            val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ›";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(105,220,226,255) else Color.argb(150,45,29,73));setStroke(dp(1),if(light) Color.argb(105,170,128,255) else Color.TRANSPARENT)};isClickable=true;setOnClickListener{chooseCalendar()}})
+            val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ›";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(95,38,46,92) else Color.argb(150,45,29,73));setStroke(dp(1),if(light) stageRem else Color.TRANSPARENT)};isClickable=true;setOnClickListener{chooseCalendar()}})
             addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere Android-Kalender können hier später ausgewählt werden.";textSize=11f;setTextColor(muted);setPadding(0,dp(10),0,0)})
         })
         sleepCard.addView(card("◷  LETZTE EINTRÄGE","Zuletzt synchronisierte Nächte",stageLight){
@@ -855,7 +855,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             append("\nLetzter automatischer Eintrag: ")
             append(if(lastAuto>0) statusFmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
         }
-        sleepCard.addView(TextView(this).apply{text=statusText;textSize=11f;setTextColor(if(calendarAutoEnabled()) (if(light) Color.rgb(22,143,112) else Color.rgb(88,220,183)) else muted);gravity=android.view.Gravity.CENTER;setPadding(0,dp(4),0,dp(12))})
+        sleepCard.addView(card("●  STATUS","Kalender-Automatik",if(calendarAutoEnabled()) Color.rgb(74,224,181) else muted){
+            addView(TextView(this@MainActivity).apply{text=statusText;textSize=11f;setTextColor(if(light) Color.rgb(235,240,252) else muted);setPadding(dp(2),0,dp(2),0)})
+        })
     }
     private fun showSettings() {
         val d = resources.displayMetrics.density
