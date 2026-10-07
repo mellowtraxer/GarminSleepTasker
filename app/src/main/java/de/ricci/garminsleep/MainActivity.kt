@@ -711,10 +711,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
             val year=key/100; val kw=key%100; val avg=items.map{it.totalMin}.average().toLong()
             val tone=if(kw%2==0) accent2 else stageRem
-            val host=android.widget.FrameLayout(this).apply{clipChildren=false;clipToPadding=false;layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}}
+            val host=android.widget.FrameLayout(this).apply{clipChildren=false;clipToPadding=false;layoutParams=LinearLayout.LayoutParams(-1,dp(62)).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}}
             if(light) host.addView(object:View(this){private val p=Paint(Paint.ANTI_ALIAS_FLAG);init{setLayerType(View.LAYER_TYPE_SOFTWARE,null)};override fun onDraw(c:Canvas){val q=dp(1).toFloat();p.style=Paint.Style.STROKE;p.strokeWidth=dp(3).toFloat();p.color=Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone));p.maskFilter=android.graphics.BlurMaskFilter(dp(14).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER);c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p);p.maskFilter=null;p.strokeWidth=dp(2).toFloat();p.color=tone;c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p)}},android.widget.FrameLayout.LayoutParams(-1,-1))
             val shell=(if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply{
-                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
+                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-1)
                 background=LayerDrawable(arrayOf(GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40));setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}))
                 if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}}
             }
@@ -725,7 +725,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(title,LinearLayout.LayoutParams(0,-2,1f))
                 addView(TextView(this@MainActivity).apply { text="Ø "+(avg/60)+" h "+(avg%60)+" min  ·  "+items.size+" Nächte"; textSize=11f; setTextColor(secondary) })
                 addView(TextView(this@MainActivity).apply { text="  ▾"; textSize=18f; setTextColor(accent2) })
-                setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
+                setOnClickListener { val opening=rows.visibility!=View.VISIBLE; rows.visibility=if(opening) View.VISIBLE else View.GONE; host.layoutParams=host.layoutParams.apply{height=if(opening) LinearLayout.LayoutParams.WRAP_CONTENT else dp(62)}; shell.layoutParams=shell.layoutParams.apply{height=if(opening) android.widget.FrameLayout.LayoutParams.WRAP_CONTENT else android.widget.FrameLayout.LayoutParams.MATCH_PARENT}; host.requestLayout() }
             }
             items.sortedByDescending{it.endMs}.forEach { s ->
                 rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(10),dp(15),dp(12)); background=GradientDrawable().apply{setColor(if(light) Color.argb(92,224,237,250) else Color.argb(70,25,32,58))}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
