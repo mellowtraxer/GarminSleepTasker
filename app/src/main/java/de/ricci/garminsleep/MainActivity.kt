@@ -1666,19 +1666,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
 
     private fun neonGlowGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(138,8,25,48),Color.argb(112,24,36,66),Color.argb(96,18,18,48))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(30,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(210,5,16,34),Color.argb(196,15,25,50),Color.argb(205,10,12,34))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(30,Color.red(tone),Color.green(tone),Color.blue(tone))) },
         GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(5),Color.argb(125,Color.red(tone),Color.green(tone),Color.blue(tone))) },
         GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
     ))
 
     private fun heroNeonGlass(radius:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(150,8,32,58),Color.argb(126,22,34,68),Color.argb(118,45,20,68))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(8),Color.argb(34,50,225,255)) },
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(198,5,22,44),Color.argb(188,15,26,56),Color.argb(190,36,13,54))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(8),Color.argb(34,50,225,255)) },
         GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(110,35,225,255),Color.argb(18,35,225,255),Color.argb(18,235,70,255),Color.argb(105,235,70,255))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(5),Color.argb(110,100,225,255)) },
         GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(65,235,255),Color.rgb(70,225,255),Color.rgb(220,75,255))).apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),Color.rgb(80,235,255)) }
     ))
 
     private fun overviewNeonGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(150,38,49,72),Color.argb(112,48,58,84),Color.argb(88,28,37,62))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(5),Color.argb(38,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(214,18,28,48),Color.argb(204,27,38,62),Color.argb(210,16,23,44))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(5),Color.argb(38,Color.red(tone),Color.green(tone),Color.blue(tone))) },
         GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
     ))
 
@@ -1713,7 +1713,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=LinearLayout.LayoutParams(0,-2,1f)
             })
             addView(TextView(this@MainActivity).apply {
-                text="${tf.format(java.time.Instant.ofEpochMilli(s.startMs))} – ${tf.format(java.time.Instant.ofEpochMilli(s.endMs))}"; textSize=12f; setTextColor(if(light) Color.rgb(91,105,139) else Color.rgb(151,158,190))
+                text="${tf.format(java.time.Instant.ofEpochMilli(s.startMs))} – ${tf.format(java.time.Instant.ofEpochMilli(s.endMs))}"; textSize=12f; setTextColor(if(light) Color.rgb(224,232,250) else Color.rgb(151,158,190))
             })
         })
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
@@ -1750,7 +1750,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     background = GradientDrawable().apply { shape=GradientDrawable.OVAL; setColor(tone) }
                     layoutParams=LinearLayout.LayoutParams(dp(7),dp(7)).apply { setMargins(0,0,dp(5),0) }
                 })
-                addView(TextView(this@MainActivity).apply { text=name; textSize=11f; setTextColor(if(light) Color.rgb(82,95,128) else Color.rgb(185,190,215)) })
+                addView(TextView(this@MainActivity).apply { text=name; textSize=11f; setTextColor(if(light) Color.rgb(232,238,252) else Color.rgb(185,190,215)) })
                 layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
             }
             addView(legend("Leicht",stageLight)); addView(legend("Tief",stageDeep)); addView(legend("REM",stageRem)); addView(legend("Wach",stageAwake))
