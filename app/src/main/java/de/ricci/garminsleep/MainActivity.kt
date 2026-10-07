@@ -1666,8 +1666,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
 
     private fun neonGlowGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(210,5,16,34),Color.argb(196,15,25,50),Color.argb(205,10,12,34))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(30,Color.red(tone),Color.green(tone),Color.blue(tone))) },
-        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(5),Color.argb(125,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        // Light-theme overview cards: same slate-glass DNA as Verlauf/Kalender/Einstellungen.
+        // Keep enough contrast for white text while letting the wallpaper breathe through.
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(168,72,88,112),Color.argb(154,66,80,108),Color.argb(162,76,82,112))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(28,Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(5),Color.argb(112,Color.red(tone),Color.green(tone),Color.blue(tone))) },
         GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
     ))
 
