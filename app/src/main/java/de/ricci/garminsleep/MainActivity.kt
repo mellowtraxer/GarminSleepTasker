@@ -731,7 +731,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply {
             text = "SYSTEM"; textSize = 12f; setTextColor(accent2); setTypeface(typeface, Typeface.BOLD); letterSpacing = .16f
         })
-        val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0) }
+        val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0); clipChildren=false; clipToPadding=false }
+        sleepCard.clipChildren=false
+        sleepCard.clipToPadding=false
         val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
         val selectedTheme=prefs.getString("theme","dark") ?: "dark"
         val selectedThemeLabel=when(selectedTheme) { "light"->"Neon Sunrise"; "system"->"Automatisch"; else->"OLED Night" }
@@ -739,7 +741,32 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
             val fill = if(settingsLight) Color.argb(178,72,88,112) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
-            settingsGrid.addView((if(settingsLight) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
+            val host=android.widget.FrameLayout(this).apply {
+                clipChildren=false
+                clipToPadding=false
+                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
+            }
+            if(settingsLight) {
+                host.addView(object:View(this) {
+                    private val glowPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        style=Paint.Style.STROKE
+                        strokeWidth=dp(2).toFloat()
+                        strokeJoin=Paint.Join.ROUND
+                    }
+                    init { setLayerType(View.LAYER_TYPE_SOFTWARE,null) }
+                    override fun onDraw(canvas:Canvas) {
+                        super.onDraw(canvas)
+                        val inset=dp(1).toFloat()
+                        glowPaint.color=color
+                        // Same glow recipe as the Dark Theme health curves:
+                        // software-drawn neon core + 7dp coloured shadow halo.
+                        glowPaint.setShadowLayer(dp(7).toFloat(),0f,0f,color)
+                        canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
+                        glowPaint.clearShadowLayer()
+                    }
+                },android.widget.FrameLayout.LayoutParams(-1,-1))
+            }
+            val card=(if(settingsLight) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
                 background=if(settingsLight) LayerDrawable(arrayOf(
                     GradientDrawable().apply {
                         cornerRadius=dp(22).toFloat()
@@ -756,10 +783,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setColor(fill)
                     setStroke(dp(1),color)
                 }
-                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
-                if(settingsLight) { elevation=dp(10).toFloat(); translationZ=dp(10).toFloat(); outlineAmbientShadowColor=color; outlineSpotShadowColor=color }
+                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
-                if(settingsLight && this is eightbitlab.com.blurview.BlurView) { outlineProvider=android.view.ViewOutlineProvider.BACKGROUND; clipToOutline=true; settingsBlurTarget?.let { target -> setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112)) } }
+                if(settingsLight && this is eightbitlab.com.blurview.BlurView) {
+                    outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+                    clipToOutline=true
+                    settingsBlurTarget?.let { target -> setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112)) }
+                }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
                     if(settingsLight) background=null
@@ -775,7 +805,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     })
                     addView(TextView(this@MainActivity).apply { text="›"; textSize=28f; setTextColor(color) })
                 })
-            })
+            }
+            host.addView(card)
+            settingsGrid.addView(host)
         }
         val garminLabel=if(garminClient.isLinked()) "Verbunden · Schlafdaten synchronisieren" else "Nicht verbunden · Jetzt verbinden"
         setting("⌚","Garmin Connect",garminLabel,accent2) { showGarminSettings() }
