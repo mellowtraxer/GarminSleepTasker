@@ -745,9 +745,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val host=android.widget.FrameLayout(this).apply {
                 clipChildren=false
                 clipToPadding=false
-                setPadding(glowSpace,glowSpace,glowSpace,glowSpace)
                 layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{
-                    setMargins(dp(4)-glowSpace,dp(9)-glowSpace,dp(4)-glowSpace,dp(9)-glowSpace)
+                    setMargins(dp(4),dp(9),dp(4),dp(9))
                 }
             }
             if(settingsLight) {
@@ -779,9 +778,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         glowPaint.color=color
                         canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
                     }
-                },android.widget.FrameLayout.LayoutParams(-1,-1).apply {
-                    setMargins(glowSpace,glowSpace,glowSpace,glowSpace)
-                })
+                },android.widget.FrameLayout.LayoutParams(-1,-1))
             }
             val card=(if(settingsLight) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
                 background=if(settingsLight) LayerDrawable(arrayOf(
@@ -800,9 +797,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setColor(fill)
                     setStroke(dp(1),color)
                 }
-                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2).apply {
-                    setMargins(glowSpace,glowSpace,glowSpace,glowSpace)
-                }
+                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
                 if(settingsLight && this is eightbitlab.com.blurview.BlurView) {
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
