@@ -242,7 +242,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}}
         }
         val shellContent=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=null}
-        shellContent.addView(shellContent,android.widget.FrameLayout.LayoutParams(-1,-2))
+        shell.addView(shellContent,android.widget.FrameLayout.LayoutParams(-1,-2))
         shellContent.addView(TextView(this).apply{text="📅  ZIELKALENDER";textSize=18f;setTextColor(stageRem);setTypeface(typeface,Typeface.BOLD);setPadding(0,0,0,dp(4))})
         shellContent.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(secondary);setPadding(0,0,0,dp(12))})
         val list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
