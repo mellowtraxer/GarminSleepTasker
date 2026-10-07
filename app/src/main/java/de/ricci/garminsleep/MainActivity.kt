@@ -276,7 +276,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private val permissionLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { refresh() }
 
     private fun scheduleBackgroundSleepSync(){
-        val request=PeriodicWorkRequestBuilder<SleepSyncWorker>(30,TimeUnit.MINUTES).build()
+        val minutes=calendarPrefs().getInt("check_interval_min",30).coerceIn(15,240)
+        val request=PeriodicWorkRequestBuilder<SleepSyncWorker>(minutes.toLong(),TimeUnit.MINUTES).build()
         WorkManager.getInstance(this).enqueueUniquePeriodicWork("sleepsync_background",ExistingPeriodicWorkPolicy.UPDATE,request)
     }
 
@@ -1281,25 +1282,68 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     private fun showAutomationSettings() {
         val p=calendarPrefs()
+        val d=resources.displayMetrics.density
+        fun dp(v:Int)=(v*d).toInt()
+        val startMin=p.getInt("check_start_min",4*60)
+        val endMin=p.getInt("check_end_min",10*60)
+        val interval=p.getInt("check_interval_min",30)
+        fun hm(m:Int)=String.format(java.util.Locale.GERMANY,"%02d:%02d",m/60,m%60)
+        fun chooseTime(title:String,current:Int,onSave:(Int)->Unit){
+            val dlg=android.app.TimePickerDialog(this,{_,h,m->onSave(h*60+m);scheduleBackgroundSleepSync();showAutomationSettings()},current/60,current%60,true)
+            dlg.setTitle(title);dlg.show()
+        }
+        fun chooseInterval(){
+            val values=intArrayOf(15,30,45,60,90,120)
+            val labels=values.map{"$it Minuten"}.toTypedArray()
+            val selected=values.indexOf(interval).coerceAtLeast(0)
+            val dlg=AlertDialog.Builder(this).setTitle("Prüfintervall").setSingleChoiceItems(labels,selected){dialog,which->
+                p.edit().putInt("check_interval_min",values[which]).apply();scheduleBackgroundSleepSync();dialog.dismiss();showAutomationSettings()
+            }.setNegativeButton("Abbrechen",null).create()
+            dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
+        }
         val lastCheck=p.getLong("last_background_check",0L)
         val lastAuto=p.getLong("last_auto_insert_at",0L)
         val fmt=DateTimeFormatter.ofPattern("dd.MM. · HH:mm").withZone(ZoneId.systemDefault())
         val selected=p.getString("calendar_name",null) ?: "Noch kein Zielkalender"
+        val windowText=hm(startMin)+" – "+hm(endMin)+" Uhr"
+        val crosses=if(endMin<=startMin) " · über Mitternacht" else ""
         val msg=buildString {
             append(if(calendarAutoEnabled()) "✓ Automatik ist aktiv" else "○ Automatik ist ausgeschaltet")
+            append("\n\nSCHLAFERKENNUNG")
+            append("\nPrüfzeitraum: ").append(windowText).append(crosses)
+            append("\nPrüfintervall: alle ").append(interval).append(" Minuten")
+            append("\nNach einem erfolgreichen Eintrag wird derselbe Schlaf nicht erneut eingetragen.")
             append("\n\nZielkalender: ").append(selected)
             append("\nLetzte Hintergrundprüfung: ").append(if(lastCheck>0) fmt.format(Instant.ofEpochMilli(lastCheck))+" Uhr" else "noch keine")
             append("\nLetzter automatischer Eintrag: ").append(if(lastAuto>0) fmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
-            append("\n\nSleepSync prüft selbstständig im Hintergrund auf neue Schlafdaten. Tasker wird dafür nicht benötigt.")
         }
         val dialog=AlertDialog.Builder(this)
-            .setTitle("Automatik & Kalender")
+            .setTitle("Automatik & Schlaferkennung")
             .setMessage(msg)
-            .setPositiveButton(if(calendarAutoEnabled()) "Automatik ausschalten" else "Automatik einschalten") { _,_ -> p.edit().putBoolean("auto_enabled",!calendarAutoEnabled()).apply(); showSettings() }
-            .setNeutralButton("Zielkalender") { _,_ -> chooseCalendar() }
+            .setPositiveButton("Zeiten konfigurieren",null)
+            .setNeutralButton("Zielkalender"){_,_->chooseCalendar()}
             .setNegativeButton("Schließen",null)
             .create()
-        dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.setOnShowListener {
+            styleSleepSyncDialog(dialog)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val choices=arrayOf(
+                    "Startzeit · "+hm(startMin),
+                    "Endzeit · "+hm(endMin),
+                    "Intervall · "+interval+" Min.",
+                    if(calendarAutoEnabled()) "Automatik ausschalten" else "Automatik einschalten"
+                )
+                val sub=AlertDialog.Builder(this).setTitle("Schlaferkennung konfigurieren").setItems(choices){_,which->
+                    when(which){
+                        0->chooseTime("Prüfung starten",startMin){p.edit().putInt("check_start_min",it).apply()}
+                        1->chooseTime("Prüfung beenden",endMin){p.edit().putInt("check_end_min",it).apply()}
+                        2->chooseInterval()
+                        3->{p.edit().putBoolean("auto_enabled",!calendarAutoEnabled()).apply();showAutomationSettings()}
+                    }
+                }.setNegativeButton("Zurück",null).create()
+                sub.setOnShowListener{styleSleepSyncDialog(sub)};sub.show()
+            }
+        }
         dialog.show()
     }
 
