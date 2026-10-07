@@ -621,8 +621,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun testRead() = launch {
-        status.text = "GARMIN  ●     HEALTH CONNECT  ●                              Schlafdaten werden geladen …"
+        status.text = "GARMIN  ●     HEALTH CONNECT  ●     0 % · Schlafdaten"
         setLoadingGlow(true)
+        val progressJob=launch {
+            val steps=listOf(
+                8 to "Schlafsessions",
+                22 to "Schlafphasen",
+                38 to "Herzfrequenz",
+                52 to "SpO₂",
+                66 to "Atmung",
+                78 to "HRV",
+                90 to "Garmin-Nachtwerte"
+            )
+            for((percent,label) in steps) {
+                status.text="GARMIN  ●     HEALTH CONNECT  ●     "+percent+" % · "+label
+                kotlinx.coroutines.delay(180)
+            }
+        }
         try {
             val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
             sleepHistory = history
@@ -630,11 +645,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val s = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
             renderDashboard(s)
             withContext(Dispatchers.IO) { syncLatestNightToCalendar(s) }
+            progressJob.cancel()
+            status.text="GARMIN  ●     HEALTH CONNECT  ●     100 % · Fertig"
+            kotlinx.coroutines.delay(220)
             refresh()
         } catch (t: Throwable) {
             sleepCard.removeAllViews()
             sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\n${t.message.orEmpty()}"; textSize = 16f })
         } finally {
+            progressJob.cancel()
             setLoadingGlow(false)
         }
     }
