@@ -832,18 +832,41 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         setting("↻","Updates","Nach neuer SleepSync-Version suchen",Color.rgb(70,205,225)) { checkForPreviewUpdate() }
         setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
         sleepCard.addView(settingsGrid)
-        actionsTitle.text="DIAGNOSE"; actionsTitle.setTextColor(if(settingsLight) Color.rgb(215,225,245) else stageAwake); actionsTitle.textSize=11f; actionsTitle.letterSpacing=.14f
-        actionsTitle.setPadding(0,dp(14),0,dp(4))
+        // Collapsible diagnostics: keep the settings page clean until explicitly opened.
+        var diagnosticsOpen=false
+        actionsTitle.text="DIAGNOSE   ›"
+        actionsTitle.setTextColor(if(settingsLight) Color.rgb(215,225,245) else stageAwake)
+        actionsTitle.textSize=11f
+        actionsTitle.letterSpacing=.14f
+        actionsTitle.setPadding(dp(4),dp(14),dp(4),dp(10))
+        actionsTitle.isClickable=true
+        actionsTitle.isFocusable=true
+
+        val diagnosticColors=listOf(accent2,stageRem,stageAwake,accent,stageLight)
         listOf(0,1,2,3,4).forEach { i ->
             val b=actionsBox.getChildAt(i) as? MaterialButton ?: return@forEach
-            b.cornerRadius=dp(16)
+            val tone=diagnosticColors[i]
+            b.cornerRadius=dp(18)
             b.textSize=12f
-            b.minHeight=dp(46)
-            b.setTextColor(if(settingsLight) Color.rgb(38,48,76) else Color.rgb(220,224,244))
-            b.backgroundTintList=ColorStateList.valueOf(if(settingsLight) Color.argb(220,240,245,255) else Color.rgb(14,17,34))
-            b.strokeWidth=dp(1)
-            b.strokeColor=ColorStateList.valueOf(if(settingsLight) Color.argb(175,105,132,190) else Color.rgb(48,55,89))
-            b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply { height=dp(46) }
+            b.minHeight=dp(48)
+            b.setTextColor(Color.WHITE)
+            b.backgroundTintList=ColorStateList.valueOf(
+                if(settingsLight) Color.argb(178,72,88,112) else Color.rgb(14,17,34)
+            )
+            b.strokeWidth=dp(2)
+            b.strokeColor=ColorStateList.valueOf(tone)
+            b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply {
+                height=dp(48)
+                if(this is LinearLayout.LayoutParams) setMargins(0,dp(5),0,dp(5))
+            }
+            b.visibility=View.GONE
+        }
+        actionsTitle.setOnClickListener {
+            diagnosticsOpen=!diagnosticsOpen
+            actionsTitle.text=if(diagnosticsOpen) "DIAGNOSE   ⌄" else "DIAGNOSE   ›"
+            listOf(0,1,2,3,4).forEach { i ->
+                actionsBox.getChildAt(i)?.visibility=if(diagnosticsOpen) View.VISIBLE else View.GONE
+            }
         }
         // showSettings() can be opened repeatedly; keep exactly one footer.
         while(actionsBox.childCount>5) actionsBox.removeViewAt(actionsBox.childCount-1)
