@@ -1153,29 +1153,135 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showAppearanceSettings() {
-        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
-        pageTitle.text="Wähle dein Design"; pageSubtitle.text="SleepSync so, wie du es magst"
-        actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
-        sleepCard.addView(TextView(this).apply { text="‹  Zurück zu Einstellungen"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(18)); setOnClickListener { showSettings() } })
-        val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE); val current=prefs.getString("theme","dark") ?: "dark"
-        val row=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        fun choice(key:String,title:String,sub:String,icon:String,bg:Int):MaterialCardView = MaterialCardView(this).apply {
-            radius=dp(22).toFloat(); strokeWidth=dp(if(current==key) 2 else 1); strokeColor=if(current==key) accent else Color.rgb(65,72,104)
-            setCardBackgroundColor(bg); isClickable=true; isFocusable=true
-            layoutParams=LinearLayout.LayoutParams(0,dp(210),1f).apply { setMargins(dp(4),0,dp(4),0) }
-            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; gravity=android.view.Gravity.CENTER; setPadding(dp(8),dp(16),dp(8),dp(12))
-                addView(TextView(this@MainActivity).apply { text=icon; textSize=42f; gravity=android.view.Gravity.CENTER })
-                addView(TextView(this@MainActivity).apply { text=title; textSize=14f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(key=="light") Color.rgb(25,28,42) else Color.WHITE); gravity=android.view.Gravity.CENTER; setPadding(0,dp(12),0,dp(5)) })
-                addView(TextView(this@MainActivity).apply { text=sub; textSize=10f; setTextColor(if(key=="light") Color.rgb(80,85,105) else Color.rgb(165,175,205)); gravity=android.view.Gravity.CENTER })
-                if(current==key) addView(TextView(this@MainActivity).apply { text="✓ AKTIV"; textSize=10f; setTextColor(accent); setTypeface(typeface,Typeface.BOLD); gravity=android.view.Gravity.CENTER; setPadding(0,dp(12),0,0) })
-            })
-            setOnClickListener { prefs.edit().putString("theme",key).apply(); recreate() }
+        val d=resources.displayMetrics.density
+        fun dp(v:Int)=(v*d).toInt()
+        pageTitle.text="Wähle dein Design"
+        pageSubtitle.text="SleepSync so, wie du es magst"
+        actionsTitle.visibility=View.GONE
+        actionsBox.visibility=View.GONE
+        sleepCard.removeAllViews()
+        sleepCard.clipChildren=false
+        sleepCard.clipToPadding=false
+
+        sleepCard.addView(TextView(this).apply {
+            text="‹   Einstellungen"
+            textSize=12f
+            setTypeface(typeface,Typeface.BOLD)
+            setTextColor(Color.rgb(115,210,255))
+            setPadding(dp(4),dp(10),0,dp(16))
+            setOnClickListener { showSettings() }
+        })
+
+        val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
+        val current=prefs.getString("theme","dark") ?: "dark"
+
+        fun choice(key:String,title:String,sub:String,desc:String,icon:String,tone:Int) {
+            val active=current==key
+            val host=android.widget.FrameLayout(this).apply {
+                clipChildren=false
+                clipToPadding=false
+                layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),dp(7),dp(4),dp(7)) }
+            }
+
+            // Diffuse outer aura, same visual language as the settings cards.
+            host.addView(object:View(this) {
+                private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style=Paint.Style.STROKE
+                    strokeWidth=dp(if(active) 4 else 3).toFloat()
+                }
+                init { setLayerType(View.LAYER_TYPE_SOFTWARE,null) }
+                override fun onDraw(c:Canvas) {
+                    val inset=dp(2).toFloat()
+                    p.color=Color.argb(if(active) 230 else 170,Color.red(tone),Color.green(tone),Color.blue(tone))
+                    p.maskFilter=android.graphics.BlurMaskFilter(dp(if(active) 14 else 9).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER)
+                    c.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),p)
+                    p.maskFilter=null
+                }
+            },android.widget.FrameLayout.LayoutParams(-1,-1))
+
+            val card=android.widget.FrameLayout(this).apply {
+                background=LayerDrawable(arrayOf(
+                    GradientDrawable().apply {
+                        cornerRadius=dp(22).toFloat()
+                        setColor(Color.argb(if(active) 195 else 178,72,88,112))
+                        setStroke(dp(if(active) 3 else 2),tone)
+                    },
+                    GradientDrawable().apply {
+                        cornerRadius=dp(22).toFloat()
+                        setColor(Color.TRANSPARENT)
+                        setStroke(dp(1),Color.argb(170,255,255,255))
+                    }
+                ))
+                isClickable=true
+                isFocusable=true
+                setOnClickListener { prefs.edit().putString("theme",key).apply(); recreate() }
+
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    gravity=android.view.Gravity.CENTER_VERTICAL
+                    setPadding(dp(16),dp(14),dp(16),dp(14))
+
+                    addView(TextView(this@MainActivity).apply {
+                        text=icon
+                        textSize=31f
+                        gravity=android.view.Gravity.CENTER
+                        setTextColor(Color.WHITE)
+                        background=GradientDrawable().apply {
+                            cornerRadius=dp(17).toFloat()
+                            setColor(Color.argb(205,Color.red(tone),Color.green(tone),Color.blue(tone)))
+                            setStroke(dp(1),Color.argb(220,255,255,255))
+                        }
+                        layoutParams=LinearLayout.LayoutParams(dp(64),dp(64))
+                    })
+
+                    addView(LinearLayout(this@MainActivity).apply {
+                        orientation=LinearLayout.VERTICAL
+                        setPadding(dp(16),0,dp(8),0)
+                        addView(TextView(this@MainActivity).apply {
+                            text=title; textSize=17f; setTypeface(typeface,Typeface.BOLD); setTextColor(Color.WHITE)
+                        })
+                        addView(TextView(this@MainActivity).apply {
+                            text=sub; textSize=12f; setTypeface(typeface,Typeface.BOLD); setTextColor(Color.rgb(220,226,242)); setPadding(0,dp(2),0,dp(4))
+                        })
+                        addView(TextView(this@MainActivity).apply {
+                            text=desc; textSize=11f; setTextColor(Color.rgb(210,218,235)); maxLines=2
+                        })
+                    },LinearLayout.LayoutParams(0,-2,1f))
+
+                    addView(LinearLayout(this@MainActivity).apply {
+                        orientation=LinearLayout.VERTICAL
+                        gravity=android.view.Gravity.CENTER
+                        addView(TextView(this@MainActivity).apply {
+                            text=if(active) "◉" else "○"
+                            textSize=30f
+                            gravity=android.view.Gravity.CENTER
+                            setTextColor(if(active) tone else Color.rgb(190,205,230))
+                        })
+                        if(active) addView(TextView(this@MainActivity).apply {
+                            text="✓ AKTIV"
+                            textSize=10f
+                            setTypeface(typeface,Typeface.BOLD)
+                            setTextColor(tone)
+                            gravity=android.view.Gravity.CENTER
+                        })
+                    },LinearLayout.LayoutParams(dp(72),-1))
+                })
+            }
+            host.addView(card,android.widget.FrameLayout.LayoutParams(-1,-2))
+            sleepCard.addView(host)
         }
-        row.addView(choice("dark","Dunkel","OLED Night","🌙",Color.rgb(10,15,34)))
-        row.addView(choice("light","Hell","Neon Sunrise","☀️",Color.rgb(239,242,250)))
-        row.addView(choice("system","Automatisch","System","◐",Color.rgb(24,27,45)))
-        sleepCard.addView(row)
-        sleepCard.addView(TextView(this).apply { text="Deine Auswahl gilt für die gesamte App."; textSize=11f; setTextColor(Color.rgb(155,165,195)); setPadding(dp(8),dp(18),dp(8),0) })
+
+        choice("dark","Dunkel","OLED Night","Dunkles Design für beste Lesbarkeit bei Nacht.","☾",Color.rgb(91,92,255))
+        choice("light","Hell","Neon Sunrise","Helles Design mit freundlichen Farben für den Tag.","☀",Color.rgb(255,166,46))
+        choice("system","Automatisch","System","Wechselt automatisch zwischen hell und dunkel – je nach Tageszeit.","◐",Color.rgb(49,216,255))
+
+        sleepCard.addView(TextView(this).apply {
+            text="ⓘ   Deine Auswahl gilt für die gesamte App."
+            textSize=11f
+            setTextColor(Color.WHITE)
+            alpha=.88f
+            setPadding(dp(8),dp(16),dp(8),dp(4))
+        })
     }
 
     private fun sleepStageStrip(s: SleepSummary): LinearLayout {
