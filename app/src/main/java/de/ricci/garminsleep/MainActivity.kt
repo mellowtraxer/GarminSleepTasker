@@ -356,7 +356,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         ))
         val scene = android.widget.FrameLayout(this).apply {
             addView(android.widget.ImageView(this@MainActivity).apply {
-                scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
+                scaleType=if(useLight) android.widget.ImageView.ScaleType.FIT_XY else android.widget.ImageView.ScaleType.CENTER_CROP
                 adjustViewBounds=false
                 setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
                 alpha=if(useLight) .62f else 1f
