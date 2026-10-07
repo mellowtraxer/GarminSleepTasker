@@ -623,6 +623,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun testRead() = launch {
         status.text = "GARMIN  ●     HEALTH CONNECT  ●     0 % · Schlafdaten"
         setLoadingGlow(true)
+        var shownProgress=0
         val progressJob=launch {
             val steps=listOf(
                 8 to "Schlafsessions",
@@ -633,9 +634,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 78 to "HRV",
                 90 to "Garmin-Nachtwerte"
             )
-            for((percent,label) in steps) {
-                status.text="GARMIN  ●     HEALTH CONNECT  ●     "+percent+" % · "+label
-                kotlinx.coroutines.delay(180)
+            for((target,label) in steps) {
+                while(shownProgress<target) {
+                    shownProgress++
+                    status.text="GARMIN  ●     HEALTH CONNECT  ●     "+shownProgress+" % · "+label
+                    kotlinx.coroutines.delay(32)
+                }
+                kotlinx.coroutines.delay(90)
             }
         }
         try {
@@ -646,8 +651,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             renderDashboard(s)
             withContext(Dispatchers.IO) { syncLatestNightToCalendar(s) }
             progressJob.cancel()
-            status.text="GARMIN  ●     HEALTH CONNECT  ●     100 % · Fertig"
-            kotlinx.coroutines.delay(220)
+            while(shownProgress<100) {
+                shownProgress++
+                status.text="GARMIN  ●     HEALTH CONNECT  ●     "+shownProgress+" % · "+(if(shownProgress<96) "Abschließen" else "Fertig")
+                kotlinx.coroutines.delay(28)
+            }
+            kotlinx.coroutines.delay(350)
             refresh()
         } catch (t: Throwable) {
             sleepCard.removeAllViews()
