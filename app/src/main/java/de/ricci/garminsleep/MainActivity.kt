@@ -1522,11 +1522,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
+        val pct=if(sleep!=null && label in listOf("Leicht","Tief","REM","Wach")) when(label){"Leicht"->sleep.lightMin;"Tief"->sleep.deepMin;"REM"->sleep.remMin;else->sleep.awakeMin}*100/sleep.totalMin.coerceAtLeast(1) else -1
         val valueText=TextView(this).apply{text=value;textSize=19f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(7),0,dp(3))}
         val body=LinearLayout(this).apply{
             orientation=LinearLayout.VERTICAL;setPadding(dp(15),dp(14),dp(15),dp(12))
             addView(TextView(this@MainActivity).apply{text="$icon   ${label.uppercase()}";textSize=11f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
-            addView(valueText)
+            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; addView(valueText,LinearLayout.LayoutParams(0,-2,1f)); if(pct>=0)addView(TextView(this@MainActivity).apply{text="${pct}%";textSize=17f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)}) })
             if(series.size>=2) {
                 addView(MetricSparklineView(this@MainActivity,series,tone,label,valueText).apply {
                     layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply { setMargins(0,dp(4),0,0) }
@@ -1547,7 +1548,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             layoutParams=android.widget.FrameLayout.LayoutParams(-1,-1)
             addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
-        return if(light) neonWrap(card,tone,21,::dp).apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 178 else 124);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(0,0,0,0)} } else card.apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))} }
+        return if(light) neonWrap(card,tone,21,::dp).apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 176 else 122);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(0,0,0,0)} } else card.apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))} }
     }
     private fun showStageTimeline(label:String, tone:Int, minutes:Long, s:SleepSummary) {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
@@ -1640,23 +1641,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private class NeonGlowFrame(context: android.content.Context, private val tone:Int, private val radiusPx:Float): android.widget.FrameLayout(context) {
-        private val glow=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            style=android.graphics.Paint.Style.STROKE
-            strokeWidth=3f*resources.displayMetrics.density
-            color=tone
-            maskFilter=android.graphics.BlurMaskFilter(9f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
+        private val halo=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            style=android.graphics.Paint.Style.STROKE; strokeWidth=5f*resources.displayMetrics.density
+            color=android.graphics.Color.argb(150,android.graphics.Color.red(tone),android.graphics.Color.green(tone),android.graphics.Color.blue(tone))
+            maskFilter=android.graphics.BlurMaskFilter(13f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
+        }
+        private val core=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            style=android.graphics.Paint.Style.STROKE; strokeWidth=1.6f*resources.displayMetrics.density; color=tone
+            maskFilter=android.graphics.BlurMaskFilter(3f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
         }
         init { setWillNotDraw(false); setLayerType(android.view.View.LAYER_TYPE_SOFTWARE,null); clipChildren=false; clipToPadding=false }
         override fun onDraw(c:android.graphics.Canvas) {
-            val inset=7f*resources.displayMetrics.density
-            c.drawRoundRect(inset,inset,width-inset,height-inset,radiusPx,radiusPx,glow)
+            val inset=9f*resources.displayMetrics.density
+            c.drawRoundRect(inset,inset,width-inset,height-inset,radiusPx,radiusPx,halo)
+            c.drawRoundRect(inset,inset,width-inset,height-inset,radiusPx,radiusPx,core)
             super.onDraw(c)
         }
     }
 
     private fun neonWrap(view:android.view.View,tone:Int,radius:Int,dp:(Int)->Int):android.view.View =
         NeonGlowFrame(this,tone,dp(radius).toFloat()).apply {
-            setPadding(dp(7),dp(7),dp(7),dp(7))
+            setPadding(dp(9),dp(9),dp(9),dp(9))
             addView(view,android.widget.FrameLayout.LayoutParams(-1,-1))
         }
 
@@ -1761,7 +1766,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=neonGlowGlass(20,stageLight,::dp); cardElevation=dp(12).toFloat(); outlineAmbientShadowColor=stageLight; outlineSpotShadowColor=stageLight } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
-                addView(TextView(this@MainActivity).apply { text="SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(225,235,255) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="〽  SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(225,235,255) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                addView(TextView(this@MainActivity).apply { text="${lightPct}%\nLEICHT"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageLight); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
                 addView(TextView(this@MainActivity).apply { text="$deepPct%\nTIEF"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageDeep); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
                 addView(TextView(this@MainActivity).apply { text="$remPct%\nREM"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
             })
