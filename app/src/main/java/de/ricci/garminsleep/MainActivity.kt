@@ -735,14 +735,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
             val fill = if(settingsLight) Color.argb(138,225,235,248) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView(MaterialCardView(this).apply {
-                radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(if(settingsLight) 0x00000000 else fill)
+                radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(fill)
                 strokeWidth=dp(1); strokeColor=if(settingsLight) Color.argb(245,Color.red(color),Color.green(color),Color.blue(color)) else color
                 if(settingsLight) { elevation=dp(5).toFloat(); translationZ=dp(2).toFloat() }
                 layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(0,dp(5),0,dp(5))}
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
-                    if(settingsLight) background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(Color.argb(48,31,48,70),Color.argb(38,48,45,68),Color.argb(44,61,45,65))).apply { cornerRadius=dp(22).toFloat() }
+                    if(settingsLight) background=null
                     addView(TextView(this@MainActivity).apply {
                         text=icon; textSize=23f; gravity=android.view.Gravity.CENTER; setTextColor(color); setPadding(dp(6),dp(6),dp(6),dp(6))
                         background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(Color.argb(42,Color.red(color),Color.green(color),Color.blue(color))) }
