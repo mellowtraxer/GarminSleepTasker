@@ -234,13 +234,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val items=availableCalendars(); if(items.isEmpty()){AlertDialog.Builder(this).setMessage("Android stellt aktuell keinen beschreibbaren Kalender bereit.").setPositiveButton("OK",null).show();return}
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"; val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES; val light=theme=="light" || (theme=="system" && !sysDark); val primary=Color.WHITE; val secondary=if(light) Color.rgb(220,228,246) else Color.rgb(165,175,205); val selectedId=calendarPrefs().getLong("calendar_id",-1L)
-        val shell=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(222,24,31,55) else Color.rgb(12,15,35));setStroke(dp(2),stageRem)}}
-        shell.addView(TextView(this).apply{text="📅  ZIELKALENDER";textSize=18f;setTextColor(stageRem);setTypeface(typeface,Typeface.BOLD);setPadding(0,0,0,dp(4))})
-        shell.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(secondary);setPadding(0,0,0,dp(12))})
+        val shell=(if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply{
+            background=LayerDrawable(arrayOf(
+                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(178,72,88,112) else Color.rgb(12,15,35));setStroke(dp(4),Color.argb(42,Color.red(stageRem),Color.green(stageRem),Color.blue(stageRem)))},
+                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),stageRem)}
+            ))
+            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}}
+        }
+        val shellContent=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=null}
+        shellContent.addView(shellContent,android.widget.FrameLayout.LayoutParams(-1,-2))
+        shellContent.addView(TextView(this).apply{text="📅  ZIELKALENDER";textSize=18f;setTextColor(stageRem);setTypeface(typeface,Typeface.BOLD);setPadding(0,0,0,dp(4))})
+        shellContent.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(secondary);setPadding(0,0,0,dp(12))})
         val list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
-        val dialog=AlertDialog.Builder(this).setView(ScrollView(this).apply{addView(shell)}).create()
-        items.forEach{item->val selected=item.first==selectedId;list.addView(TextView(this).apply{text=(if(selected) "✓  " else "")+item.second+"\n"+item.third;textSize=14f;setTextColor(primary);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(if(light) (if(selected) Color.argb(170,74,55,125) else Color.argb(118,45,57,82)) else Color.argb(120,40,29,70));if(selected)setStroke(dp(2),stageRem)};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
-        shell.addView(list);dialog.setOnShowListener{dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));dialog.window?.decorView?.setLayerType(View.LAYER_TYPE_SOFTWARE,null)};dialog.show()
+        val dialog=AlertDialog.Builder(this).setView(ScrollView(this).apply{background=ColorDrawable(Color.TRANSPARENT);addView(shell)}).create()
+        items.forEach{item->val selected=item.first==selectedId;list.addView(TextView(this).apply{text=(if(selected) "✓  " else "")+item.second+"\n"+item.third;textSize=14f;setTextColor(primary);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(if(light) (if(selected) Color.argb(145,83,62,145) else Color.argb(100,72,88,112)) else Color.argb(120,40,29,70));setStroke(if(selected) dp(2) else dp(1),if(selected) stageRem else Color.argb(80,stageRem shr 16 and 255,stageRem shr 8 and 255,stageRem and 255))};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
+        shellContent.addView(list);dialog.setOnShowListener{dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));dialog.window?.decorView?.setLayerType(View.LAYER_TYPE_SOFTWARE,null)};dialog.show()
     }
     private fun calendarPrefs()=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE)
     private fun calendarAutoEnabled()=calendarPrefs().getBoolean("auto_enabled",true)
