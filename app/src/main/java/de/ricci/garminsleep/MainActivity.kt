@@ -435,23 +435,68 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         var swipeDownX=0f
         var swipeDownY=0f
+        var swipeLastX=0f
+        var swipeDownTime=0L
         var swipeTracking=false
+        var swipeHorizontal=false
         scroll.setOnTouchListener { _,event ->
             when(event.actionMasked) {
                 android.view.MotionEvent.ACTION_DOWN -> {
-                    swipeDownX=event.x; swipeDownY=event.y; swipeTracking=true; false
+                    swipeDownX=event.x; swipeDownY=event.y; swipeLastX=event.x; swipeDownTime=event.eventTime
+                    swipeTracking=true; swipeHorizontal=false
+                    sleepCard.animate().cancel()
+                    false
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    if(!swipeTracking) return@setOnTouchListener false
+                    val dx=event.x-swipeDownX
+                    val dy=event.y-swipeDownY
+                    if(!swipeHorizontal && kotlin.math.abs(dx)>dp(10) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*1.15f) {
+                        swipeHorizontal=true
+                        scroll.parent?.requestDisallowInterceptTouchEvent(true)
+                    }
+                    if(swipeHorizontal) {
+                        val edgeResistance=(dx>0 && currentPageIndex==0)||(dx<0 && currentPageIndex==3)
+                        val drag=if(edgeResistance) dx*.22f else dx*.72f
+                        sleepCard.translationX=drag
+                        sleepCard.alpha=(1f-(kotlin.math.abs(drag)/(scroll.width.coerceAtLeast(1)*1.8f))).coerceIn(.72f,1f)
+                        swipeLastX=event.x
+                        true
+                    } else false
                 }
                 android.view.MotionEvent.ACTION_UP -> {
                     if(!swipeTracking) return@setOnTouchListener false
                     swipeTracking=false
                     val dx=event.x-swipeDownX
                     val dy=event.y-swipeDownY
-                    if(kotlin.math.abs(dx)>dp(72) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*1.35f && kotlin.math.abs(dy)<dp(120)) {
+                    val dt=(event.eventTime-swipeDownTime).coerceAtLeast(1L)
+                    val velocity=dx*1000f/dt
+                    val commit=swipeHorizontal && kotlin.math.abs(dy)<dp(150) &&
+                        (kotlin.math.abs(dx)>scroll.width*.20f || kotlin.math.abs(velocity)>720f)
+                    if(commit) {
                         val next=if(dx<0) currentPageIndex+1 else currentPageIndex-1
-                        if(next in 0..3) { swipeOpenPage(next); true } else false
-                    } else false
+                        if(next in 0..3) {
+                            sleepCard.animate().cancel()
+                            sleepCard.animate().translationX(if(dx<0) -scroll.width*.16f else scroll.width*.16f).alpha(.55f)
+                                .setDuration(90).setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction {
+                                    sleepCard.translationX=0f; sleepCard.alpha=1f; swipeOpenPage(next)
+                                }.start()
+                        } else {
+                            sleepCard.animate().translationX(0f).alpha(1f).setDuration(180).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                        }
+                    } else if(swipeHorizontal) {
+                        sleepCard.animate().translationX(0f).alpha(1f).setDuration(180).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                    }
+                    scroll.parent?.requestDisallowInterceptTouchEvent(false)
+                    swipeHorizontal
                 }
-                android.view.MotionEvent.ACTION_CANCEL -> { swipeTracking=false; false }
+                android.view.MotionEvent.ACTION_CANCEL -> {
+                    swipeTracking=false
+                    if(swipeHorizontal) sleepCard.animate().translationX(0f).alpha(1f).setDuration(160).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                    swipeHorizontal=false
+                    scroll.parent?.requestDisallowInterceptTouchEvent(false)
+                    false
+                }
                 else -> false
             }
         }
