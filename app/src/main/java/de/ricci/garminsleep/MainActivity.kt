@@ -740,10 +740,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
             val fill = if(settingsLight) Color.argb(178,72,88,112) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView((if(settingsLight) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
-                background=GradientDrawable().apply {
+                background=if(settingsLight) LayerDrawable(arrayOf(
+                    GradientDrawable().apply {
+                        cornerRadius=dp(22).toFloat()
+                        setColor(fill)
+                        setStroke(dp(4),Color.argb(42,Color.red(color),Color.green(color),Color.blue(color)))
+                    },
+                    GradientDrawable().apply {
+                        cornerRadius=dp(22).toFloat()
+                        setColor(Color.TRANSPARENT)
+                        setStroke(dp(2),Color.argb(255,Color.red(color),Color.green(color),Color.blue(color)))
+                    }
+                )) else GradientDrawable().apply {
                     cornerRadius=dp(22).toFloat()
                     setColor(fill)
-                    setStroke(dp(1),if(settingsLight) Color.argb(245,Color.red(color),Color.green(color),Color.blue(color)) else color)
+                    setStroke(dp(1),color)
                 }
                 layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{setMargins(0,dp(5),0,dp(5))}
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
