@@ -733,7 +733,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
-            val fill = if(settingsLight) Color.argb(224,247,250,255) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
+            val fill = if(settingsLight) Color.argb(138,225,235,248) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             settingsGrid.addView(MaterialCardView(this).apply {
                 radius=dp(22).toFloat(); cardElevation=dp(1).toFloat(); setCardBackgroundColor(fill)
                 strokeWidth=dp(1); strokeColor=color
