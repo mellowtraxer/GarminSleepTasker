@@ -324,9 +324,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val test = button("Schlafdaten neu laden") { testRead() }
         val sig = button("App-Signatur anzeigen") { showAppSignature() }
         val statusCard = MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=dp(2).toFloat(); strokeWidth=dp(1); strokeColor=if(bootLight) Color.argb(125,74,190,225) else Color.argb(115,91,176,255)
-            setCardBackgroundColor(if(bootLight) Color.argb(210,240,247,255) else Color.argb(118,5,13,30))
-            status.setPadding(dp(12),dp(7),dp(12),dp(7)); addView(status)
+            radius=dp(18).toFloat()
+            cardElevation=0f
+            strokeWidth=dp(2)
+            strokeColor=Color.rgb(49,216,255)
+            setCardBackgroundColor(Color.argb(178,72,88,112))
+            elevation=dp(6).toFloat()
+            outlineAmbientShadowColor=Color.rgb(49,216,255)
+            outlineSpotShadowColor=Color.rgb(49,216,255)
+            status.setPadding(dp(12),dp(7),dp(12),dp(7))
+            addView(status)
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
@@ -334,7 +341,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageTitle.background=null
         pageTitle.setPadding(0,0,0,0)
         pageSubtitle.setTextColor(Color.rgb(235,240,255)); pageSubtitle.textSize=13f; pageSubtitle.alpha=.90f; pageSubtitle.setShadowLayer(0f,0f,0f,Color.TRANSPARENT)
-        status.setTextColor(if(bootLight) Color.rgb(31,100,119) else Color.rgb(166,238,244)); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
+        status.setTextColor(Color.WHITE); status.textSize=10f; status.letterSpacing=.08f; status.setTypeface(status.typeface,Typeface.BOLD)
         actionsTitle.setTextColor(Color.WHITE)
         brandGlow = View(this).apply {
             background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(78,118,255),Color.rgb(49,216,255),Color.rgb(190,91,255),Color.TRANSPARENT)).apply { cornerRadius=dp(2).toFloat() }
