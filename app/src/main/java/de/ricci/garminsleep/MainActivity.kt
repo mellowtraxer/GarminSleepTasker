@@ -400,8 +400,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             v.setPadding(0,bars.top,0,0)
-            navShell.updateLayoutParams<LinearLayout.LayoutParams> {
-                bottomMargin=bars.bottom+dp(8)
+            (navShell.layoutParams as? LinearLayout.LayoutParams)?.let { lp ->
+                lp.bottomMargin=bars.bottom+dp(8)
+                navShell.layoutParams=lp
             }
             insets
         }
