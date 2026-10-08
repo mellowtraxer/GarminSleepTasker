@@ -793,6 +793,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 }
                 kotlinx.coroutines.delay(90)
             }
+            // The Garmin request is a single blocking operation. Report real elapsed
+            // waiting time rather than inventing progress percentages or substeps.
+            val waitingSince=android.os.SystemClock.elapsedRealtime()
+            while(kotlinx.coroutines.currentCoroutineContext().isActive) {
+                val elapsedSeconds=(android.os.SystemClock.elapsedRealtime()-waitingSince)/1000L
+                progress(90,"Garmin-Antwort ausstehend · "+elapsedSeconds+" s")
+                kotlinx.coroutines.delay(1000)
+            }
         }
         try {
             val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
