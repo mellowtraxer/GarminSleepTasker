@@ -1696,39 +1696,70 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         return if(light) neonWrap(card,tone,21,::dp).apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 176 else 122);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(0,0,0,0)} } else card.apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))} }
     }
     private fun showStageTimeline(label:String, tone:Int, minutes:Long, s:SleepSummary) {
+        showAllStageTimelines(s)
+    }
+
+    private fun showAllStageTimelines(s:SleepSummary) {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
-        val stageTone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;else->tone}
         val primary=Color.WHITE
         val secondary=if(light) Color.rgb(225,232,248) else Color.rgb(165,175,205)
         val timeColor=if(light) Color.rgb(210,222,244) else Color.rgb(135,147,180)
-        pageTitle.text="Schlafphasen"; pageSubtitle.text=label+" · Verlauf dieser Nacht"
+        val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
+        fun fmtMin(m:Long)=if(m>=60) (m/60).toString()+" h "+(m%60).toString()+" min" else m.toString()+" min"
+        pageTitle.text="Schlafphasen"; pageSubtitle.text="Die Architektur deiner Nacht"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
         sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
-        val intervals=s.stageSeries.filter { it.stageLabel==label }
+
+        // One-glance summary: sleep duration + full-night composition.
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); strokeWidth=0; setCardBackgroundColor(Color.TRANSPARENT); cardElevation=0f; elevation=0f
-            background=GradientDrawable().apply { cornerRadius=dp(24).toFloat(); setColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31)); setStroke(dp(2),stageTone) }
-            addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
-                addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(stageTone); setTypeface(typeface,Typeface.BOLD) })
-                addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(4)) })
-                val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
-                addView(TextView(this@MainActivity).apply { text=pct.toString()+" % der Nacht · "+intervals.size+" Abschnitte"; textSize=11f; setTextColor(secondary); setPadding(0,0,0,dp(14)) })
-                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                    val duration=(s.endMs-s.startMs).coerceAtLeast(1); var cursor=s.startMs
-                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { if(active) background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(stageTone) } else background=null; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(if(active) dp(1) else 0,0,if(active) dp(1) else 0,0) } }
-                    intervals.sortedBy { it.startMs }.forEach { st -> if(st.startMs>cursor) addView(seg(st.startMs-cursor,false)); addView(seg(st.endMs-st.startMs,true)); cursor=st.endMs }; if(cursor<s.endMs) addView(seg(s.endMs-cursor,false))
+            radius=dp(24).toFloat();strokeWidth=0;setCardBackgroundColor(Color.TRANSPARENT);cardElevation=0f;elevation=0f
+            background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),accent2)}
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
+            addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
+                addView(TextView(this@MainActivity).apply{text="NACHT-ZUSAMMENFASSUNG";textSize=10f;letterSpacing=.12f;setTextColor(accent2);setTypeface(typeface,Typeface.BOLD)})
+                addView(TextView(this@MainActivity).apply{text=fmtMin(s.totalMin);textSize=30f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(5),0,dp(2))})
+                addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs))+"  ·  Schlafdauer";textSize=11f;setTextColor(secondary)})
+                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(13),0,dp(8))
+                    listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).forEach{q->if(q.first>0)addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(q.second)}},LinearLayout.LayoutParams(0,dp(10),q.first.toFloat()).apply{setMargins(0,0,dp(2),0)})}
                 })
-                val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
-                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,0)
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(timeColor); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2)); textSize=10f; gravity=android.view.Gravity.CENTER; setTextColor(timeColor); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; gravity=android.view.Gravity.END; setTextColor(timeColor); layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f) })
-                })
+                addView(TextView(this@MainActivity).apply{text="Leicht "+fmtMin(s.lightMin)+"  ·  Tief "+fmtMin(s.deepMin)+"  ·  REM "+fmtMin(s.remMin)+"  ·  Wach "+fmtMin(s.awakeMin);textSize=10f;setTextColor(secondary)})
             })
         })
+
+        fun stageCard(label:String, minutes:Long, stageTone:Int) {
+            val intervals=s.stageSeries.filter{it.stageLabel==label}.sortedBy{it.startMs}
+            val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
+            sleepCard.addView(MaterialCardView(this).apply {
+                radius=dp(24).toFloat();strokeWidth=0;setCardBackgroundColor(Color.TRANSPARENT);cardElevation=0f;elevation=0f
+                background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),stageTone)}
+                layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
+                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(15))
+                    addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
+                        addView(TextView(this@MainActivity).apply{text=label.uppercase();textSize=11f;letterSpacing=.08f;setTextColor(stageTone);setTypeface(typeface,Typeface.BOLD)},LinearLayout.LayoutParams(0,-2,1f))
+                        addView(TextView(this@MainActivity).apply{text=pct.toString()+" %";textSize=18f;setTextColor(stageTone);setTypeface(typeface,Typeface.BOLD)})
+                    })
+                    addView(TextView(this@MainActivity).apply{text=fmtMin(minutes);textSize=27f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(3),0,dp(2))})
+                    addView(TextView(this@MainActivity).apply{text=intervals.size.toString()+" "+if(intervals.size==1)"Abschnitt" else "Abschnitte";textSize=10f;setTextColor(secondary);setPadding(0,0,0,dp(9))})
+                    addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL
+                        val duration=(s.endMs-s.startMs).coerceAtLeast(1);var cursor=s.startMs
+                        fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply{if(active)background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(stageTone)};layoutParams=LinearLayout.LayoutParams(0,dp(if(active)44 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply{gravity=android.view.Gravity.CENTER_VERTICAL;setMargins(if(active)dp(1) else 0,0,if(active)dp(1) else 0,0)}}
+                        intervals.forEach{st->if(st.startMs>cursor)addView(seg(st.startMs-cursor,false));addView(seg(st.endMs-st.startMs,true));cursor=st.endMs};if(cursor<s.endMs)addView(seg(s.endMs-cursor,false))
+                    })
+                    addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(7),0,0)
+                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs));textSize=9f;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2));textSize=9f;gravity=android.view.Gravity.CENTER;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.endMs));textSize=9f;gravity=android.view.Gravity.END;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                    })
+                })
+            })
+        }
+        stageCard("Leicht",s.lightMin,stageLight)
+        stageCard("Tief",s.deepMin,stageDeep)
+        stageCard("REM",s.remMin,stageRem)
+        stageCard("Wach",s.awakeMin,stageAwake)
     }
 
     private fun showMetricDetail(label: String, icon: String, tone: Int, s: SleepSummary) {
@@ -1948,10 +1979,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val stages = GridLayout(this).apply {
             columnCount = 2
             setPadding(0, dp(6), 0, dp(8))
-            addView(metricCard("🌙","Leicht",fmt(s.lightMin), onClick={ showStageTimeline("Leicht", stageLight, s.lightMin, s) }, sleep=s))
-            addView(metricCard("🌑","Tief",fmt(s.deepMin), onClick={ showStageTimeline("Tief", stageDeep, s.deepMin, s) }, sleep=s))
-            addView(metricCard("🧠","REM",fmt(s.remMin), onClick={ showStageTimeline("REM", stageRem, s.remMin, s) }, sleep=s))
-            addView(metricCard("👀","Wach",fmt(s.awakeMin), onClick={ showStageTimeline("Wach", stageAwake, s.awakeMin, s) }, sleep=s))
+            addView(metricCard("🌙","Leicht",fmt(s.lightMin), onClick={ showAllStageTimelines(s) }, sleep=s))
+            addView(metricCard("🌑","Tief",fmt(s.deepMin), onClick={ showAllStageTimelines(s) }, sleep=s))
+            addView(metricCard("🧠","REM",fmt(s.remMin), onClick={ showAllStageTimelines(s) }, sleep=s))
+            addView(metricCard("👀","Wach",fmt(s.awakeMin), onClick={ showAllStageTimelines(s) }, sleep=s))
         }
         sleepCard.addView(stages)
         sleepCard.addView(View(this).apply {
