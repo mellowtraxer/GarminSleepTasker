@@ -2313,17 +2313,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             else -> 25
         }
         val nightRating = (durationScore * 0.75 + quality * 0.25).toInt().coerceIn(0,100)
-        val nightExplanation = when {
-            s.totalMin < 360 -> "Kurze Schlafdauer trotz $quality% Schlafeffizienz."
-            s.totalMin < 420 -> "Schlafdauer unter 7 Stunden · $quality% Effizienz."
-            else -> "${s.totalMin / 60} h ${s.totalMin % 60} min Schlaf · $quality% Effizienz."
+        val durationDelta = personalAverage?.let { s.totalMin - it }
+        val phaseTotal = (s.lightMin + s.deepMin + s.remMin + s.awakeMin).coerceAtLeast(1)
+        val deepShare = s.deepMin * 100 / phaseTotal
+        val remShare = s.remMin * 100 / phaseTotal
+        val nightTitle = when {
+            s.totalMin < 360 && quality >= 90 -> "KURZ, ABER RUHIG"
+            s.totalMin < 360 -> "ZU WENIG SCHLAF"
+            durationDelta != null && durationDelta <= -60 -> "KÜRZER ALS GEWOHNT"
+            s.awakeMin >= 30 -> "UNRUHIGE NACHT"
+            s.totalMin >= 480 && quality >= 90 -> "LANG UND EFFIZIENT"
+            else -> "DEINE NACHT IM FOKUS"
         }
-        val comparison = personalAverage?.let { average ->
-            val delta = s.totalMin - average
-            val direction = if(delta >= 0) "mehr" else "weniger"
-            "${kotlin.math.abs(delta)} min $direction als dein 14-Nächte-Schnitt"
-        } ?: "Persönlicher Vergleich ab 3 früheren Nächten"
-
+        val nightExplanation = when {
+            s.totalMin < 360 && quality >= 90 -> "Hohe Effizienz ($quality %), aber nur ${s.totalMin / 60} h ${s.totalMin % 60} min Schlaf. Effizienz ersetzt keine Schlafdauer."
+            s.totalMin < 360 -> "Die Nacht war mit ${s.totalMin / 60} h ${s.totalMin % 60} min kurz. Die erfasste Effizienz lag bei $quality %."
+            s.awakeMin >= 30 -> "${s.awakeMin} Minuten Wachzeit wurden erfasst. Deine Effizienz lag bei $quality %."
+            else -> "${s.totalMin / 60} h ${s.totalMin % 60} min Schlaf bei $quality % Effizienz. Tiefschlaf $deepShare %, REM $remShare %."
+        }
+        val comparison = durationDelta?.let { delta ->
+            "${kotlin.math.abs(delta)} min ${if (delta >= 0) "über" else "unter"} deinem persönlichen Schnitt aus ${referenceNights.size} Nächten"
+        } ?: "Persönlicher Vergleich ab drei früheren Nächten"
         sleepCard.addView(settingsStyleCard(accent2,30,LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(10).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(2).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(),72,88,112),Color.argb((designGlassAlpha()*.92f).toInt(),58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
@@ -2457,7 +2467,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(16),0,dp(7))
             addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
             addView(TextView(this@MainActivity).apply {
-                text=when { nightRating>=90 -> "AUSGEZEICHNET"; nightRating>=80 -> "GUT"; nightRating>=60 -> "MITTELMÄSSIG"; else -> "SCHLECHTE NACHT" }
+                text=nightTitle
                 tag="sleepsync_colored_pill"; textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(nightRating>=80) Color.rgb(5,69,39) else if(nightRating>=60) Color.rgb(90,62,0) else Color.rgb(105,16,26)); setPadding(dp(10),dp(5),dp(10),dp(5))
                 background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); val pillColor=if(nightRating>=80) Color.rgb(111,245,153) else if(nightRating>=60) Color.rgb(255,219,91) else Color.rgb(255,125,132); setColor(pillColor); setStroke(dp(1),if(nightRating>=80) Color.rgb(31,172,91) else if(nightRating>=60) Color.rgb(209,154,20) else Color.rgb(216,54,70)) }
             })
