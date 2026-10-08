@@ -658,42 +658,60 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         val pulse=kotlin.math.exp(-kotlin.math.pow(((progress*2f)%1f)*7f,2f))
                         val colors=intArrayOf(Color.rgb(255,62,134),Color.rgb(165,255,53),
                             Color.rgb(48,233,211),Color.rgb(208,75,242))
-                        // Translucent moving aurora ribbons; keep the wallpaper fixed behind scrolling cards.
+                        // Layered translucent silk ribbons with parallax, soft halo and a bright fold.
+                        val density=resources.displayMetrics.density
                         for(layer in 0..3) {
-                            val base=h*(.23f+layer*.175f)
-                            val amplitude=h*(.026f+layer*.006f)*(1f+.26f*breathe)
-                            val path=android.graphics.Path()
-                            for(step in 0..110) {
-                                val x=w*step/110f
-                                val u=step/110f
-                                val wave=kotlin.math.sin(u*14.0+layer*1.4+t*.16).toFloat()+
-                                    .38f*kotlin.math.sin(u*31.0-layer*.8-t*.12).toFloat()
-                                val y=base+amplitude*wave
-                                if(step==0)path.moveTo(x,y) else path.lineTo(x,y)
-                            }
+                            val base=h*(.21f+layer*.18f)
+                            val amplitude=h*(.035f+layer*.008f)*(1f+.23f*breathe)
                             val tone=colors[layer]
+                            fun wave(u:Float,depth:Float):Float {
+                                return kotlin.math.sin(u*12.0+layer*1.25+t*(.12+depth*.025)).toFloat()+
+                                    .36f*kotlin.math.sin(u*28.0-layer*.7-t*.09+depth).toFloat()
+                            }
+                            // Back-to-front translucent surfaces create the illusion of twisting fabric.
+                            for(depth in 0..3) {
+                                val thickness=density*(14f+depth*7f)
+                                val ribbon=android.graphics.Path()
+                                for(step in 0..100) {
+                                    val u=step/100f
+                                    val x=w*u
+                                    val y=base+amplitude*wave(u,depth*.38f)+
+                                        kotlin.math.sin(u*9.0+t*.18+depth).toFloat()*density*depth*5f
+                                    if(step==0)ribbon.moveTo(x,y) else ribbon.lineTo(x,y)
+                                }
+                                paint.shader=null
+                                paint.style=android.graphics.Paint.Style.STROKE
+                                paint.strokeCap=android.graphics.Paint.Cap.ROUND
+                                paint.strokeJoin=android.graphics.Paint.Join.ROUND
+                                paint.strokeWidth=thickness
+                                paint.color=Color.argb((10+depth*5+7*breathe).toInt(),
+                                    Color.red(tone),Color.green(tone),Color.blue(tone))
+                                canvas.drawPath(ribbon,paint)
+                            }
+                            val highlight=android.graphics.Path()
+                            for(step in 0..110) {
+                                val u=step/110f
+                                val y=base+amplitude*wave(u,0f)
+                                if(step==0)highlight.moveTo(0f,y) else highlight.lineTo(w*u,y)
+                            }
                             paint.style=android.graphics.Paint.Style.STROKE
                             paint.strokeCap=android.graphics.Paint.Cap.ROUND
                             paint.strokeJoin=android.graphics.Paint.Join.ROUND
                             paint.shader=null
-                            paint.color=Color.argb((27+13*breathe+8*pulse).toInt(),
+                            paint.strokeWidth=density*5f
+                            paint.color=Color.argb((46+20*breathe+8*pulse).toInt(),
                                 Color.red(tone),Color.green(tone),Color.blue(tone))
-                            paint.strokeWidth=resources.displayMetrics.density*17f
-                            canvas.drawPath(path,paint)
-                            paint.color=Color.argb((80+42*breathe+15*pulse).toInt(),
-                                Color.red(tone),Color.green(tone),Color.blue(tone))
-                            paint.strokeWidth=resources.displayMetrics.density*2.5f
-                            canvas.drawPath(path,paint)
-                            // Sparse moving particles follow the same measured-color visual language.
+                            canvas.drawPath(highlight,paint)
+                            paint.strokeWidth=density*1.35f
+                            paint.color=Color.argb((125+40*breathe).toInt(),255,235,255)
+                            canvas.drawPath(highlight,paint)
                             paint.style=android.graphics.Paint.Style.FILL
-                            for(dot in 0..9) {
-                                val u=((dot/10f+progress*.09f+layer*.11f)%1f)
-                                val wave=kotlin.math.sin(u*14.0+layer*1.4+t*.16).toFloat()+
-                                    .38f*kotlin.math.sin(u*31.0-layer*.8-t*.12).toFloat()
-                                val y=base+amplitude*wave
-                                paint.color=Color.argb((65+60*breathe).toInt(),
+                            for(dot in 0..7) {
+                                val u=(dot/8f+progress*.075f+layer*.13f)%1f
+                                val y=base+amplitude*wave(u,0f)
+                                paint.color=Color.argb((55+55*breathe).toInt(),
                                     Color.red(tone),Color.green(tone),Color.blue(tone))
-                                canvas.drawCircle(w*u,y,resources.displayMetrics.density*(1f+dot%3*.55f),paint)
+                                canvas.drawCircle(w*u,y,density*(.9f+dot%3*.45f),paint)
                             }
                         }
                     }
