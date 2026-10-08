@@ -849,10 +849,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
             val year=key/100; val kw=key%100; val avg=items.map{it.totalMin}.average().toLong()
             val tone=if(kw%2==0) accent2 else stageRem
-            val shell=MaterialCardView(this).apply{
-                radius=dp(22).toFloat();strokeWidth=dp(2);strokeColor=tone;cardElevation=dp(2).toFloat()
-                setCardBackgroundColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(225,12,18,40))
-                if(light){elevation=dp(6).toFloat();outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone}
+            val shell:android.widget.FrameLayout=(if(light) eightbitlab.com.blurview.BlurView(this).apply{
+                background=LayerDrawable(arrayOf(
+                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.argb(designGlassAlpha(),72,88,112));setStroke(dp(4),Color.argb(designNeonAlpha(42),Color.red(tone),Color.green(tone),Color.blue(tone)))},
+                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone)))}
+                ))
+                outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
+                settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
+            } else android.widget.FrameLayout(this).apply{
+                background=GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.argb(225,12,18,40));setStroke(dp(2),tone)}
+            }).apply{
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
             }
             val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2) }
@@ -865,7 +871,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
             }
             items.sortedByDescending{it.endMs}.forEach { s ->
-                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(9),dp(15),dp(11)); background=GradientDrawable().apply{setColor(if(light) Color.argb(designGlassAlpha(),38,49,72) else Color.argb(70,25,32,58));setStroke(dp(1),if(light) Color.argb(42,210,225,250) else Color.TRANSPARENT)}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
+                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(9),dp(15),dp(11)); background=GradientDrawable().apply{setColor(if(light) Color.argb((designGlassAlpha()*0.38f).toInt(),72,88,112) else Color.argb(70,25,32,58));setStroke(dp(1),if(light) Color.argb(designNeonAlpha(36),Color.red(tone),Color.green(tone),Color.blue(tone)) else Color.TRANSPARENT)}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                         addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(if(light) Color.rgb(242,246,255) else Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                         addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) })
