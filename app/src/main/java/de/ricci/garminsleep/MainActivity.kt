@@ -1717,7 +1717,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(TextView(this@MainActivity).apply { text=pct.toString()+" % der Nacht · "+intervals.size+" Abschnitte"; textSize=11f; setTextColor(secondary); setPadding(0,0,0,dp(14)) })
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                     val duration=(s.endMs-s.startMs).coerceAtLeast(1); var cursor=s.startMs
-                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(if(active) stageTone else Color.TRANSPARENT) }; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 18),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(dp(1),0,dp(1),0) } }
+                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { if(active) background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(stageTone) } else background=null; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(if(active) dp(1) else 0,0,if(active) dp(1) else 0,0) } }
                     intervals.sortedBy { it.startMs }.forEach { st -> if(st.startMs>cursor) addView(seg(st.startMs-cursor,false)); addView(seg(st.endMs-st.startMs,true)); cursor=st.endMs }; if(cursor<s.endMs) addView(seg(s.endMs-cursor,false))
                 })
                 val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
