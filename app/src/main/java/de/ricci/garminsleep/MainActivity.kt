@@ -233,7 +233,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone)))
             }
             settingsBlurTarget?.let { target ->
-                setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true)
+                setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true)
                     .setBlurRadius(effectiveBlurRadius())
                     .setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
             }
@@ -247,7 +247,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             clipToOutline=true
             background=GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT) }
-            settingsBlurTarget?.let { target -> setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.TRANSPARENT) }
+            settingsBlurTarget?.let { target -> setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.TRANSPARENT) }
         }
         host.addView(blur,0,android.view.ViewGroup.LayoutParams(-1,-1))
     }
@@ -297,7 +297,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(12,15,35));setStroke(dp(4),Color.argb(42,Color.red(stageRem),Color.green(stageRem),Color.blue(stageRem)))},
                 GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),stageRem)}
             ))
-            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
+            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
         }
         val shellContent=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=null}
         shell.addView(shellContent,android.widget.FrameLayout.LayoutParams(-1,-2))
@@ -949,7 +949,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 if(light && this is eightbitlab.com.blurview.BlurView){
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
-                    settingsBlurTarget?.let{target->setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
+                    settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
                 }
                 addView(LinearLayout(this@MainActivity).apply{
                     orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16));background=null
@@ -1100,7 +1100,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 if(settingsLight && this is eightbitlab.com.blurview.BlurView) {
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
                     clipToOutline=true
-                    settingsBlurTarget?.let { target -> setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112)) }
+                    settingsBlurTarget?.let { target -> setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112)) }
                 }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
@@ -1601,7 +1601,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
                 clipToOutline=true
                 settingsBlurTarget?.let { target ->
-                    setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
+                    setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
                 }
 
                 addView(LinearLayout(this@MainActivity).apply {
@@ -1763,7 +1763,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
                 clipToOutline=true
                 settingsBlurTarget?.let { target ->
-                    setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true)
+                    setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true)
                         .setBlurRadius(effectiveBlurRadius())
                         .setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
                 }
@@ -1997,7 +1997,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     GradientDrawable().apply{cornerRadius=dp(radius).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}
                 ))
                 outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
-                settingsBlurTarget?.let{target->setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
+                settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
                 addView(content,android.widget.FrameLayout.LayoutParams(-1,-2))
             },android.widget.FrameLayout.LayoutParams(-1,-2))
             return host
