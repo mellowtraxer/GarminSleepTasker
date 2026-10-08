@@ -2193,6 +2193,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
+        // Vorläufige Nacht-Einschätzung: Schlafdauer begrenzt die Effizienzbewertung.
+        // Die Schlafeffizienz selbst bleibt als unabhängiger Messwert sichtbar.
+        val nightRating = minOf(quality, when { s.totalMin >= 420 -> 100; s.totalMin >= 360 -> 79; s.totalMin >= 300 -> 59; else -> 39 })
         sleepCard.addView(settingsStyleCard(accent2,30,LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(10).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(2).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(),72,88,112),Color.argb((designGlassAlpha()*.92f).toInt(),58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
@@ -2304,9 +2307,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(16),0,dp(7))
             addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
             addView(TextView(this@MainActivity).apply {
-                text=when { quality>=90 -> "AUSGEZEICHNET"; quality>=80 -> "GUT"; quality>=60 -> "MITTELMÄSSIG"; else -> "SCHLECHTE NACHT" }
-                tag="sleepsync_colored_pill"; textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(quality>=80) Color.rgb(5,69,39) else if(quality>=60) Color.rgb(90,62,0) else Color.rgb(105,16,26)); setPadding(dp(10),dp(5),dp(10),dp(5))
-                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); val pillColor=if(quality>=80) Color.rgb(111,245,153) else if(quality>=60) Color.rgb(255,219,91) else Color.rgb(255,125,132); setColor(pillColor); setStroke(dp(1),if(quality>=80) Color.rgb(31,172,91) else if(quality>=60) Color.rgb(209,154,20) else Color.rgb(216,54,70)) }
+                text=when { nightRating>=90 -> "AUSGEZEICHNET"; nightRating>=80 -> "GUT"; nightRating>=60 -> "MITTELMÄSSIG"; else -> "SCHLECHTE NACHT" }
+                tag="sleepsync_colored_pill"; textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(nightRating>=80) Color.rgb(5,69,39) else if(nightRating>=60) Color.rgb(90,62,0) else Color.rgb(105,16,26)); setPadding(dp(10),dp(5),dp(10),dp(5))
+                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); val pillColor=if(nightRating>=80) Color.rgb(111,245,153) else if(nightRating>=60) Color.rgb(255,219,91) else Color.rgb(255,125,132); setColor(pillColor); setStroke(dp(1),if(nightRating>=80) Color.rgb(31,172,91) else if(nightRating>=60) Color.rgb(209,154,20) else Color.rgb(216,54,70)) }
             })
         })
         sleepCard.addView(MaterialCardView(this).apply {
@@ -2320,7 +2323,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
                 addView(TextView(this@MainActivity).apply {
                     layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
-                    text=(if (quality >= 90) "Hohe Schlafeffizienz" else if (quality >= 80) "Solide Schlafeffizienz" else "Schlafeffizienz") + "\n" + "$quality% deiner Bettzeit entfielen auf Schlafphasen."
+                    text=(if(s.totalMin < 360) "Kurze Schlafdauer" else if(s.totalMin < 420) "Schlafdauer ausbaufähig" else if(nightRating >= 80) "Erholsame Nacht nach Schlafdauer und Effizienz" else "Deine Nacht im Überblick") + "\n" + "${s.totalMin / 60} h ${s.totalMin % 60} min Schlaf · $quality% Schlafeffizienz."
                     textSize=13f; setTextColor(if(light) Color.WHITE else Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
                 })
             })
