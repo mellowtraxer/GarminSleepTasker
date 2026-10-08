@@ -1424,8 +1424,28 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
         val keys=arrayOf("accent","accent2","stage_light","stage_deep","stage_rem","stage_awake","heart","spo2","resp","hrv")
         val defs=intArrayOf(Color.rgb(139,92,246),Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,164,91),Color.rgb(255,82,126),Color.rgb(44,205,255),Color.rgb(80,225,184),Color.rgb(213,96,255))
-        val palette=intArrayOf(Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,82,126),Color.rgb(255,164,91),Color.rgb(80,225,184),Color.rgb(255,220,80),Color.WHITE,Color.rgb(150,160,185))
-        val paletteNames=arrayOf("Cyan","Blau","Indigo","Violett","Pink","Orange","Mint","Gelb","Weiß","Slate")
+        fun pickFullColor(index:Int) {
+            val current=p.getInt(keys[index],defs[index])
+            var rr=Color.red(current);var gg=Color.green(current);var bb=Color.blue(current)
+            val wrap=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(22),dp(8),dp(22),0)}
+            val swatch=TextView(this).apply{text=String.format("#%06X",0xFFFFFF and current);gravity=android.view.Gravity.CENTER;textSize=16f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);background=GradientDrawable().apply{cornerRadius=dp(16).toFloat();setColor(current)};layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}}
+            wrap.addView(swatch)
+            fun channel(label:String,start:Int,onChange:(Int)->Unit){
+                val value=TextView(this).apply{text="$label   $start";textSize=13f;setTextColor(Color.WHITE)}
+                wrap.addView(value)
+                wrap.addView(android.widget.SeekBar(this).apply{max=255;progress=start;setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{
+                    override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean){onChange(v);value.text="$label   $v";val col=Color.rgb(rr,gg,bb);swatch.text=String.format("#%06X",0xFFFFFF and col);swatch.background=GradientDrawable().apply{cornerRadius=dp(16).toFloat();setColor(col)}}
+                    override fun onStartTrackingTouch(s:android.widget.SeekBar?){};override fun onStopTrackingTouch(s:android.widget.SeekBar?){}
+                })})
+            }
+            channel("Rot",rr){rr=it};channel("Grün",gg){gg=it};channel("Blau",bb){bb=it}
+            val dlg=AlertDialog.Builder(this).setTitle(names[index]).setView(wrap).setPositiveButton("Übernehmen"){_,_->p.edit().putInt(keys[index],Color.rgb(rr,gg,bb)).putBoolean("custom_enabled",true).apply();showDesignStudio()}.setNegativeButton("Abbrechen",null).create()
+            dlg.setOnShowListener{
+                dlg.window?.setBackgroundDrawable(GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.rgb(28,35,52));setStroke(dp(2),p.getInt(keys[index],defs[index]))})
+                val titleId=resources.getIdentifier("alertTitle","id","android");if(titleId!=0)dlg.findViewById<TextView>(titleId)?.setTextColor(Color.WHITE)
+                dlg.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.rgb(70,220,255));dlg.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.rgb(190,150,255))
+            };dlg.show()
+        }
         fun section(t:String)=sleepCard.addView(TextView(this).apply{text=t;textSize=11f;letterSpacing=.14f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);setPadding(dp(4),dp(18),0,dp(8))})
         fun row(title:String,sub:String,tone:Int,click:()->Unit)=sleepCard.addView(MaterialCardView(this).apply{
             radius=dp(18).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.argb(170,72,88,112));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
@@ -1441,7 +1461,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,Color.red(defs[i]),Color.green(defs[i]),Color.blue(defs[i])));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
         })
         section("FARBEN")
-        names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);row(names[i],String.format("#%06X",0xFFFFFF and tone),tone){val dlg=AlertDialog.Builder(this).setTitle(names[i]).setItems(paletteNames){_,w->p.edit().putInt(keys[i],palette[w]).putBoolean("custom_enabled",true).apply();showDesignStudio()}.setNegativeButton("Abbrechen",null).create();dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()}}
+        names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);row(names[i],String.format("#%06X",0xFFFFFF and tone),tone){pickFullColor(i)}}
         section("HINTERGRUND")
         row("Wallpaper",if(p.getBoolean("wallpaper_enabled",true)) "Aktiv · SleepSync Wallpaper" else "Aus · einfarbiger Hintergrund",Color.rgb(70,205,225)){p.edit().putBoolean("wallpaper_enabled",!p.getBoolean("wallpaper_enabled",true)).putBoolean("custom_enabled",true).apply();recreate()}
         section("GLAS & EFFEKTE")
@@ -1455,6 +1475,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         slider("Blur","blur_strength",p.getInt("blur_strength",20),100,Color.rgb(183,99,255))
         slider("Neon","neon_strength",p.getInt("neon_strength",100),100,Color.rgb(255,82,190))
         slider("Glow","glow_strength",p.getInt("glow_strength",100),100,Color.rgb(80,225,184))
+        sleepCard.addView(MaterialButton(this).apply{text="✓  Übernehmen";isAllCaps=false;textSize=16f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(designColor("accent2",Color.rgb(34,211,238)));layoutParams=LinearLayout.LayoutParams(-1,dp(54)).apply{setMargins(0,dp(18),0,dp(6))};setOnClickListener{p.edit().putBoolean("custom_enabled",true).apply();recreate()}})
         sleepCard.addView(MaterialButton(this).apply{text="↺  SleepSync Standard wiederherstellen";isAllCaps=false;setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(Color.argb(190,55,48,82));layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(16),0,dp(10))};setOnClickListener{p.edit().clear().apply();recreate()}})
     }
 
