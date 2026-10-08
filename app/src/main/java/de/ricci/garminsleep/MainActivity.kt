@@ -770,7 +770,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun testRead() = launch {
         val progressPrefix = "GARMIN  ●     HEALTH CONNECT  ●     "
         fun progress(percent:Int,stage:String) {
-            status.text = "$"+"{progressPrefix}$"+"percent % · $"+ "stage"
+            status.text = progressPrefix + percent + " % · " + stage
         }
         progress(0,"Schlafdaten vorbereiten")
         setLoadingGlow(true)
@@ -813,7 +813,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             progressJob.cancel()
             progress(shownProgress.coerceAtLeast(90),"Fehler beim Laden")
             sleepCard.removeAllViews()
-            sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\\n$"+"{t.message.orEmpty()}"; textSize = 16f })
+            sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\n" + t.message.orEmpty(); textSize = 16f })
         } finally {
             progressJob.cancel()
             setLoadingGlow(false)
