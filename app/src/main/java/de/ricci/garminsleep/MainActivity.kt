@@ -785,7 +785,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         try {
             val history = withContext(Dispatchers.IO) {
-                SleepReader(this@MainActivity).garminHistory(onProgress = { detail ->
+                SleepReader(this@MainActivity).garminHistory(cachedNights = sleepHistory.toList(), onProgress = { detail ->
                     status.post {
                         // Ignore queued progress after the loading job has ended.
                         if (progressJob.isActive) {
