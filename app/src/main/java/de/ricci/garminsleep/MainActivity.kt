@@ -1910,16 +1910,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>):View {
             val tokenColor=when(name){"Puls"->designColor("heart",Color.rgb(255,82,126));"SpO₂"->designColor("spo2",Color.rgb(44,205,255));"Atmung"->designColor("resp",Color.rgb(80,225,184));"HRV"->designColor("hrv",Color.rgb(213,96,255));else->color}
-            return MaterialCardView(this).apply {
-                radius=px(24).toFloat(); strokeWidth=px(2); strokeColor=tokenColor
-                // Important: CardView's own semi-transparent surface is rendered as a rectangular
-                // compatibility layer on some devices. Keep the card surface transparent and put
-                // the rounded glass drawable on the card itself instead.
-                setCardBackgroundColor(Color.TRANSPARENT); cardElevation=0f; elevation=0f
-                background=GradientDrawable().apply {
-                    cornerRadius=px(24).toFloat()
-                    setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(188,9,15,31))
-                    setStroke(px(2),Color.argb(designNeonAlpha(255),Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor)))
+            return (if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
+                background=LayerDrawable(arrayOf(
+                    GradientDrawable().apply {
+                        cornerRadius=px(22).toFloat()
+                        setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(188,9,15,31))
+                        setStroke(px(4),Color.argb(42,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor)))
+                    },
+                    GradientDrawable().apply {
+                        cornerRadius=px(22).toFloat()
+                        setColor(Color.TRANSPARENT)
+                        setStroke(px(2),Color.argb(255,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor)))
+                    }
+                ))
+                if(light && this is eightbitlab.com.blurview.BlurView) {
+                    outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+                    clipToOutline=true
+                    settingsBlurTarget?.let { target ->
+                        setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true)
+                            .setBlurRadius(effectiveBlurRadius())
+                            .setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
+                    }
                 }
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(14)) }
                 addView(LinearLayout(this@MainActivity).apply {
