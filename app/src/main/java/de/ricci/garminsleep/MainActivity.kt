@@ -222,6 +222,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun designNeonAlpha(base:Int):Int=(base*(designPercent("neon_strength",100)/100f)).toInt().coerceIn(0,255)
     private fun designGlowAlpha(base:Int):Int=(base*(designPercent("glow_strength",100)/100f)).toInt().coerceIn(0,255)
     private fun designBlurRadius():Float=(25f*(designPercent("blur_strength",20)/100f)).coerceAtLeast(0f)
+    private fun glassBlurView(radius:Int, tone:Int, dp:(Int)->Int, content:View):View {
+        val blur=eightbitlab.com.blurview.BlurView(this).apply {
+            outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+            clipToOutline=true
+            background=GradientDrawable().apply {
+                cornerRadius=dp(radius).toFloat()
+                setColor(Color.argb(designGlassAlpha(),72,88,112))
+                setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone)))
+            }
+            settingsBlurTarget?.let { target ->
+                setupWith(target)
+                    .setBlurRadius(if(designGlassAlpha()==0) 0f else designBlurRadius())
+                    .setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
+            }
+            addView(content,android.widget.FrameLayout.LayoutParams(-1,-1))
+        }
+        return blur
+    }
     private fun applySleepSyncStandard() {
         getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit()
             .putBoolean("custom_enabled",true).putBoolean("wallpaper_enabled",true)
@@ -1714,9 +1732,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
             }
         }
-        val card=MaterialCardView(this).apply{
-            radius=dp(21).toFloat();cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.TRANSPARENT);if(light){background=neonGlowGlass(21,tone,::dp);outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone}else setCardBackgroundColor(fill)
-            layoutParams=android.widget.FrameLayout.LayoutParams(-1,-1)
+        val card:View=if(light) glassBlurView(21,tone,::dp,body).apply {
+            if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
+        } else MaterialCardView(this).apply{
+            radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(fill)
             addView(body);if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         }
         return if(light) neonWrap(card,tone,21,::dp).apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 176 else 122);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(0,0,0,0)} } else card.apply { layoutParams=GridLayout.LayoutParams().apply{width=0;height=dp(if(label in listOf("Puls","SpO₂","Atmung","HRV")) 164 else 110);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(4),dp(4),dp(4),dp(4))} }
