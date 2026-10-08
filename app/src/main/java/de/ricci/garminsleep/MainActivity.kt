@@ -660,13 +660,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         val w=width.toFloat();val h=height.toFloat()
                         if(w<=0f||h<=0f)return
                         val center=h*.55f
-                        val intensity=.35f+.65f*breath
+                        val intensity=.55f+.45f*breath
                         glow.style=android.graphics.Paint.Style.STROKE
                         glow.strokeCap=android.graphics.Paint.Cap.ROUND
-                        for(layer in 0..2) {
+                        for(layer in 0..3) {
                             val path=android.graphics.Path()
-                            val baseline=center+(layer-1)*h*.025f
-                            val amplitude=h*(.014f+layer*.005f)*(1f+.18f*breath)
+                            val baseline=center+(layer-1.5f)*h*.065f
+                            val amplitude=h*(.024f+layer*.007f)*(1f+.35f*breath)
                             for(step in 0..72) {
                                 val x=w*step/72f
                                 val t=step/72f
@@ -674,15 +674,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                                     kotlin.math.sin(t*39.0+layer*.7).toFloat()*amplitude*.22f
                                 if(step==0)path.moveTo(x,y) else path.lineTo(x,y)
                             }
-                            glow.color=if(layer==1) Color.argb((52*intensity).toInt(),164,87,255)
-                                else Color.argb((45*intensity).toInt(),55,218,255)
-                            glow.strokeWidth=resources.displayMetrics.density*(1.2f+layer*.35f)
+                            glow.color=if(layer==1) Color.argb((130*intensity).toInt(),164,87,255)
+                                else Color.argb((110*intensity).toInt(),55,218,255)
+                            glow.strokeWidth=resources.displayMetrics.density*(2.0f+layer*.45f)
                             canvas.drawPath(path,glow)
                         }
                     }
                 },android.widget.FrameLayout.LayoutParams(-1,-1))
             }
-            else addView(View(this@MainActivity).apply {
+            if(!wallpaperOn) addView(View(this@MainActivity).apply {
                 background=ColorDrawable(if(useLight) Color.rgb(38,45,64) else Color.rgb(5,6,14))
             },android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
