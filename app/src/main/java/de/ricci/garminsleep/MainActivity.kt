@@ -868,7 +868,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsTitle.textSize=11f
         actionsTitle.letterSpacing=.14f
         actionsTitle.setTypeface(actionsTitle.typeface,Typeface.BOLD)
-        actionsTitle.setTextColor(if(light) Color.rgb(70,80,105) else Color.rgb(235,240,255))
+        actionsTitle.setTextColor(Color.WHITE)
+        actionsTitle.setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK)
         actionsTitle.setPadding(dp(4),dp(14),dp(4),dp(10))
         actionsTitle.isClickable=true
         actionsTitle.isFocusable=true
