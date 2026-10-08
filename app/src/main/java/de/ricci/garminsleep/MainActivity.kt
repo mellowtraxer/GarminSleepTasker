@@ -2232,10 +2232,40 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(TextView(this@MainActivity).apply { text=fmt(s.totalMin); textSize=42f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(2),0,0) })
                 addView(TextView(this@MainActivity).apply { text="☾  Schlafzeit"; textSize=12f; setTextColor(if(light) Color.rgb(205,225,245) else Color.rgb(151,210,225)); setPadding(0,dp(2),0,0) })
             })
-            addView(TextView(this@MainActivity).apply {
-                text = "$quality%\nEFFIZIENZ"; gravity = android.view.Gravity.CENTER; textSize = 12f; setTypeface(typeface, Typeface.BOLD)
-                setTextColor(Color.WHITE); setPadding(dp(14),dp(12),dp(14),dp(12))
-                background = if(light) overviewNeonGlass(22,accent2,::dp) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(22,94,120),Color.rgb(77,45,145))).apply { cornerRadius=dp(22).toFloat(); setStroke(dp(1),Color.rgb(83,205,229)) }
+            // SleepSync Ultimate · compact, duration-aware score orbit.
+            // The score is an orientation value, not a medical assessment.
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.VERTICAL; gravity=android.view.Gravity.CENTER
+                layoutParams=LinearLayout.LayoutParams(dp(108),-2)
+                addView(android.widget.FrameLayout(this@MainActivity).apply {
+                    layoutParams=LinearLayout.LayoutParams(dp(94),dp(94))
+                    addView(object:View(this@MainActivity) {
+                        private val ringPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE; strokeCap=Paint.Cap.ROUND }
+                        override fun onDraw(canvas:Canvas) {
+                            super.onDraw(canvas)
+                            val inset=dp(7).toFloat()
+                            val bounds=android.graphics.RectF(inset,inset,width-inset,height-inset)
+                            ringPaint.strokeWidth=dp(6).toFloat()
+                            ringPaint.color=Color.argb(95,180,195,235)
+                            canvas.drawArc(bounds,0f,360f,false,ringPaint)
+                            ringPaint.color=when { nightRating>=80 -> Color.rgb(76,235,190); nightRating>=60 -> Color.rgb(255,200,86); else -> Color.rgb(255,104,135) }
+                            canvas.drawArc(bounds,-90f,360f*nightRating/100f,false,ringPaint)
+                        }
+                    },android.widget.FrameLayout.LayoutParams(-1,-1))
+                    addView(TextView(this@MainActivity).apply {
+                        text="$nightRating"; textSize=29f; gravity=android.view.Gravity.CENTER
+                        setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD)
+                    },android.widget.FrameLayout.LayoutParams(-1,-1))
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text="SLEEP SCORE"; textSize=9f; letterSpacing=.08f; gravity=android.view.Gravity.CENTER
+                    setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD)
+                },LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(4) })
+                addView(TextView(this@MainActivity).apply {
+                    text="$quality% EFFIZIENZ"; textSize=10f; gravity=android.view.Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                },LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(3) })
+                contentDescription="Sleep Score $nightRating von 100, vorläufige Bewertung aus Schlafdauer und Effizienz. Schlafeffizienz $quality Prozent."
             })
         }))
         sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else stageLight); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); setPadding(dp(4),dp(18),0,dp(8)) })
