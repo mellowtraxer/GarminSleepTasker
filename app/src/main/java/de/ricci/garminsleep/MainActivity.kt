@@ -193,7 +193,6 @@ private class BottomNavIconView(context: android.content.Context, private val ki
 
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private var settingsBlurTarget: eightbitlab.com.blurview.BlurTarget? = null
-    private var mainScroll: android.widget.ScrollView? = null
     private lateinit var status: TextView
     private lateinit var sleepCard: LinearLayout
     private lateinit var pageTitle: TextView
@@ -498,12 +497,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(scene)
             layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
         }
-        mainScroll=scroll
-        scroll.setOnScrollChangeListener { _, _, scrollY, _, _ ->
-            // BlurTarget is fixed to the viewport while cards live inside a scrolling container.
-            // Offset the target by the scroll amount so BlurView samples the wallpaper currently behind each card.
-            settingsBlurTarget?.translationY = scrollY.toFloat()
-        }
         var swipeDownX=0f
         var swipeDownY=0f
         var swipeLastX=0f
@@ -591,8 +584,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(navShell)
         }
         val root=android.widget.FrameLayout(this).apply {
-            // One continuous wallpaper, including underneath the app nav and
-            // Android's transparent system navigation area.
+            // Keep BlurTarget and every BlurView in the same coordinate space.
+            // The content layer is a sibling directly above the fixed wallpaper target;
+            // ScrollView performs its own child transform, which BlurView can resolve correctly.
             addView(blurTarget,android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(contentColumn,android.widget.FrameLayout.LayoutParams(-1,-1))
         }
