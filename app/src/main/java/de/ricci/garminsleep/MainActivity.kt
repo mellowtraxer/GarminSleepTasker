@@ -768,7 +768,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun testRead() = launch {
-        status.text = "GARMIN  ●     HEALTH CONNECT  ●     0 % · Schlafdaten"
+        val progressPrefix = "GARMIN  ●     HEALTH CONNECT  ●     "
+        fun progress(percent:Int,stage:String) {
+            status.text = "$"+"{progressPrefix}$"+"percent % · $"+ "stage"
+        }
+        progress(0,"Schlafdaten vorbereiten")
         setLoadingGlow(true)
         var shownProgress=0
         val progressJob=launch {
@@ -779,12 +783,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 52 to "SpO₂",
                 66 to "Atmung",
                 78 to "HRV",
-                90 to "Garmin-Nachtwerte"
+                90 to "Garmin-Daten abrufen"
             )
             for((target,label) in steps) {
                 while(shownProgress<target) {
                     shownProgress++
-                    status.text="GARMIN  ●     HEALTH CONNECT  ●     "+shownProgress+" % · "+label
+                    progress(shownProgress,label)
                     kotlinx.coroutines.delay(32)
                 }
                 kotlinx.coroutines.delay(90)
@@ -792,22 +796,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         try {
             val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
-            sleepHistory = mergeHistory(sleepHistory, history)
-            saveCachedHistory(sleepHistory)
-            val s = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
-            renderDashboard(s)
-            withContext(Dispatchers.IO) { syncLatestNightToCalendar(s) }
             progressJob.cancel()
-            while(shownProgress<100) {
-                shownProgress++
-                status.text="GARMIN  ●     HEALTH CONNECT  ●     "+shownProgress+" % · "+(if(shownProgress<96) "Abschließen" else "Fertig")
-                kotlinx.coroutines.delay(28)
-            }
-            kotlinx.coroutines.delay(350)
+            progress(92,"Schlafdaten zusammenführen")
+            sleepHistory = mergeHistory(sleepHistory, history)
+            progress(94,"Schlafverlauf speichern")
+            saveCachedHistory(sleepHistory)
+            progress(96,"Letzte Nacht darstellen")
+            val latest = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
+            renderDashboard(latest)
+            progress(98,"Kalender synchronisieren")
+            withContext(Dispatchers.IO) { syncLatestNightToCalendar(latest) }
+            progress(99,"Ansicht aktualisieren")
             refresh()
+            progress(100,"Fertig")
         } catch (t: Throwable) {
+            progressJob.cancel()
+            progress(shownProgress.coerceAtLeast(90),"Fehler beim Laden")
             sleepCard.removeAllViews()
-            sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\n${t.message.orEmpty()}"; textSize = 16f })
+            sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\\n$"+"{t.message.orEmpty()}"; textSize = 16f })
         } finally {
             progressJob.cancel()
             setLoadingGlow(false)
