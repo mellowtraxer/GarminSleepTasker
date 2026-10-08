@@ -1725,7 +1725,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),0,0,0);addView(TextView(this@MainActivity).apply{text="Design Studio";textSize=17f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)});addView(TextView(this@MainActivity).apply{text="Farben frei personalisieren";textSize=12f;setTextColor(Color.rgb(220,226,242));setPadding(0,dp(3),0,0)})},LinearLayout.LayoutParams(0,-2,1f))
                 addView(TextView(this@MainActivity).apply{text="›";textSize=30f;setTextColor(Color.rgb(255,92,205))})
             })
-            setOnClickListener{showDesignStudio()}
+            setOnClickListener {
+                try {
+                    showDesignStudio()
+                } catch (error: Exception) {
+                    val trace=android.util.Log.getStackTraceString(error)
+                    android.util.Log.e("SleepSyncDesignStudio","Failed to open Design Studio",error)
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("Design Studio – Fehlerdiagnose")
+                        .setMessage(trace.take(12000))
+                        .setPositiveButton("Kopieren") { _, _ ->
+                            val clipboard=getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("SleepSync Fehler",trace))
+                            android.widget.Toast.makeText(this@MainActivity,"Fehlerbericht kopiert",android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Schließen",null)
+                        .show()
+                }
+            }
         }
         sleepCard.addView(studio)
 
