@@ -1882,7 +1882,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     isClickable=true
                     isFocusable=true
                     setOnClickListener {
-                        val text="$name · $minutes min ($percentage %)\\n" +
+                        val text="$name · $minutes min ($percentage %)\n" +
                             "Schlafzeit: ${timeFormat.format(java.time.Instant.ofEpochMilli(s.startMs))}–${timeFormat.format(java.time.Instant.ofEpochMilli(s.endMs))}"
                         android.app.AlertDialog.Builder(this@MainActivity)
                             .setTitle("Schlafphase · $name")
