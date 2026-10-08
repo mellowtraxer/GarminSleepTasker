@@ -1976,6 +1976,32 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
         fun glass(vararg rgb:Int)=if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(rgb[0],rgb[1],rgb[2])
+        fun settingsStyleCard(tone:Int, radius:Int=22, content:View):View {
+            if(!light) return content
+            val host=android.widget.FrameLayout(this).apply { clipChildren=false;clipToPadding=false }
+            host.addView(object:View(this) {
+                private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeJoin=Paint.Join.ROUND}
+                init{setLayerType(View.LAYER_TYPE_SOFTWARE,null)}
+                override fun onDraw(canvas:Canvas){
+                    val q=dp(1).toFloat();p.strokeWidth=dp(3).toFloat()
+                    p.color=Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone))
+                    p.maskFilter=android.graphics.BlurMaskFilter(dp(14).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER)
+                    canvas.drawRoundRect(q,q,width-q,height-q,dp(radius).toFloat(),dp(radius).toFloat(),p)
+                    p.maskFilter=null;p.strokeWidth=dp(2).toFloat();p.color=tone
+                    canvas.drawRoundRect(q,q,width-q,height-q,dp(radius).toFloat(),dp(radius).toFloat(),p)
+                }
+            },android.widget.FrameLayout.LayoutParams(-1,-1))
+            host.addView(eightbitlab.com.blurview.BlurView(this).apply {
+                background=LayerDrawable(arrayOf(
+                    GradientDrawable().apply{cornerRadius=dp(radius).toFloat();setColor(Color.argb(designGlassAlpha(),72,88,112));setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},
+                    GradientDrawable().apply{cornerRadius=dp(radius).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}
+                ))
+                outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
+                settingsBlurTarget?.let{target->setupWith(target,1f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
+                addView(content,android.widget.FrameLayout.LayoutParams(-1,-2))
+            },android.widget.FrameLayout.LayoutParams(-1,-2))
+            return host
+        }
         val historical=viewingHistoryNight
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(2),0,dp(2),dp(8))
@@ -1988,7 +2014,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
-        sleepCard.addView(LinearLayout(this).apply {
+        sleepCard.addView(settingsStyleCard(accent2,30,LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(10).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(2).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(),72,88,112),Color.argb((designGlassAlpha()*.92f).toInt(),58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
@@ -2005,7 +2031,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setTextColor(Color.WHITE); setPadding(dp(14),dp(12),dp(14),dp(12))
                 background = if(light) overviewNeonGlass(22,accent2,::dp) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(22,94,120),Color.rgb(77,45,145))).apply { cornerRadius=dp(22).toFloat(); setStroke(dp(1),Color.rgb(83,205,229)) }
             })
-        })
+        }))
         sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else stageLight); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); setPadding(dp(4),dp(18),0,dp(8)) })
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(LinearLayout(this).apply {
