@@ -639,6 +639,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         setContentView(root)
         loadCachedHistory()
+        styleHomeConnections()
         refresh()
         testRead()
     }
@@ -856,9 +857,47 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         return chosen
     }
 
+    private fun styleHomeConnections() {
+        actionsTitle.visibility=View.VISIBLE
+        actionsBox.visibility=View.VISIBLE
+        val light=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")=="light"
+        val red=Color.rgb(255,70,82)
+        actionsTitle.text="VERBINDUNGEN & AUTOMATIK   ›"
+        actionsTitle.textSize=11f
+        actionsTitle.letterSpacing=.14f
+        actionsTitle.setTypeface(actionsTitle.typeface,Typeface.BOLD)
+        actionsTitle.setTextColor(if(light) Color.rgb(70,80,105) else Color.rgb(235,240,255))
+        actionsTitle.setPadding(dp(4),dp(14),dp(4),dp(10))
+        actionsTitle.isClickable=true
+        actionsTitle.isFocusable=true
+        for(i in 0 until minOf(5,actionsBox.childCount)) {
+            val b=actionsBox.getChildAt(i) as? MaterialButton ?: continue
+            b.cornerRadius=dp(18)
+            b.textSize=12f
+            b.minHeight=dp(48)
+            b.setTextColor(if(light) Color.rgb(30,36,58) else Color.WHITE)
+            b.backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(14,17,34))
+            b.strokeWidth=dp(2)
+            b.strokeColor=ColorStateList.valueOf(red)
+            b.setLayerType(View.LAYER_TYPE_SOFTWARE,null)
+            b.paint.maskFilter=null
+            b.setShadowLayer(dp(8).toFloat(),0f,0f,Color.argb(190,255,70,82))
+            b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply {
+                height=dp(48)
+                if(this is LinearLayout.LayoutParams) setMargins(0,dp(5),0,dp(5))
+            }
+            b.visibility=View.GONE
+        }
+        actionsTitle.setOnClickListener {
+            val open=actionsBox.getChildAt(0)?.visibility!=View.VISIBLE
+            actionsTitle.text=if(open) "VERBINDUNGEN & AUTOMATIK   ⌄" else "VERBINDUNGEN & AUTOMATIK   ›"
+            for(i in 0 until minOf(5,actionsBox.childCount))
+                actionsBox.getChildAt(i)?.visibility=if(open) View.VISIBLE else View.GONE
+        }
+    }
+
     private fun showOverview() {
-        actionsTitle.visibility = View.GONE
-        actionsBox.visibility = View.GONE
+        styleHomeConnections()
         pageTitle.text = "SleepSync"
         pageSubtitle.text = nextTimeAwareGreeting()
         lastSummary?.let { renderDashboard(it) }
