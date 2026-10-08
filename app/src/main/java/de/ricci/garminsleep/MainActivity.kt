@@ -1709,7 +1709,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
         val intervals=s.stageSeries.filter { it.stageLabel==label }
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); strokeWidth=dp(2); strokeColor=stageTone; setCardBackgroundColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31)); cardElevation=dp(if(light) 8 else 3).toFloat(); if(light){ elevation=dp(8).toFloat(); outlineAmbientShadowColor=stageTone; outlineSpotShadowColor=stageTone }
+            radius=dp(24).toFloat(); strokeWidth=0; setCardBackgroundColor(Color.TRANSPARENT); cardElevation=0f; elevation=0f
+            background=GradientDrawable().apply { cornerRadius=dp(24).toFloat(); setColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31)); setStroke(dp(2),stageTone) }
             addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
                 addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(stageTone); setTypeface(typeface,Typeface.BOLD) })
                 addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(4)) })
