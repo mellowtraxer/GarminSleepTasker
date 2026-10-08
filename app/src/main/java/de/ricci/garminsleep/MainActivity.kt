@@ -486,8 +486,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         settingsBlurTarget=blurTarget
         val scene = android.widget.FrameLayout(this).apply {
-            // Wallpaper is owned by the full-screen root below. Keep this scene
-            // transparent so the same image remains visible behind content.
+            // Scroll-space blur source: a second BlurTarget lives in the same scrolling
+            // coordinate system as the glass cards. It carries the same wallpaper and
+            // is counter-translated while scrolling so its pixels remain viewport-fixed.
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
         val scroll = ScrollView(this).apply {
@@ -496,6 +497,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             background=ColorDrawable(Color.TRANSPARENT)
             addView(scene)
             layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
+        }
+        scroll.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            // BlurView's capture transform does not account for ScrollView's canvas translation.
+            // Counter-scroll the fixed BlurTarget so sampled wallpaper stays aligned to the viewport.
+            blurTarget.translationY = (-scrollY).toFloat()
+            blurTarget.invalidate()
         }
         var swipeDownX=0f
         var swipeDownY=0f
