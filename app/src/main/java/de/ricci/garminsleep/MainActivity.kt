@@ -1412,28 +1412,45 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showDesignStudio() {
+        val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
+        pageTitle.text="Design Studio";pageSubtitle.text="Dein SleepSync. Dein Look."
+        actionsTitle.visibility=View.GONE;actionsBox.visibility=View.GONE;sleepCard.removeAllViews()
         val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
         val keys=arrayOf("accent","accent2","stage_light","stage_deep","stage_rem","stage_awake","heart","spo2","resp","hrv")
-        val defaults=intArrayOf(accent,accent2,stageLight,stageDeep,stageRem,stageAwake,Color.rgb(255,86,120),Color.rgb(44,218,255),Color.rgb(70,224,181),Color.rgb(183,99,255))
-        val palette=intArrayOf(Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,86,120),Color.rgb(255,164,91),Color.rgb(70,224,181),Color.rgb(255,220,80),Color.WHITE,Color.rgb(150,160,185))
+        val defs=intArrayOf(Color.rgb(139,92,246),Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,164,91),Color.rgb(255,82,126),Color.rgb(44,205,255),Color.rgb(80,225,184),Color.rgb(213,96,255))
+        val palette=intArrayOf(Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,82,126),Color.rgb(255,164,91),Color.rgb(80,225,184),Color.rgb(255,220,80),Color.WHITE,Color.rgb(150,160,185))
         val paletteNames=arrayOf("Cyan","Blau","Indigo","Violett","Pink","Orange","Mint","Gelb","Weiß","Slate")
-        fun pick(index:Int){
-            val dlg=AlertDialog.Builder(this).setTitle(names[index]).setItems(paletteNames){_,which->
-                p.edit().putInt(keys[index],palette[which]).putBoolean("custom_enabled",true).apply(); showDesignStudio()
-            }.setNegativeButton("Abbrechen",null).create()
-            dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
+        fun section(t:String)=sleepCard.addView(TextView(this).apply{text=t;textSize=11f;letterSpacing=.14f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);setPadding(dp(4),dp(18),0,dp(8))})
+        fun row(title:String,sub:String,tone:Int,click:()->Unit)=sleepCard.addView(MaterialCardView(this).apply{
+            radius=dp(18).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.argb(170,72,88,112));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
+            addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL;setPadding(dp(15),dp(12),dp(15),dp(12))
+                addView(View(this@MainActivity).apply{background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(tone);setStroke(dp(2),Color.WHITE)};layoutParams=LinearLayout.LayoutParams(dp(30),dp(30)).apply{marginEnd=dp(13)}})
+                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;addView(TextView(this@MainActivity).apply{text=title;textSize=15f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)});addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(Color.rgb(220,228,245))})},LinearLayout.LayoutParams(0,-2,1f))
+                addView(TextView(this@MainActivity).apply{text="›";textSize=27f;setTextColor(tone)})
+            });setOnClickListener{click()}
+        })
+        sleepCard.addView(TextView(this).apply{text="‹   Darstellung";textSize=12f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(115,210,255));setPadding(dp(4),dp(8),0,dp(12));setOnClickListener{showAppearanceSettings()}})
+        // Live preview
+        sleepCard.addView(MaterialCardView(this).apply{radius=dp(24).toFloat();strokeWidth=dp(2);strokeColor=designColor("accent2",defs[1]);setCardBackgroundColor(Color.argb(p.getInt("glass_alpha",168),72,88,112));layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
+            addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,defs[i]));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
+        })
+        section("FARBEN")
+        names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);row(names[i],String.format("#%06X",0xFFFFFF and tone),tone){val dlg=AlertDialog.Builder(this).setTitle(names[i]).setItems(paletteNames){_,w->p.edit().putInt(keys[i],palette[w]).putBoolean("custom_enabled",true).apply();showDesignStudio()}.setNegativeButton("Abbrechen",null).create();dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()}}
+        section("HINTERGRUND")
+        row("Wallpaper",if(p.getBoolean("wallpaper_enabled",true)) "Aktiv · SleepSync Wallpaper" else "Aus · einfarbiger Hintergrund",Color.rgb(70,205,225)){p.edit().putBoolean("wallpaper_enabled",!p.getBoolean("wallpaper_enabled",true)).putBoolean("custom_enabled",true).apply();recreate()}
+        section("GLAS & EFFEKTE")
+        fun slider(title:String,key:String,value:Int,max:Int,tone:Int){
+            val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(10),dp(14),dp(8));background=GradientDrawable().apply{cornerRadius=dp(18).toFloat();setColor(Color.argb(155,72,88,112));setStroke(dp(1),tone)};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
+                val label=TextView(this@MainActivity).apply{text="$title   $value%";textSize=13f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)};addView(label)
+                addView(android.widget.SeekBar(this@MainActivity).apply{this.max=max;progress=value;progressTintList=ColorStateList.valueOf(tone);thumbTintList=ColorStateList.valueOf(tone);setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean){label.text="$title   $v%";if(u)p.edit().putInt(key,v).putBoolean("custom_enabled",true).apply()}override fun onStartTrackingTouch(s:android.widget.SeekBar?){};override fun onStopTrackingTouch(s:android.widget.SeekBar?){showDesignStudio()}})})
+            };sleepCard.addView(box)
         }
-        val lines=names.indices.map{i->"●  "+names[i]+"   ·   "+String.format("#%06X",0xFFFFFF and p.getInt(keys[i],defaults[i]))}.toTypedArray()
-        val dlg=AlertDialog.Builder(this)
-            .setTitle("🎨 Design Studio")
-            .setMessage("Dein SleepSync, deine Farben. Wähle einen Bereich und passe seine Akzentfarbe an. Eigene Farben werden als persönliches Design gespeichert.\n\nHintergrund & Effekte")
-            .setItems(lines){_,which->pick(which)}
-            .setPositiveButton("Eigenes Design aktivieren"){_,_->p.edit().putBoolean("custom_enabled",true).apply();recreate()}
-            .setNeutralButton("Zurücksetzen"){_,_->p.edit().clear().apply();recreate()}
-            .setNegativeButton("Schließen",null)
-            .create()
-        dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
+        slider("Glas-Transparenz","glass_strength",p.getInt("glass_strength",66),100,Color.rgb(90,190,255))
+        slider("Blur","blur_strength",p.getInt("blur_strength",20),100,Color.rgb(183,99,255))
+        slider("Neon","neon_strength",p.getInt("neon_strength",100),100,Color.rgb(255,82,190))
+        slider("Glow","glow_strength",p.getInt("glow_strength",100),100,Color.rgb(80,225,184))
+        sleepCard.addView(MaterialButton(this).apply{text="↺  SleepSync Standard wiederherstellen";isAllCaps=false;setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(Color.argb(190,55,48,82));layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(16),0,dp(10))};setOnClickListener{p.edit().clear().apply();recreate()}})
     }
 
     private fun showAppearanceSettings() {
