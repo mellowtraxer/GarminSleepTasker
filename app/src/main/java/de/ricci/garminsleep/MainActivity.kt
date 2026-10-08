@@ -1551,11 +1551,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),dp(7),dp(4),dp(7)) }
             }
 
-            val card=android.widget.FrameLayout(this).apply {
+            val card=(eightbitlab.com.blurview.BlurView(this)).apply {
                 background=LayerDrawable(arrayOf(
                     GradientDrawable().apply {
                         cornerRadius=dp(22).toFloat()
-                        setColor(Color.argb(if(active) 195 else 178,72,88,112))
+                        setColor(Color.argb(designGlassAlpha(),72,88,112))
                         setStroke(dp(if(active) 3 else 2),tone)
                     },
                     GradientDrawable().apply {
@@ -1567,6 +1567,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 isClickable=true
                 isFocusable=true
                 setOnClickListener { prefs.edit().putString("theme",key).apply(); recreate() }
+                outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+                clipToOutline=true
+                settingsBlurTarget?.let { target ->
+                    setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
+                }
 
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL
