@@ -2489,6 +2489,76 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(4),dp(10),dp(4),0) }
         })
+        // Sleep DNA: an original night-specific fingerprint drawn from measured sleep stages.
+        val dnaSegments=s.stageSeries.filter { it.endMs>it.startMs && it.endMs>s.startMs && it.startMs<s.endMs }
+            .sortedBy { it.startMs }
+        sleepCard.addView(TextView(this).apply {
+            text="SLEEP DNA  ·  DEINE NACHTSIGNATUR"
+            textSize=11f
+            letterSpacing=.13f
+            setTypeface(typeface,Typeface.BOLD)
+            setTextColor(if(light) Color.WHITE else stageRem)
+            setPadding(dp(5),dp(20),0,dp(8))
+        })
+        sleepCard.addView(MaterialCardView(this).apply {
+            radius=dp(24).toFloat()
+            cardElevation=if(light) dp(10).toFloat() else dp(2).toFloat()
+            strokeWidth=dp(1)
+            strokeColor=Color.argb(180,147,105,235)
+            setCardBackgroundColor(Color.argb(if(light) designGlassAlpha() else 220,22,25,56))
+            addView(object:View(this@MainActivity) {
+                private val ink=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                override fun onDraw(canvas:android.graphics.Canvas) {
+                    super.onDraw(canvas)
+                    val w=width.toFloat()
+                    val h=height.toFloat()
+                    if(w<=0f||h<=0f)return
+                    val centerX=w/2f
+                    val centerY=h/2f
+                    val radius=kotlin.math.min(w,h)*.35f
+                    val duration=(s.endMs-s.startMs).coerceAtLeast(1L).toDouble()
+                    val ring=android.graphics.RectF(centerX-radius,centerY-radius,centerX+radius,centerY+radius)
+                    ink.style=android.graphics.Paint.Style.STROKE
+                    ink.strokeWidth=dp(3).toFloat()
+                    ink.color=Color.argb(90,154,164,215)
+                    canvas.drawCircle(centerX,centerY,radius,ink)
+                    val palette=mapOf("leicht" to stageLight,"tief" to stageDeep,"rem" to stageRem,"wach" to stageAwake)
+                    dnaSegments.forEach { phase ->
+                        val from=((phase.startMs-s.startMs)/duration*360.0).toFloat().coerceIn(0f,360f)
+                        val to=((phase.endMs-s.startMs)/duration*360.0).toFloat().coerceIn(0f,360f)
+                        if(to<=from)return@forEach
+                        val tone=palette[phase.stageLabel.trim().lowercase()]?:Color.rgb(122,134,161)
+                        ink.color=tone
+                        ink.strokeWidth=dp(4).toFloat()
+                        ink.strokeCap=android.graphics.Paint.Cap.ROUND
+                        canvas.drawArc(ring,from-90f,to-from,false,ink)
+                        val mid=(from+to)/2f
+                        val radians=Math.toRadians((mid-90f).toDouble())
+                        val startR=radius-dp(12)
+                        val endR=startR+dp(9)+((to-from)/360f*dp(18))
+                        ink.strokeWidth=dp(2).toFloat()
+                        canvas.drawLine(
+                            centerX+kotlin.math.cos(radians).toFloat()*startR,
+                            centerY+kotlin.math.sin(radians).toFloat()*startR,
+                            centerX+kotlin.math.cos(radians).toFloat()*endR,
+                            centerY+kotlin.math.sin(radians).toFloat()*endR,ink)
+                    }
+                    ink.style=android.graphics.Paint.Style.FILL
+                    ink.textAlign=android.graphics.Paint.Align.CENTER
+                    ink.typeface=Typeface.create(Typeface.DEFAULT,Typeface.BOLD)
+                    ink.textSize=dp(23).toFloat()
+                    ink.color=Color.WHITE
+                    canvas.drawText("${s.totalMin/60}h ${s.totalMin%60}m",centerX,centerY+dp(2),ink)
+                    ink.textSize=dp(9).toFloat()
+                    ink.color=Color.rgb(192,202,241)
+                    canvas.drawText("DEINE NACHT",centerX,centerY+dp(20),ink)
+                }
+            }.apply {
+                contentDescription="Sleep DNA. Individuelle Schlafsignatur aus ${dnaSegments.size} erfassten Schlafphasen."
+                layoutParams=android.widget.FrameLayout.LayoutParams(-1,dp(210))
+            })
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),0,dp(4),dp(5)) }
+        })
         makeOverviewTextWhite(sleepCard)
     }
 
