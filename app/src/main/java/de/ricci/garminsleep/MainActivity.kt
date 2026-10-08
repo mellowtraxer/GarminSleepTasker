@@ -2706,8 +2706,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     val w=width.toFloat();val h=height.toFloat()
                     if(w<=0f||h<=0f)return
                     val cx=w/2f;val cy=h/2f
-                    val outer=kotlin.math.min(w,h)*.34f
-                    val inner=outer-dp(35)
+                    val outer=kotlin.math.min(w,h)*.36f
+                    val inner=outer-dp(37)
                     val track=android.graphics.RectF(cx-outer,cy-outer,cx+outer,cy+outer)
                     val innerTrack=android.graphics.RectF(cx-inner,cy-inner,cx+inner,cy+inner)
                     ink.shader=null
@@ -2716,6 +2716,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     ink.strokeWidth=dp(2).toFloat()
                     ink.color=Color.argb(85,174,178,229)
                     canvas.drawCircle(cx,cy,outer,ink)
+                    ink.strokeWidth=dp(1).toFloat()
+                    ink.color=Color.argb(55,170,145,245)
+                    canvas.drawCircle(cx,cy,outer+dp(12),ink)
 
                     if(dnaSegments.isNotEmpty()) {
                         dnaSegments.forEach { phase ->
@@ -2724,6 +2727,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             val tone=palette[phase.stageLabel.trim().lowercase()]?:Color.rgb(122,134,161)
                             ink.color=tone
                             ink.strokeWidth=dp(6).toFloat()
+                            canvas.drawArc(track,start-90f,sweep,false,ink)
+                            ink.strokeWidth=dp(1.2f.toInt()).toFloat()
+                            ink.color=Color.argb(90,Color.red(tone),Color.green(tone),Color.blue(tone))
                             canvas.drawArc(track,start-90f,sweep,false,ink)
                         }
                         // Separate proportional ring: phase shares across the complete night.
@@ -2765,14 +2771,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     ink.typeface=Typeface.create(Typeface.DEFAULT,Typeface.BOLD)
                     ink.color=Color.WHITE
                     val phase=focusedTime?.let { time -> dnaSegments.lastOrNull { time>=it.startMs && time<it.endMs } }
-                    ink.textSize=dp(25).toFloat()
+                    ink.textSize=dp(29).toFloat()
                     val primary=if(focusedTime==null) String.format(java.util.Locale.GERMANY,"%d:%02d",s.totalMin/60,s.totalMin%60)
                         else clock.format(java.time.Instant.ofEpochMilli(focusedTime!!))
                     canvas.drawText(primary,cx,cy+dp(1),ink)
                     ink.textSize=dp(10).toFloat()
                     ink.color=Color.rgb(202,211,247)
-                    canvas.drawText(if(focusedTime==null) "STUNDEN : MINUTEN" else phase?.stageLabel?.uppercase()?:"KEINE PHASENDATEN",
-                        cx,cy+dp(21),ink)
+                    canvas.drawText(if(focusedTime==null) "SCHLAFDAUER" else phase?.stageLabel?.uppercase()?:"KEINE PHASENDATEN",
+                        cx,cy+dp(22),ink)
                 }
                 override fun onTouchEvent(event:android.view.MotionEvent):Boolean {
                     when(event.actionMasked) {
@@ -2802,7 +2808,36 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),0,dp(4),dp(5)) }
         })
+        val dnaLegend=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            gravity=android.view.Gravity.CENTER
+            setPadding(dp(5),dp(9),dp(5),dp(8))
+            listOf(Triple("TIEF",s.deepMin,stageDeep),Triple("LEICHT",s.lightMin,stageLight),
+                Triple("REM",s.remMin,stageRem),Triple("WACH",s.awakeMin,stageAwake)).forEach { (name,mins,tone) ->
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.VERTICAL
+                    gravity=android.view.Gravity.CENTER
+                    addView(TextView(this@MainActivity).apply {
+                        text="● $name";textSize=10f;setTextColor(tone)
+                        gravity=android.view.Gravity.CENTER
+                    })
+                    addView(TextView(this@MainActivity).apply {
+                        text="${mins/60}:${(mins%60).toString().padStart(2,'0')} h"
+                        textSize=12f;setTypeface(typeface,Typeface.BOLD)
+                        setTextColor(Color.WHITE);gravity=android.view.Gravity.CENTER
+                    })
+                },LinearLayout.LayoutParams(0,-2,1f))
+            }
+        }
+        sleepCard.addView(dnaLegend)
         sleepCard.addView(dnaDetail)
+        sleepCard.addView(TextView(this).apply {
+            text="SCHLAFVERLAUF  ·  ${java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.startMs))} — ${java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))}"
+            textSize=10f;letterSpacing=.08f;setTextColor(Color.rgb(196,204,239))
+            setPadding(dp(8),dp(10),dp(8),dp(7))
+        })
+        sleepCard.addView(sleepStageStrip(s))
+
         makeOverviewTextWhite(sleepCard)
     }
 
