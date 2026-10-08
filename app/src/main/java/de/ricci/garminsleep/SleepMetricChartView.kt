@@ -98,10 +98,8 @@ class SleepMetricChartView(
                 val y=bottom-(bottom-top)*(.08f+((pt.value-minV)/span).toFloat()*.84f)
                 c.drawCircle(x,y,1.35f*d,pointPaint)
             }}
-            val fill=Path(path); fill.lineTo(r,bottom); fill.lineTo(l,bottom); fill.close()
-            fillPaint.style=Paint.Style.FILL
-            fillPaint.shader=LinearGradient(0f,top,0f,bottom,Color.argb(90,Color.red(tone),Color.green(tone),Color.blue(tone)),Color.TRANSPARENT,Shader.TileMode.CLAMP)
-            c.drawPath(fill,fillPaint); fillPaint.shader=null
+            // Keep the chart body transparent: the surrounding SleepSync glass card is the only surface.
+            fillPaint.shader=null
         }
         setLayerType(LAYER_TYPE_SOFTWARE,p)
         p.style=Paint.Style.STROKE; p.strokeCap=Paint.Cap.ROUND; p.strokeJoin=Paint.Join.ROUND
