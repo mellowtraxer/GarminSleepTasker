@@ -1862,7 +1862,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             Triple("REM",s.remMin,stageRem),
             Triple("Wach",s.awakeMin,stageAwake)
         )
-        val total = values.sumOf { it.second }.coerceAtLeast(1L)
+        val total = values.sumOf { it.second.toLong() }.coerceAtLeast(1L)
         val timeFormat=java.time.format.DateTimeFormatter.ofPattern("HH:mm")
             .withZone(java.time.ZoneId.systemDefault())
         return LinearLayout(this).apply {
