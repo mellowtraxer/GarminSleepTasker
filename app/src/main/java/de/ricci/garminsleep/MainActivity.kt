@@ -803,7 +803,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }
         try {
-            val history = withContext(Dispatchers.IO) { SleepReader(this@MainActivity).garminHistory() }
+            val history = withContext(Dispatchers.IO) {
+                SleepReader(this@MainActivity).garminHistory(onProgress = { detail ->
+                    status.post {
+                        // Ignore queued progress after the loading job has ended.
+                        if (progressJob.isActive) progress(90,detail)
+                    }
+                })
+            }
             progressJob.cancel()
             progress(92,"Schlafdaten zusammenführen")
             sleepHistory = mergeHistory(sleepHistory, history)
