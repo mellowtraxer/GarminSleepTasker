@@ -1743,7 +1743,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
             }
         }
-        val card:View=if(light) glassBlurView(21,tone,::dp,body).apply {
+        val card:View=if(light && label=="Leicht") {
+            // Canary card: prove a single real BlurView against the shared BlurTarget
+            eightbitlab.com.blurview.BlurView(this).apply {
+                outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+                clipToOutline=true
+                background=GradientDrawable().apply { cornerRadius=dp(21).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
+                settingsBlurTarget?.let { target ->
+                    setupWith(target).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(25f).setOverlayColor(Color.argb(18,72,88,112))
+                }
+                addView(body,android.widget.FrameLayout.LayoutParams(-1,-1))
+                if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
+            }
+        } else if(light) glassBlurView(21,tone,::dp,body).apply {
             if(onClick!=null){isClickable=true;isFocusable=true;setOnClickListener{onClick()}}
         } else MaterialCardView(this).apply{
             radius=dp(21).toFloat();cardElevation=dp(2).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(fill)
