@@ -655,8 +655,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         if(w<=0f||h<=0f)return
                         val t=progress*2f*Math.PI.toFloat()
                         val breathe=.5f+.5f*kotlin.math.sin(t)
-                        val pulsePhase=((progress*2f)%1f)*7f
-                        val pulse=kotlin.math.exp(-(pulsePhase*pulsePhase))
+                        val pulseDistance=1f-kotlin.math.cos(t*2f)
+                        val pulse=kotlin.math.exp(-pulseDistance*7f)
                         val colors=intArrayOf(Color.rgb(255,62,134),Color.rgb(165,255,53),
                             Color.rgb(48,233,211),Color.rgb(208,75,242))
                         // Layered translucent silk ribbons with parallax, soft halo and a bright fold.
@@ -666,8 +666,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             val amplitude=h*(.035f+layer*.008f)*(1f+.23f*breathe)
                             val tone=colors[layer]
                             fun wave(u:Float,depth:Float):Float {
-                                return kotlin.math.sin(u*12.0+layer*1.25+t*(.12+depth*.025)).toFloat()+
-                                    .36f*kotlin.math.sin(u*28.0-layer*.7-t*.09+depth).toFloat()
+                                return kotlin.math.sin(u*12.0+layer*1.25+t*(1f+depth.toFloat())).toFloat()+
+                                    .36f*kotlin.math.sin(u*28.0-layer*.7-t*2f+depth).toFloat()
                             }
                             // Back-to-front translucent surfaces create the illusion of twisting fabric.
                             for(depth in 0..3) {
@@ -677,7 +677,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                                     val u=step/100f
                                     val x=w*u
                                     val y=base+amplitude*wave(u,depth*.38f)+
-                                        kotlin.math.sin(u*9.0+t*.18+depth).toFloat()*density*depth*5f
+                                        kotlin.math.sin(u*9.0+t+depth).toFloat()*density*depth*5f
                                     if(step==0)ribbon.moveTo(x,y) else ribbon.lineTo(x,y)
                                 }
                                 paint.shader=null
@@ -708,7 +708,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             canvas.drawPath(highlight,paint)
                             paint.style=android.graphics.Paint.Style.FILL
                             for(dot in 0..7) {
-                                val u=(dot/8f+progress*.075f+layer*.13f)%1f
+                                val u=(dot/8f+progress+layer*.13f)%1f
                                 val y=base+amplitude*wave(u,0f)
                                 paint.color=Color.argb((55+55*breathe).toInt(),
                                     Color.red(tone),Color.green(tone),Color.blue(tone))
