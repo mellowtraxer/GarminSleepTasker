@@ -2595,6 +2595,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setTextColor(if(light) Color.WHITE else stageRem)
             setPadding(dp(5),dp(20),0,dp(8))
         })
+        val dnaDetail=TextView(this).apply {
+            text="Außen: Schlafverlauf  ·  Innen: Phasenanteile"
+            textSize=11f; gravity=android.view.Gravity.CENTER
+            setTextColor(if(light) Color.WHITE else Color.rgb(194,204,235))
+            setPadding(dp(8),dp(8),dp(8),dp(12))
+        }
         sleepCard.addView(MaterialCardView(this).apply {
             radius=dp(24).toFloat()
             cardElevation=if(light) dp(10).toFloat() else dp(2).toFloat()
@@ -2618,8 +2624,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     val w=width.toFloat();val h=height.toFloat()
                     if(w<=0f||h<=0f)return
                     val cx=w/2f;val cy=h/2f
-                    val outer=kotlin.math.min(w,h)*.39f
-                    val inner=outer-dp(25)
+                    val outer=kotlin.math.min(w,h)*.34f
+                    val inner=outer-dp(35)
                     val track=android.graphics.RectF(cx-outer,cy-outer,cx+outer,cy+outer)
                     val innerTrack=android.graphics.RectF(cx-inner,cy-inner,cx+inner,cy+inner)
                     ink.shader=null
@@ -2628,8 +2634,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     ink.strokeWidth=dp(2).toFloat()
                     ink.color=Color.argb(85,174,178,229)
                     canvas.drawCircle(cx,cy,outer,ink)
-                    ink.color=Color.argb(65,174,178,229)
-                    canvas.drawCircle(cx,cy,inner,ink)
+
                     if(dnaSegments.isNotEmpty()) {
                         dnaSegments.forEach { phase ->
                             val start=angle(phase.startMs);val sweep=angle(phase.endMs)-start
@@ -2638,23 +2643,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             ink.color=tone
                             ink.strokeWidth=dp(6).toFloat()
                             canvas.drawArc(track,start-90f,sweep,false,ink)
-                            ink.color=Color.argb(170,Color.red(tone),Color.green(tone),Color.blue(tone))
-                            ink.strokeWidth=dp(2).toFloat()
-                            canvas.drawArc(innerTrack,start-90f,sweep,false,ink)
-                            val mid=Math.toRadians((start+sweep/2f-90f).toDouble())
-                            val tickLength=dp(5)+dp(9)*sweep/360f
-                            ink.strokeWidth=dp(2).toFloat()
-                            canvas.drawLine(cx+kotlin.math.cos(mid).toFloat()*(outer+dp(8)),
-                                cy+kotlin.math.sin(mid).toFloat()*(outer+dp(8)),
-                                cx+kotlin.math.cos(mid).toFloat()*(outer+dp(8)+tickLength),
-                                cy+kotlin.math.sin(mid).toFloat()*(outer+dp(8)+tickLength),ink)
                         }
                         // Separate proportional ring: phase shares across the complete night.
                         val phaseValues=listOf(s.lightMin to stageLight,s.deepMin to stageDeep,
                             s.remMin to stageRem,s.awakeMin to stageAwake)
                         val phaseSum=phaseValues.sumOf { it.first.toLong() }.coerceAtLeast(1L)
                         var phaseStart=-90f
-                        val phaseRadius=inner-dp(17)
+                        val phaseRadius=inner
                         val phaseTrack=android.graphics.RectF(cx-phaseRadius,cy-phaseRadius,
                             cx+phaseRadius,cy+phaseRadius)
                         phaseValues.forEach { (minutes,tone) ->
@@ -2696,16 +2691,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     ink.color=Color.rgb(202,211,247)
                     canvas.drawText(if(focusedTime==null) "STUNDEN : MINUTEN" else phase?.stageLabel?.uppercase()?:"KEINE PHASENDATEN",
                         cx,cy+dp(21),ink)
-                    if(phase!=null) {
-                        ink.textSize=dp(10).toFloat()
-                        ink.color=palette[phase.stageLabel.trim().lowercase()]?:Color.WHITE
-                        canvas.drawText("${((phase.endMs-phase.startMs)/60000L).coerceAtLeast(1L)} MIN IN DIESER PHASE",
-                            cx,cy+dp(38),ink)
-                    } else if(focusedTime==null) {
-                        ink.textSize=dp(9).toFloat()
-                        ink.color=Color.rgb(193,201,232)
-                        canvas.drawText("VERLAUF  /  PHASENANTEILE",cx,cy+dp(38),ink)
-                    }
                 }
                 override fun onTouchEvent(event:android.view.MotionEvent):Boolean {
                     when(event.actionMasked) {
@@ -2714,6 +2699,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             val degrees=((Math.toDegrees(kotlin.math.atan2(
                                 (event.y-height/2f).toDouble(),(event.x-width/2f).toDouble()))+450.0)%360.0)
                             focusedTime=(s.startMs+(degrees/360.0*span).toLong()).coerceIn(s.startMs,s.endMs-1)
+                            val phase=dnaSegments.lastOrNull { segment -> focusedTime?.let { it>=segment.startMs && it<segment.endMs }==true }
+                            dnaDetail.text=if(phase!=null) "${clock.format(java.time.Instant.ofEpochMilli(focusedTime!!))}  ·  ${phase.stageLabel}  ·  ${((phase.endMs-phase.startMs)/60000L).coerceAtLeast(1L)} min" else "Keine Schlafphase für diese Uhrzeit"
                             invalidate()
                             return true
                         }
@@ -2733,6 +2720,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),0,dp(4),dp(5)) }
         })
+        sleepCard.addView(dnaDetail)
         makeOverviewTextWhite(sleepCard)
     }
 
