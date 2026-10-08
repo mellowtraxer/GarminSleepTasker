@@ -655,7 +655,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         if(w<=0f||h<=0f)return
                         val t=progress*2f*Math.PI.toFloat()
                         val breathe=.5f+.5f*kotlin.math.sin(t)
-                        val pulse=kotlin.math.exp(-kotlin.math.pow(((progress*2f)%1f)*7f,2f))
+                        val pulsePhase=((progress*2f)%1f)*7f
+                        val pulse=kotlin.math.exp(-(pulsePhase*pulsePhase))
                         val colors=intArrayOf(Color.rgb(255,62,134),Color.rgb(165,255,53),
                             Color.rgb(48,233,211),Color.rgb(208,75,242))
                         // Layered translucent silk ribbons with parallax, soft halo and a bright fold.
