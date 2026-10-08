@@ -774,31 +774,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         progress(0,"Schlafdaten vorbereiten")
         setLoadingGlow(true)
-        var shownProgress=0
+        var currentDetail="Health Connect · Schlafsessions suchen"
+        val startedAt=android.os.SystemClock.elapsedRealtime()
         val progressJob=launch {
-            val steps=listOf(
-                8 to "Schlafsessions",
-                22 to "Schlafphasen",
-                38 to "Herzfrequenz",
-                52 to "SpO₂",
-                66 to "Atmung",
-                78 to "HRV",
-                90 to "Garmin-Daten abrufen"
-            )
-            for((target,label) in steps) {
-                while(shownProgress<target) {
-                    shownProgress++
-                    progress(shownProgress,label)
-                    kotlinx.coroutines.delay(32)
-                }
-                kotlinx.coroutines.delay(90)
-            }
-            // The Garmin request is a single blocking operation. Report real elapsed
-            // waiting time rather than inventing progress percentages or substeps.
-            val waitingSince=android.os.SystemClock.elapsedRealtime()
             while(kotlinx.coroutines.currentCoroutineContext().isActive) {
-                val elapsedSeconds=(android.os.SystemClock.elapsedRealtime()-waitingSince)/1000L
-                progress(90,"Garmin-Antwort ausstehend · "+elapsedSeconds+" s")
+                val elapsed=(android.os.SystemClock.elapsedRealtime()-startedAt)/1000L
+                progress(90,currentDetail+" · "+elapsed+" s")
                 kotlinx.coroutines.delay(1000)
             }
         }
@@ -807,7 +788,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 SleepReader(this@MainActivity).garminHistory(onProgress = { detail ->
                     status.post {
                         // Ignore queued progress after the loading job has ended.
-                        if (progressJob.isActive) progress(90,detail)
+                        if (progressJob.isActive) {
+                            currentDetail=detail
+                            val elapsed=(android.os.SystemClock.elapsedRealtime()-startedAt)/1000L
+                            progress(90,detail+" · "+elapsed+" s")
+                        }
                     }
                 })
             }
@@ -826,7 +811,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             progress(100,"Fertig")
         } catch (t: Throwable) {
             progressJob.cancel()
-            progress(shownProgress.coerceAtLeast(90),"Fehler beim Laden")
+            progress(90,"Fehler beim Laden")
             sleepCard.removeAllViews()
             sleepCard.addView(TextView(this@MainActivity).apply { text = "⚠️ Schlafdaten konnten nicht geladen werden\n" + t.message.orEmpty(); textSize = 16f })
         } finally {
