@@ -373,7 +373,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun button(label: String, action: () -> Unit) = MaterialButton(this).apply {
             text = label; isAllCaps = false; textSize = 15f; minHeight = dp(56); setOnClickListener { action() }
         }
-        status = TextView(this).apply { textSize = 14f; setPadding(dp(12),dp(7),dp(12),dp(7)); gravity=android.view.Gravity.CENTER_VERTICAL }
+        status = TextView(this).apply { textSize = 14f; setPadding(dp(12),dp(7),dp(12),dp(7)); gravity=android.view.Gravity.CENTER_VERTICAL; maxLines=1; setSingleLine(true); ellipsize=android.text.TextUtils.TruncateAt.END; includeFontPadding=false }
         sleepCard = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18)) }
         val bootTheme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
         val bootSystemDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
