@@ -634,50 +634,67 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             if(wallpaperOn && designPrefs.getString("wallpaper_source","builtin")=="dreamscape") {
                 addView(object:View(this@MainActivity) {
-                    private val glow=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-                    private var breath=0f
-                    private val motion=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
-                        duration=12000L
+                    private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                    private var progress=0f
+                    private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
+                        duration=18000L
                         repeatCount=android.animation.ValueAnimator.INFINITE
-                        repeatMode=android.animation.ValueAnimator.REVERSE
-                        interpolator=android.view.animation.AccelerateDecelerateInterpolator()
-                        addUpdateListener {
-                            breath=it.animatedValue as Float
-                            invalidate()
-                        }
+                        repeatMode=android.animation.ValueAnimator.RESTART
+                        interpolator=android.view.animation.LinearInterpolator()
+                        addUpdateListener { progress=it.animatedValue as Float;invalidate() }
                     }
                     override fun onAttachedToWindow() {
                         super.onAttachedToWindow()
                         if(android.provider.Settings.Global.getFloat(contentResolver,
-                            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,1f)>0f) motion.start()
+                            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,1f)>0f) animator.start()
                     }
-                    override fun onDetachedFromWindow() {
-                        motion.cancel()
-                        super.onDetachedFromWindow()
-                    }
+                    override fun onDetachedFromWindow() { animator.cancel();super.onDetachedFromWindow() }
                     override fun onDraw(canvas:android.graphics.Canvas) {
                         super.onDraw(canvas)
                         val w=width.toFloat();val h=height.toFloat()
                         if(w<=0f||h<=0f)return
-                        val center=h*.55f
-                        val intensity=.55f+.45f*breath
-                        glow.style=android.graphics.Paint.Style.STROKE
-                        glow.strokeCap=android.graphics.Paint.Cap.ROUND
+                        val t=progress*2f*Math.PI.toFloat()
+                        val breathe=.5f+.5f*kotlin.math.sin(t)
+                        val pulse=kotlin.math.exp(-kotlin.math.pow(((progress*2f)%1f)*7f,2f))
+                        val colors=intArrayOf(Color.rgb(255,62,134),Color.rgb(165,255,53),
+                            Color.rgb(48,233,211),Color.rgb(208,75,242))
+                        // Translucent moving aurora ribbons; keep the wallpaper fixed behind scrolling cards.
                         for(layer in 0..3) {
+                            val base=h*(.23f+layer*.175f)
+                            val amplitude=h*(.026f+layer*.006f)*(1f+.26f*breathe)
                             val path=android.graphics.Path()
-                            val baseline=center+(layer-1.5f)*h*.065f
-                            val amplitude=h*(.024f+layer*.007f)*(1f+.35f*breath)
-                            for(step in 0..72) {
-                                val x=w*step/72f
-                                val t=step/72f
-                                val y=baseline+kotlin.math.sin(t*19.0+layer*1.6+breath*.55).toFloat()*amplitude+
-                                    kotlin.math.sin(t*39.0+layer*.7).toFloat()*amplitude*.22f
+                            for(step in 0..110) {
+                                val x=w*step/110f
+                                val u=step/110f
+                                val wave=kotlin.math.sin(u*14.0+layer*1.4+t*.16).toFloat()+
+                                    .38f*kotlin.math.sin(u*31.0-layer*.8-t*.12).toFloat()
+                                val y=base+amplitude*wave
                                 if(step==0)path.moveTo(x,y) else path.lineTo(x,y)
                             }
-                            glow.color=if(layer==1) Color.argb((130*intensity).toInt(),164,87,255)
-                                else Color.argb((110*intensity).toInt(),55,218,255)
-                            glow.strokeWidth=resources.displayMetrics.density*(2.0f+layer*.45f)
-                            canvas.drawPath(path,glow)
+                            val tone=colors[layer]
+                            paint.style=android.graphics.Paint.Style.STROKE
+                            paint.strokeCap=android.graphics.Paint.Cap.ROUND
+                            paint.strokeJoin=android.graphics.Paint.Join.ROUND
+                            paint.shader=null
+                            paint.color=Color.argb((27+13*breathe+8*pulse).toInt(),
+                                Color.red(tone),Color.green(tone),Color.blue(tone))
+                            paint.strokeWidth=resources.displayMetrics.density*17f
+                            canvas.drawPath(path,paint)
+                            paint.color=Color.argb((80+42*breathe+15*pulse).toInt(),
+                                Color.red(tone),Color.green(tone),Color.blue(tone))
+                            paint.strokeWidth=resources.displayMetrics.density*2.5f
+                            canvas.drawPath(path,paint)
+                            // Sparse moving particles follow the same measured-color visual language.
+                            paint.style=android.graphics.Paint.Style.FILL
+                            for(dot in 0..9) {
+                                val u=((dot/10f+progress*.09f+layer*.11f)%1f)
+                                val wave=kotlin.math.sin(u*14.0+layer*1.4+t*.16).toFloat()+
+                                    .38f*kotlin.math.sin(u*31.0-layer*.8-t*.12).toFloat()
+                                val y=base+amplitude*wave
+                                paint.color=Color.argb((65+60*breathe).toInt(),
+                                    Color.red(tone),Color.green(tone),Color.blue(tone))
+                                canvas.drawCircle(w*u,y,resources.displayMetrics.density*(1f+dot%3*.55f),paint)
+                            }
                         }
                     }
                 },android.widget.FrameLayout.LayoutParams(-1,-1))
