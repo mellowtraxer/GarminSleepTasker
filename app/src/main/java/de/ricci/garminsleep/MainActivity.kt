@@ -1841,9 +1841,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
 
         // One-glance summary: sleep duration + full-night composition.
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat();strokeWidth=0;setCardBackgroundColor(Color.TRANSPARENT);cardElevation=0f;elevation=0f
-            background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(accent2),Color.green(accent2),Color.blue(accent2)))}
+        sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
+            background=LayerDrawable(arrayOf(
+                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(designNeonAlpha(42),Color.red(accent2),Color.green(accent2),Color.blue(accent2)))},
+                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(accent2),Color.green(accent2),Color.blue(accent2)))}
+            ))
+            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
                 addView(TextView(this@MainActivity).apply{text="NACHT-ZUSAMMENFASSUNG";textSize=10f;letterSpacing=.12f;setTextColor(accent2);setTypeface(typeface,Typeface.BOLD)})
@@ -1859,9 +1862,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun stageCard(label:String, minutes:Long, stageTone:Int) {
             val intervals=s.stageSeries.filter{it.stageLabel==label}.sortedBy{it.startMs}
             val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
-            sleepCard.addView(MaterialCardView(this).apply {
-                radius=dp(24).toFloat();strokeWidth=0;setCardBackgroundColor(Color.TRANSPARENT);cardElevation=0f;elevation=0f
-                background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))}
+            sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
+                background=LayerDrawable(arrayOf(
+                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(designNeonAlpha(42),Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
+                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))}
+                ))
+                if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
                 addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(15))
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
