@@ -464,7 +464,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             outlineAmbientShadowColor=Color.rgb(49,216,255)
             outlineSpotShadowColor=Color.rgb(49,216,255)
             addView(status)
-            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(12)) }
+            // Align the connection bar with the dashboard cards inside sleepCard (18dp horizontal padding).
+            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(18),dp(10),dp(18),dp(12)) }
         }
         actionsBox = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; addView(grant); addView(link); addView(unlink); addView(test); addView(sig) }
         pageTitle.setTextColor(Color.WHITE); pageTitle.textSize=31f; pageTitle.setTypeface(pageTitle.typeface,Typeface.BOLD); pageTitle.letterSpacing=-.025f
