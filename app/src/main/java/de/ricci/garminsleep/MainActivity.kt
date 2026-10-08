@@ -514,9 +514,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         settingsBlurTarget=blurTarget
         val scene = android.widget.FrameLayout(this).apply {
-            // Scroll-space blur source: a second BlurTarget lives in the same scrolling
-            // coordinate system as the glass cards. It carries the same wallpaper and
-            // is counter-translated while scrolling so its pixels remain viewport-fixed.
+            // One continuous wallpaper and blur source in scroll-content coordinates.
+            // Android's long-screenshot capture now sees the same uninterrupted
+            // background as the cards, instead of stitching a viewport-fixed image.
+            addView(blurTarget, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
         val scroll = ScrollView(this).apply {
@@ -613,10 +614,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(navShell)
         }
         val root=android.widget.FrameLayout(this).apply {
-            // Keep BlurTarget and every BlurView in the same coordinate space.
-            // The content layer is a sibling directly above the fixed wallpaper target;
-            // ScrollView performs its own child transform, which BlurView can resolve correctly.
-            addView(blurTarget,android.widget.FrameLayout.LayoutParams(-1,-1))
+            // The wallpaper is owned by the scroll scene, not repeated per viewport.
             addView(contentColumn,android.widget.FrameLayout.LayoutParams(-1,-1))
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
