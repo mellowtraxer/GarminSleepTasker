@@ -1843,8 +1843,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         // One-glance summary: sleep duration + full-night composition.
         sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
             background=LayerDrawable(arrayOf(
-                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(designNeonAlpha(42),Color.red(accent2),Color.green(accent2),Color.blue(accent2)))},
-                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(accent2),Color.green(accent2),Color.blue(accent2)))}
+                GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(42,Color.red(accent2),Color.green(accent2),Color.blue(accent2)))},
+                GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(accent2),Color.green(accent2),Color.blue(accent2)))}
             ))
             if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
@@ -1864,8 +1864,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
             sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
                 background=LayerDrawable(arrayOf(
-                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(designNeonAlpha(42),Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
-                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))}
+                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(42,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
+                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))}
                 ))
                 if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
