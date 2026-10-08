@@ -415,12 +415,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             GradientDrawable(GradientDrawable.Orientation.TR_BL, intArrayOf(Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)))
         ))
         val blurTarget = eightbitlab.com.blurview.BlurTarget(this).apply {
-            addView(android.widget.ImageView(this@MainActivity).apply {
+            val designPrefs=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
+            val wallpaperOn=designPrefs.getBoolean("wallpaper_enabled",true)
+            if(wallpaperOn) addView(android.widget.ImageView(this@MainActivity).apply {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
                 adjustViewBounds=false
                 setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
                 alpha=1f
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
+            else addView(View(this@MainActivity).apply {
+                background=ColorDrawable(if(useLight) Color.rgb(38,45,64) else Color.rgb(5,6,14))
+            },android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(View(this@MainActivity).apply {
                 background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(34,255,255,255),Color.argb(12,240,247,255),Color.argb(24,225,245,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
