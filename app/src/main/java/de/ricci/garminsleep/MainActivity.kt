@@ -2288,10 +2288,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
             addView(legend("Leicht",stageLight)); addView(legend("Tief",stageDeep)); addView(legend("REM",stageRem)); addView(legend("Wach",stageAwake))
         })
-        sleepCard.addView(View(this).apply {
-            background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.TRANSPARENT,Color.rgb(74,64,116),Color.TRANSPARENT))
-            layoutParams=LinearLayout.LayoutParams(-1,dp(1)).apply { setMargins(dp(12),dp(7),dp(12),dp(3)) }
-        })
         val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
         val remPct = (s.remMin * 100 / sleepOnly).toInt()
@@ -2328,10 +2324,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("👀","Wach",fmt(s.awakeMin), onClick={ showAllStageTimelines(s) }, sleep=s))
         }
         sleepCard.addView(stages)
-        sleepCard.addView(View(this).apply {
-            background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.TRANSPARENT,Color.rgb(33,104,122),Color.rgb(84,51,133),Color.TRANSPARENT))
-            layoutParams=LinearLayout.LayoutParams(-1,dp(1)).apply { setMargins(dp(18),dp(15),dp(18),dp(3)) }
-        })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(8),dp(4),dp(4))
             addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else accent2); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
