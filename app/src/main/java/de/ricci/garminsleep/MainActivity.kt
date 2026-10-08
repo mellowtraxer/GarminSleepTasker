@@ -1854,47 +1854,83 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun sleepStageStrip(s: SleepSummary): LinearLayout {
-        val d = resources.displayMetrics.density
-        fun dp(v: Int) = (v * d).toInt()
-        val values = listOf(
-            Triple("Leicht",s.lightMin,stageLight),
-            Triple("Tief",s.deepMin,stageDeep),
-            Triple("REM",s.remMin,stageRem),
-            Triple("Wach",s.awakeMin,stageAwake)
-        )
-        val total = values.sumOf { it.second.toLong() }.coerceAtLeast(1L)
-        val timeFormat=java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+        val density=resources.displayMetrics.density
+        fun dp(v:Int)=(v*density).toInt()
+        val formatter=java.time.format.DateTimeFormatter.ofPattern("HH:mm")
             .withZone(java.time.ZoneId.systemDefault())
+        val tones=mapOf("leicht" to stageLight,"tief" to stageDeep,"rem" to stageRem,"wach" to stageAwake)
+        val segments=s.stageSeries.filter { it.endMs>it.startMs && it.endMs>s.startMs && it.startMs<s.endMs }
+            .sortedBy { it.startMs }
+        val values=listOf(Triple("Leicht",s.lightMin,stageLight),Triple("Tief",s.deepMin,stageDeep),
+            Triple("REM",s.remMin,stageRem),Triple("Wach",s.awakeMin,stageAwake))
+        val total=values.sumOf { it.second.toLong() }.coerceAtLeast(1L)
+        fun showPhase(name:String,minutes:Long) {
+            val pct=(minutes*100/total).toInt()
+            android.app.AlertDialog.Builder(this@MainActivity)
+                .setTitle("Schlafphase · $name")
+                .setMessage("$name · $minutes min ($pct %)\\nSchlafzeit: ${formatter.format(java.time.Instant.ofEpochMilli(s.startMs))}–${formatter.format(java.time.Instant.ofEpochMilli(s.endMs))}")
+                .setPositiveButton("Schließen",null)
+                .setNeutralButton("Phasen im Detail") { _,_ -> showAllStageTimelines(s) }
+                .show()
+        }
         return LinearLayout(this).apply {
-            orientation=LinearLayout.HORIZONTAL
-            background=GradientDrawable().apply {
-                cornerRadius=dp(10).toFloat()
-                setColor(Color.rgb(43,37,72))
-            }
-            values.forEach { (name,minutes,color) ->
-                addView(View(this@MainActivity).apply {
-                    background=GradientDrawable().apply {
-                        cornerRadius=dp(8).toFloat()
-                        setColor(color)
+            orientation=LinearLayout.VERTICAL
+            if(segments.isNotEmpty() && s.endMs>s.startMs) {
+                addView(object:View(this@MainActivity) {
+                    private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                    init { isClickable=true; isFocusable=true; contentDescription="Zeitlicher Schlafverlauf. Tippen für Details der jeweiligen Schlafphase." }
+                    override fun onDraw(canvas:android.graphics.Canvas) {
+                        super.onDraw(canvas)
+                        val w=width.toFloat();val h=height.toFloat()
+                        val span=(s.endMs-s.startMs).toDouble()
+                        paint.color=Color.rgb(43,37,72)
+                        canvas.drawRoundRect(0f,0f,w,h,dp(9).toFloat(),dp(9).toFloat(),paint)
+                        segments.forEach { segment ->
+                            val left=((segment.startMs-s.startMs)/span*w).toFloat().coerceIn(0f,w)
+                            val right=((segment.endMs-s.startMs)/span*w).toFloat().coerceIn(0f,w)
+                            if(right>left) {
+                                paint.color=tones[segment.stageLabel.trim().lowercase()]?:Color.rgb(100,112,145)
+                                canvas.drawRoundRect(left,0f,right,h,dp(2).toFloat(),dp(2).toFloat(),paint)
+                            }
+                        }
                     }
-                    val percentage=(minutes*100/total).toInt()
-                    contentDescription="$name: $minutes Minuten, $percentage Prozent"
-                    isClickable=true
-                    isFocusable=true
-                    setOnClickListener {
-                        val text="$name · $minutes min ($percentage %)\n" +
-                            "Schlafzeit: ${timeFormat.format(java.time.Instant.ofEpochMilli(s.startMs))}–${timeFormat.format(java.time.Instant.ofEpochMilli(s.endMs))}"
-                        android.app.AlertDialog.Builder(this@MainActivity)
-                            .setTitle("Schlafphase · $name")
-                            .setMessage(text)
-                            .setPositiveButton("Schließen",null)
-                            .setNeutralButton("Phasen im Detail") { _,_ -> showAllStageTimelines(s) }
-                            .show()
+                    override fun onTouchEvent(event:android.view.MotionEvent):Boolean {
+                        if(event.action==android.view.MotionEvent.ACTION_UP) {
+                            val timestamp=s.startMs+((event.x.coerceIn(0f,width.toFloat())/width.coerceAtLeast(1))*(s.endMs-s.startMs)).toLong()
+                            val selected=segments.lastOrNull { timestamp>=it.startMs && timestamp<it.endMs }
+                            if(selected!=null) {
+                                val name=selected.stageLabel
+                                val duration=((selected.endMs-selected.startMs)/60000L).coerceAtLeast(1L)
+                                android.app.AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("Schlafphase · $name")
+                                    .setMessage("${formatter.format(java.time.Instant.ofEpochMilli(selected.startMs))}–${formatter.format(java.time.Instant.ofEpochMilli(selected.endMs))} · $duration min")
+                                    .setPositiveButton("Schließen",null)
+                                    .setNeutralButton("Phasen im Detail") { _,_ -> showAllStageTimelines(s) }
+                                    .show()
+                            } else showAllStageTimelines(s)
+                            performClick()
+                            return true
+                        }
+                        return true
                     }
-                    layoutParams=LinearLayout.LayoutParams(
-                        0,dp(20),minutes.coerceAtLeast(1).toFloat()
-                    ).apply { setMargins(dp(1),0,dp(1),0) }
-                })
+                    override fun performClick():Boolean { super.performClick();return true }
+                },LinearLayout.LayoutParams(-1,dp(22)))
+            } else {
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    background=GradientDrawable().apply { cornerRadius=dp(10).toFloat();setColor(Color.rgb(43,37,72)) }
+                    values.forEach { (name,minutes,color) ->
+                        addView(View(this@MainActivity).apply {
+                            background=GradientDrawable().apply { cornerRadius=dp(8).toFloat();setColor(color) }
+                            contentDescription="$name: $minutes Minuten"
+                            isClickable=true
+                            setOnClickListener { showPhase(name,minutes.toLong()) }
+                            layoutParams=LinearLayout.LayoutParams(0,dp(20),minutes.coerceAtLeast(1).toFloat()).apply {
+                                setMargins(dp(1),0,dp(1),0)
+                            }
+                        })
+                    }
+                },LinearLayout.LayoutParams(-1,dp(20)))
             }
         }
     }
