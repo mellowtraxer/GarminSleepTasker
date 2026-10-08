@@ -3,6 +3,8 @@ package de.ricci.garminsleep
 import androidx.activity.ComponentActivity
 import android.os.Bundle
 import android.content.pm.PackageManager
+import android.net.Uri
+import java.io.File
 import android.Manifest
 import android.provider.CalendarContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -278,6 +280,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         HealthPermission.getReadPermission(OxygenSaturationRecord::class),
         HealthPermission.getReadPermission(RespiratoryRateRecord::class)
     )
+    private val customWallpaperLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri ?: return@registerForActivityResult
+        runCatching {
+            runCatching { contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            val out=File(filesDir,"sleepsync_custom_wallpaper")
+            contentResolver.openInputStream(uri)?.use { input -> out.outputStream().use { input.copyTo(it) } }
+            getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit().putBoolean("custom_enabled",true).putBoolean("wallpaper_enabled",true).putString("wallpaper_source","custom").apply()
+            recreate()
+        }.onFailure { android.widget.Toast.makeText(this,"Wallpaper konnte nicht geladen werden.",android.widget.Toast.LENGTH_SHORT).show() }
+    }
     private val calendarPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { showCalendarPlaceholder() }
     private fun calendarPermissionReady() = checkSelfPermission(Manifest.permission.READ_CALENDAR)==PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.WRITE_CALENDAR)==PackageManager.PERMISSION_GRANTED
     private fun requestCalendarPermission(){ calendarPermissionLauncher.launch(arrayOf(Manifest.permission.READ_CALENDAR,Manifest.permission.WRITE_CALENDAR)) }
@@ -474,7 +486,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if(wallpaperOn) addView(android.widget.ImageView(this@MainActivity).apply {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
                 adjustViewBounds=false
-                setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
+                val custom=File(filesDir,"sleepsync_custom_wallpaper")
+                if(designPrefs.getString("wallpaper_source","builtin")=="custom" && custom.exists()) setImageURI(Uri.fromFile(custom))
+                else setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
                 alpha=1f
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
             else addView(View(this@MainActivity).apply {
@@ -1515,7 +1529,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         section("FARBEN")
         names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);row(names[i],String.format("#%06X",0xFFFFFF and tone),tone){pickFullColor(i)}}
         section("HINTERGRUND")
-        row("Wallpaper",if(p.getBoolean("wallpaper_enabled",true)) "Aktiv · SleepSync Wallpaper" else "Aus · einfarbiger Hintergrund",Color.rgb(70,205,225)){p.edit().putBoolean("wallpaper_enabled",!p.getBoolean("wallpaper_enabled",true)).putBoolean("custom_enabled",true).apply();recreate()}
+        val wallpaperSource=p.getString("wallpaper_source","builtin")?:"builtin"
+        row("Wallpaper",if(!p.getBoolean("wallpaper_enabled",true)) "Aus · einfarbiger Hintergrund" else if(wallpaperSource=="custom") "Aktiv · Eigenes Wallpaper" else "Aktiv · SleepSync Wallpaper",Color.rgb(70,205,225)){
+            val choices=arrayOf("SleepSync Wallpaper","Eigenes Wallpaper auswählen","Kein Wallpaper","✨ KI OLED Studio · demnächst")
+            val dlg=AlertDialog.Builder(this).setTitle("Wallpaper").setItems(choices){_,which->
+                when(which){
+                    0->{p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();recreate()}
+                    1->customWallpaperLauncher.launch(arrayOf("image/*"))
+                    2->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();recreate()}
+                    3->android.widget.Toast.makeText(this,"KI OLED Studio ist vorbereitet – echte OLED-KI-Generierung folgt als eigener Schritt.",android.widget.Toast.LENGTH_LONG).show()
+                }
+            }.create()
+            dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
+        }
         section("GLAS & EFFEKTE")
         fun slider(title:String,key:String,value:Int,max:Int,tone:Int){
             val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(10),dp(14),dp(8));background=GradientDrawable().apply{cornerRadius=dp(18).toFloat();setColor(Color.argb(designGlassAlpha(),72,88,112));setStroke(dp(1),tone)};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
