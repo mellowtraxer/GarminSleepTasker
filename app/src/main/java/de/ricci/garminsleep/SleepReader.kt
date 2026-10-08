@@ -34,7 +34,7 @@ class SleepReader(private val context: Context) {
 
     suspend fun latestGarminSleep(hoursBack: Long = 36): SleepSummary = garminHistory(hoursBack).maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession in den letzten $hoursBack Stunden gefunden")
 
-    suspend fun garminHistory(hoursBack: Long = 24L * 90L, onProgress: ((String) -> Unit)? = null): List<SleepSummary> {
+    suspend fun garminHistory(hoursBack: Long = 24L * 90L, onProgress: ((String) -> Unit)? = null, cachedNights: List<SleepSummary> = emptyList(), forceFullRefresh: Boolean = false): List<SleepSummary> {
         onProgress?.invoke("Health Connect · Schlafsessions suchen")
         val now = Instant.now()
         val from = now.minus(Duration.ofHours(hoursBack))
@@ -48,11 +48,26 @@ class SleepReader(private val context: Context) {
         val sleeps = response.records
             .filter { it.metadata.dataOrigin.packageName == GARMIN_PACKAGE }
             .sortedByDescending { it.endTime }
-        return sleeps.mapIndexedNotNull { index, sleep ->
+        // Previously completed nights are immutable for routine refreshes. Keep the
+        // two most recent calendar dates fresh because Garmin may backfill metrics.
+        val refreshFrom=now.atZone(ZoneId.systemDefault()).toLocalDate().minusDays(2)
+        val cachedByInterval=cachedNights.associateBy { it.startMs to it.endMs }
+        var reused=0
+        val results=sleeps.mapIndexedNotNull { index, sleep ->
             val date=sleep.endTime.atZone(ZoneId.systemDefault()).toLocalDate()
-            onProgress?.invoke("Nacht ${index+1}/${sleeps.size} · $date")
-            runCatching { buildSummary(sleep) { stage -> onProgress?.invoke("Nacht ${index+1}/${sleeps.size} · $stage") } }.getOrNull()
+            val key=sleep.startTime.toEpochMilli() to sleep.endTime.toEpochMilli()
+            val cached=if(!forceFullRefresh && date.isBefore(refreshFrom)) cachedByInterval[key] else null
+            if(cached!=null) {
+                reused++
+                onProgress?.invoke("Gespeicherte Nacht verwenden · $reused")
+                cached
+            } else {
+                onProgress?.invoke("Nacht ${index+1}/${sleeps.size} · $date")
+                runCatching { buildSummary(sleep) { stage -> onProgress?.invoke("Nacht ${index+1}/${sleeps.size} · $stage") } }.getOrNull()
+            }
         }
+        onProgress?.invoke("$reused Nächte aus Cache · ${results.size-reused} neu geprüft")
+        return results
     }
 
     private suspend fun buildSummary(sleep: SleepSessionRecord, onProgress: ((String) -> Unit)? = null): SleepSummary {
