@@ -898,11 +898,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
+    private fun makeOverviewTextWhite(view: View) {
+        if(view is TextView) view.setTextColor(Color.WHITE)
+        if(view is android.view.ViewGroup) {
+            for(i in 0 until view.childCount) makeOverviewTextWhite(view.getChildAt(i))
+        }
+    }
+
     private fun showOverview() {
         styleHomeConnections()
         pageTitle.text = "SleepSync"
         pageSubtitle.text = nextTimeAwareGreeting()
         lastSummary?.let { renderDashboard(it) }
+        makeOverviewTextWhite(sleepCard)
+        makeOverviewTextWhite(actionsTitle)
+        for(i in 0 until minOf(5,actionsBox.childCount)) makeOverviewTextWhite(actionsBox.getChildAt(i))
     }
 
     private fun historyLoadingView(): View = LinearLayout(this).apply {
@@ -2315,6 +2325,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(4),dp(10),dp(4),0) }
         })
+        makeOverviewTextWhite(sleepCard)
     }
 
     override fun onDestroy() { super.onDestroy(); cancel() }
