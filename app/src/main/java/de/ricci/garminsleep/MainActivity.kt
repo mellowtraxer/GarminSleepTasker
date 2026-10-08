@@ -2552,6 +2552,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                                 cx+kotlin.math.cos(mid).toFloat()*(outer+dp(8)+tickLength),
                                 cy+kotlin.math.sin(mid).toFloat()*(outer+dp(8)+tickLength),ink)
                         }
+                        // Separate proportional ring: phase shares across the complete night.
+                        val phaseValues=listOf(s.lightMin to stageLight,s.deepMin to stageDeep,
+                            s.remMin to stageRem,s.awakeMin to stageAwake)
+                        val phaseSum=phaseValues.sumOf { it.first.toLong() }.coerceAtLeast(1L)
+                        var phaseStart=-90f
+                        val phaseRadius=inner-dp(17)
+                        val phaseTrack=android.graphics.RectF(cx-phaseRadius,cy-phaseRadius,
+                            cx+phaseRadius,cy+phaseRadius)
+                        phaseValues.forEach { (minutes,tone) ->
+                            val sweep=minutes.toFloat()/phaseSum*360f
+                            ink.color=tone
+                            ink.strokeWidth=dp(4).toFloat()
+                            canvas.drawArc(phaseTrack,phaseStart,sweep,false,ink)
+                            phaseStart+=sweep
+                        }
                     } else {
                         val values=listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake)
                         val total=values.sumOf { it.first.toLong() }.coerceAtLeast(1L)
@@ -2589,6 +2604,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         ink.color=palette[phase.stageLabel.trim().lowercase()]?:Color.WHITE
                         canvas.drawText("${((phase.endMs-phase.startMs)/60000L).coerceAtLeast(1L)} MIN IN DIESER PHASE",
                             cx,cy+dp(38),ink)
+                    } else if(focusedTime==null) {
+                        ink.textSize=dp(9).toFloat()
+                        ink.color=Color.rgb(193,201,232)
+                        canvas.drawText("VERLAUF  /  PHASENANTEILE",cx,cy+dp(38),ink)
                     }
                 }
                 override fun onTouchEvent(event:android.view.MotionEvent):Boolean {
