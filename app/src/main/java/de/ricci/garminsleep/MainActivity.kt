@@ -1747,8 +1747,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val tokenColor=when(name){"Puls"->designColor("heart",Color.rgb(255,82,126));"SpO₂"->designColor("spo2",Color.rgb(44,205,255));"Atmung"->designColor("resp",Color.rgb(80,225,184));"HRV"->designColor("hrv",Color.rgb(213,96,255));else->color}
             return MaterialCardView(this).apply {
                 radius=px(24).toFloat(); strokeWidth=px(2); strokeColor=tokenColor
-                setCardBackgroundColor(if(light) Color.argb(168,72,88,112) else Color.argb(188,9,15,31)); cardElevation=px(if(light) 8 else 3).toFloat()
-                if(light){ elevation=px(8).toFloat();outlineAmbientShadowColor=tokenColor;outlineSpotShadowColor=tokenColor }
+                // Important: CardView's own semi-transparent surface is rendered as a rectangular
+                // compatibility layer on some devices. Keep the card surface transparent and put
+                // the rounded glass drawable on the card itself instead.
+                setCardBackgroundColor(Color.TRANSPARENT); cardElevation=0f; elevation=0f
+                background=GradientDrawable().apply {
+                    cornerRadius=px(24).toFloat()
+                    setColor(if(light) Color.argb(168,72,88,112) else Color.argb(188,9,15,31))
+                    setStroke(px(2),tokenColor)
+                }
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(14)) }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.VERTICAL; setPadding(px(16),px(15),px(16),px(12))
