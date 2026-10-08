@@ -600,6 +600,56 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 else setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
                 alpha=1f
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
+            if(wallpaperOn && designPrefs.getString("wallpaper_source","builtin")=="dreamscape") {
+                addView(object:View(this@MainActivity) {
+                    private val glow=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                    private var breath=0f
+                    private val motion=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
+                        duration=12000L
+                        repeatCount=android.animation.ValueAnimator.INFINITE
+                        repeatMode=android.animation.ValueAnimator.REVERSE
+                        interpolator=android.view.animation.AccelerateDecelerateInterpolator()
+                        addUpdateListener {
+                            breath=it.animatedValue as Float
+                            invalidate()
+                        }
+                    }
+                    override fun onAttachedToWindow() {
+                        super.onAttachedToWindow()
+                        if(android.provider.Settings.Global.getFloat(contentResolver,
+                            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,1f)>0f) motion.start()
+                    }
+                    override fun onDetachedFromWindow() {
+                        motion.cancel()
+                        super.onDetachedFromWindow()
+                    }
+                    override fun onDraw(canvas:android.graphics.Canvas) {
+                        super.onDraw(canvas)
+                        val w=width.toFloat();val h=height.toFloat()
+                        if(w<=0f||h<=0f)return
+                        val center=h*.55f
+                        val intensity=.35f+.65f*breath
+                        glow.style=android.graphics.Paint.Style.STROKE
+                        glow.strokeCap=android.graphics.Paint.Cap.ROUND
+                        for(layer in 0..2) {
+                            val path=android.graphics.Path()
+                            val baseline=center+(layer-1)*h*.025f
+                            val amplitude=h*(.014f+layer*.005f)*(1f+.18f*breath)
+                            for(step in 0..72) {
+                                val x=w*step/72f
+                                val t=step/72f
+                                val y=baseline+kotlin.math.sin(t*19.0+layer*1.6+breath*.55).toFloat()*amplitude+
+                                    kotlin.math.sin(t*39.0+layer*.7).toFloat()*amplitude*.22f
+                                if(step==0)path.moveTo(x,y) else path.lineTo(x,y)
+                            }
+                            glow.color=if(layer==1) Color.argb((52*intensity).toInt(),164,87,255)
+                                else Color.argb((45*intensity).toInt(),55,218,255)
+                            glow.strokeWidth=resources.displayMetrics.density*(1.2f+layer*.35f)
+                            canvas.drawPath(path,glow)
+                        }
+                    }
+                },android.widget.FrameLayout.LayoutParams(-1,-1))
+            }
             else addView(View(this@MainActivity).apply {
                 background=ColorDrawable(if(useLight) Color.rgb(38,45,64) else Color.rgb(5,6,14))
             },android.widget.FrameLayout.LayoutParams(-1,-1))
