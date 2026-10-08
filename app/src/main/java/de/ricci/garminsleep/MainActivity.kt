@@ -1717,6 +1717,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
+    private fun settingsStyleMetricHost(card:View,tone:Int,radius:Int,dp:(Int)->Int):View {
+        val host=android.widget.FrameLayout(this).apply { clipChildren=false;clipToPadding=false }
+        host.addView(object:View(this) {
+            private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeJoin=Paint.Join.ROUND}
+            init{setLayerType(View.LAYER_TYPE_SOFTWARE,null)}
+            override fun onDraw(canvas:Canvas){
+                val q=dp(1).toFloat();p.strokeWidth=dp(3).toFloat();p.color=Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone))
+                p.maskFilter=android.graphics.BlurMaskFilter(dp(14).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER)
+                canvas.drawRoundRect(q,q,width-q,height-q,dp(radius).toFloat(),dp(radius).toFloat(),p)
+                p.maskFilter=null;p.strokeWidth=dp(2).toFloat();p.color=tone
+                canvas.drawRoundRect(q,q,width-q,height-q,dp(radius).toFloat(),dp(radius).toFloat(),p)
+            }
+        },android.widget.FrameLayout.LayoutParams(-1,-1))
+        host.addView(card,android.widget.FrameLayout.LayoutParams(-1,-1))
+        host.layoutParams=GridLayout.LayoutParams().apply { width=0;height=dp(140);columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);setMargins(dp(5),dp(5),dp(5),dp(5)) }
+        return host
+    }
+
     private fun metricCard(icon: String, label: String, value: String, onClick: (() -> Unit)? = null, series: List<MetricPoint> = emptyList(), sleep: SleepSummary? = null): android.view.View {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val tone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;"Puls"->designColor("heart",Color.rgb(255,82,126));"SpO₂"->designColor("spo2",Color.rgb(44,205,255));"Atmung"->designColor("resp",Color.rgb(80,225,184));"HRV"->designColor("hrv",Color.rgb(213,96,255));else->accent}
