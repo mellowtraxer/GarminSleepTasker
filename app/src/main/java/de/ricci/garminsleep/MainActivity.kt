@@ -864,7 +864,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsBox.visibility=View.VISIBLE
         val light=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")=="light"
         val red=Color.rgb(255,70,82)
-        actionsTitle.text="VERBINDUNGEN & AUTOMATIK   ›"
+        val preferences=getSharedPreferences("sleepsync_dashboard",MODE_PRIVATE)
+        var expanded=preferences.getBoolean("connections_expanded",false)
+        actionsTitle.text=if(expanded) "VERBINDUNGEN & AUTOMATIK   ⌄" else "VERBINDUNGEN & AUTOMATIK   ›"
         actionsTitle.textSize=11f
         actionsTitle.letterSpacing=.14f
         actionsTitle.setTypeface(actionsTitle.typeface,Typeface.BOLD)
@@ -889,10 +891,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 height=dp(48)
                 if(this is LinearLayout.LayoutParams) setMargins(0,dp(5),0,dp(5))
             }
-            b.visibility=View.GONE
+            b.visibility=if(expanded) View.VISIBLE else View.GONE
         }
         actionsTitle.setOnClickListener {
-            val open=actionsBox.getChildAt(0)?.visibility!=View.VISIBLE
+            expanded=!expanded
+            preferences.edit().putBoolean("connections_expanded",expanded).apply()
+            val open=expanded
             actionsTitle.text=if(open) "VERBINDUNGEN & AUTOMATIK   ⌄" else "VERBINDUNGEN & AUTOMATIK   ›"
             for(i in 0 until minOf(5,actionsBox.childCount))
                 actionsBox.getChildAt(i)?.visibility=if(open) View.VISIBLE else View.GONE
