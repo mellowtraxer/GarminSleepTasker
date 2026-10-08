@@ -261,7 +261,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"; val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES; val light=theme=="light" || (theme=="system" && !sysDark); val primary=Color.WHITE; val secondary=if(light) Color.rgb(220,228,246) else Color.rgb(165,175,205); val selectedId=calendarPrefs().getLong("calendar_id",-1L)
         val shell=(if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply{
             background=LayerDrawable(arrayOf(
-                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(178,72,88,112) else Color.rgb(12,15,35));setStroke(dp(4),Color.argb(42,Color.red(stageRem),Color.green(stageRem),Color.blue(stageRem)))},
+                GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(12,15,35));setStroke(dp(4),Color.argb(42,Color.red(stageRem),Color.green(stageRem),Color.blue(stageRem)))},
                 GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),stageRem)}
             ))
             if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb((110f*(designPercent("glass_strength",66)/100f)).toInt(),72,88,112))}}
@@ -401,7 +401,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             cardElevation=0f
             strokeWidth=dp(2)
             strokeColor=Color.rgb(49,216,255)
-            setCardBackgroundColor(Color.argb(178,72,88,112))
+            setCardBackgroundColor(Color.argb(designGlassAlpha(),72,88,112))
             elevation=dp(6).toFloat()
             outlineAmbientShadowColor=Color.rgb(49,216,255)
             outlineSpotShadowColor=Color.rgb(49,216,255)
@@ -536,7 +536,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             cardElevation=0f
             strokeWidth=dp(2)
             strokeColor=Color.rgb(70,205,225)
-            setCardBackgroundColor(if(useLight) Color.argb(190,52,67,94) else Color.argb(230,6,12,25))
+            setCardBackgroundColor(if(useLight) Color.argb(designGlassAlpha(190),52,67,94) else Color.argb(230,6,12,25))
             foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(22,70,205,225),Color.TRANSPARENT,Color.argb(26,120,170,255))).apply { cornerRadius=dp(18).toFloat() }
             elevation=dp(8).toFloat()
             outlineAmbientShadowColor=Color.rgb(70,205,225)
@@ -789,7 +789,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val tone=if(kw%2==0) accent2 else stageRem
             val shell=MaterialCardView(this).apply{
                 radius=dp(22).toFloat();strokeWidth=dp(2);strokeColor=tone;cardElevation=dp(2).toFloat()
-                setCardBackgroundColor(if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40))
+                setCardBackgroundColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(225,12,18,40))
                 if(light){elevation=dp(6).toFloat();outlineAmbientShadowColor=tone;outlineSpotShadowColor=tone}
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
             }
@@ -885,12 +885,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val primary=Color.WHITE
         val secondary=if(light) Color.rgb(225,232,248) else Color.rgb(150,165,195)
         val muted=if(light) Color.rgb(215,225,245) else Color.rgb(165,175,205)
-        val glass=if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40)
+        val glass=if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(225,12,18,40)
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         pageTitle.text="Kalender"; pageSubtitle.text="Deine Nächte · automatisch dort, wo du sie willst"
         sleepCard.removeAllViews(); sleepCard.background=null
         fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit):View {
-            val fill=if(light) Color.argb(178,72,88,112) else Color.argb(225,12,18,40)
+            val fill=if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(225,12,18,40)
             val host=android.widget.FrameLayout(this).apply {
                 clipChildren=false;clipToPadding=false
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
@@ -1003,7 +1003,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
         fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
-            val fill = if(settingsLight) Color.argb(178,72,88,112) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
+            val fill = if(settingsLight) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
             val glowSpace=if(settingsLight) dp(14) else 0
             val host=android.widget.FrameLayout(this).apply {
                 clipChildren=false
@@ -1113,7 +1113,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             b.minHeight=dp(48)
             b.setTextColor(Color.WHITE)
             b.backgroundTintList=ColorStateList.valueOf(
-                if(settingsLight) Color.argb(178,72,88,112) else Color.rgb(14,17,34)
+                if(settingsLight) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(14,17,34)
             )
             b.strokeWidth=dp(2)
             b.strokeColor=ColorStateList.valueOf(diagnosticRed)
@@ -1465,7 +1465,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         fun section(t:String)=sleepCard.addView(TextView(this).apply{text=t;textSize=11f;letterSpacing=.14f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);setPadding(dp(4),dp(18),0,dp(8))})
         fun row(title:String,sub:String,tone:Int,click:()->Unit)=sleepCard.addView(MaterialCardView(this).apply{
-            radius=dp(18).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.argb(170,72,88,112));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
+            radius=dp(18).toFloat();strokeWidth=dp(2);strokeColor=tone;setCardBackgroundColor(Color.argb(designGlassAlpha(),72,88,112));layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL;setPadding(dp(15),dp(12),dp(15),dp(12))
                 addView(View(this@MainActivity).apply{background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(tone);setStroke(dp(2),Color.WHITE)};layoutParams=LinearLayout.LayoutParams(dp(30),dp(30)).apply{marginEnd=dp(13)}})
                 addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;addView(TextView(this@MainActivity).apply{text=title;textSize=15f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)});addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(Color.rgb(220,228,245))})},LinearLayout.LayoutParams(0,-2,1f))
@@ -1483,7 +1483,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         row("Wallpaper",if(p.getBoolean("wallpaper_enabled",true)) "Aktiv · SleepSync Wallpaper" else "Aus · einfarbiger Hintergrund",Color.rgb(70,205,225)){p.edit().putBoolean("wallpaper_enabled",!p.getBoolean("wallpaper_enabled",true)).putBoolean("custom_enabled",true).apply();recreate()}
         section("GLAS & EFFEKTE")
         fun slider(title:String,key:String,value:Int,max:Int,tone:Int){
-            val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(10),dp(14),dp(8));background=GradientDrawable().apply{cornerRadius=dp(18).toFloat();setColor(Color.argb(155,72,88,112));setStroke(dp(1),tone)};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
+            val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(10),dp(14),dp(8));background=GradientDrawable().apply{cornerRadius=dp(18).toFloat();setColor(Color.argb(designGlassAlpha(),72,88,112));setStroke(dp(1),tone)};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
                 val label=TextView(this@MainActivity).apply{text="$title   $value%";textSize=13f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)};addView(label)
                 addView(android.widget.SeekBar(this@MainActivity).apply{this.max=max;progress=value;progressTintList=ColorStateList.valueOf(tone);thumbTintList=ColorStateList.valueOf(tone);setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean){label.text="$title   $v%";if(u)p.edit().putInt(key,v).putBoolean("custom_enabled",true).apply()}override fun onStartTrackingTouch(s:android.widget.SeekBar?){};override fun onStopTrackingTouch(s:android.widget.SeekBar?){showDesignStudio()}})})
             };sleepCard.addView(box)
@@ -1627,7 +1627,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         choice("system","Automatisch","System","Wechselt automatisch zwischen hell und dunkel – je nach Tageszeit.","◐",Color.rgb(49,216,255))
 
         val studio=MaterialCardView(this).apply {
-            radius=dp(22).toFloat(); strokeWidth=dp(2); strokeColor=Color.rgb(255,92,205); setCardBackgroundColor(Color.argb(178,72,88,112))
+            radius=dp(22).toFloat(); strokeWidth=dp(2); strokeColor=Color.rgb(255,92,205); setCardBackgroundColor(Color.argb(designGlassAlpha(),72,88,112))
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(10),dp(4),dp(7))}
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL;setPadding(dp(16),dp(15),dp(16),dp(15))
@@ -1733,7 +1733,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         // One-glance summary: sleep duration + full-night composition.
         sleepCard.addView(MaterialCardView(this).apply {
             radius=dp(24).toFloat();strokeWidth=0;setCardBackgroundColor(Color.TRANSPARENT);cardElevation=0f;elevation=0f
-            background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),accent2)}
+            background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(accent2),Color.green(accent2),Color.blue(accent2)))}
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
                 addView(TextView(this@MainActivity).apply{text="NACHT-ZUSAMMENFASSUNG";textSize=10f;letterSpacing=.12f;setTextColor(accent2);setTypeface(typeface,Typeface.BOLD)})
@@ -1845,10 +1845,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
     }
 
-    private class NeonGlowFrame(context: android.content.Context, private val tone:Int, private val radiusPx:Float): android.widget.FrameLayout(context) {
+    private inner class NeonGlowFrame(context: android.content.Context, private val tone:Int, private val radiusPx:Float): android.widget.FrameLayout(context) {
         private val halo=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             style=android.graphics.Paint.Style.STROKE; strokeWidth=7f*resources.displayMetrics.density
-            color=android.graphics.Color.argb(190,android.graphics.Color.red(tone),android.graphics.Color.green(tone),android.graphics.Color.blue(tone))
+            color=android.graphics.Color.argb(designGlowAlpha(190),android.graphics.Color.red(tone),android.graphics.Color.green(tone),android.graphics.Color.blue(tone))
             maskFilter=android.graphics.BlurMaskFilter(15f*resources.displayMetrics.density,android.graphics.BlurMaskFilter.Blur.NORMAL)
         }
         private val core=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
@@ -1911,7 +1911,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
-        fun glass(vararg rgb:Int)=if(light) Color.argb(168,72,88,112) else Color.rgb(rgb[0],rgb[1],rgb[2])
+        fun glass(vararg rgb:Int)=if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(rgb[0],rgb[1],rgb[2])
         val historical=viewingHistoryNight
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(2),0,dp(2),dp(8))
@@ -1970,7 +1970,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
         val remPct = (s.remMin * 100 / sleepOnly).toInt()
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=GradientDrawable().apply { cornerRadius=dp(20).toFloat(); setColor(Color.argb(174,72,88,112)); setStroke(dp(2),stageLight) }; cardElevation=dp(7).toFloat(); outlineAmbientShadowColor=stageLight; outlineSpotShadowColor=stageLight } else setCardBackgroundColor(Color.rgb(19,15,39))
+            radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=GradientDrawable().apply { cornerRadius=dp(20).toFloat(); setColor(Color.argb(designGlassAlpha(),72,88,112)); setStroke(dp(2),stageLight) }; cardElevation=dp(7).toFloat(); outlineAmbientShadowColor=stageLight; outlineSpotShadowColor=stageLight } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
                 addView(TextView(this@MainActivity).apply { text="〽  SCHLAF-\nARCHITEKTUR"; textSize=10f; letterSpacing=.10f; setTextColor(if(light) Color.rgb(225,235,255) else Color.rgb(171,155,220)); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
@@ -2022,7 +2022,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         sleepCard.addView(vitals)
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(18).toFloat(); cardElevation=if(light) dp(10).toFloat() else 0f; strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=GradientDrawable().apply { cornerRadius=dp(18).toFloat(); setColor(Color.argb(168,72,88,112)); setStroke(dp(1),Color.rgb(76,225,169)) } else setCardBackgroundColor(Color.rgb(7,25,31))
+            radius=dp(18).toFloat(); cardElevation=if(light) dp(10).toFloat() else 0f; strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=GradientDrawable().apply { cornerRadius=dp(18).toFloat(); setColor(Color.argb(designGlassAlpha(),72,88,112)); setStroke(dp(1),Color.rgb(76,225,169)) } else setCardBackgroundColor(Color.rgb(7,25,31))
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(10),dp(14),dp(10))
@@ -2041,7 +2041,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=GradientDrawable().apply { cornerRadius=dp(24).toFloat(); setColor(Color.argb(168,72,88,112)); setStroke(dp(1),stageRem) } else setCardBackgroundColor(Color.rgb(19,15,39))
+            radius=dp(24).toFloat(); cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.TRANSPARENT); if(light) background=GradientDrawable().apply { cornerRadius=dp(24).toFloat(); setColor(Color.argb(designGlassAlpha(),72,88,112)); setStroke(dp(1),stageRem) } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
                 addView(TextView(this@MainActivity).apply {
