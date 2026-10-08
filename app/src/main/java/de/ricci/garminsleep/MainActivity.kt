@@ -498,12 +498,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(scene)
             layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
         }
-        scroll.setOnScrollChangeListener { _, _, scrollY, _, _ ->
-            // BlurView's capture transform does not account for ScrollView's canvas translation.
-            // Counter-scroll the fixed BlurTarget so sampled wallpaper stays aligned to the viewport.
-            blurTarget.translationY = (-scrollY).toFloat()
-            blurTarget.invalidate()
-        }
         var swipeDownX=0f
         var swipeDownY=0f
         var swipeLastX=0f
