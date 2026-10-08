@@ -207,6 +207,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private var viewingHistoryNight = false
     private val nightBg = Color.rgb(5, 6, 14)
     private val cardBg = Color.argb(222, 10, 16, 36)
+    private fun designPercent(key:String, fallback:Int):Int {
+        val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
+        return if(p.getBoolean("custom_enabled",false)) p.getInt(key,fallback).coerceIn(0,100) else fallback
+    }
+    private fun designGlassAlpha(defaultAlpha:Int=168):Int {
+        val strength=designPercent("glass_strength",66)
+        return (255f*(strength/100f)).toInt().coerceIn(0,255)
+    }
+    private fun designNeonAlpha(base:Int):Int=(base*(designPercent("neon_strength",100)/100f)).toInt().coerceIn(0,255)
+    private fun designGlowAlpha(base:Int):Int=(base*(designPercent("glow_strength",100)/100f)).toInt().coerceIn(0,255)
+    private fun designBlurRadius():Float=(25f*(designPercent("blur_strength",20)/100f)).coerceAtLeast(0f)
+    private fun applySleepSyncStandard() {
+        getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit()
+            .putBoolean("custom_enabled",true).putBoolean("wallpaper_enabled",true)
+            .putInt("accent",Color.rgb(139,92,246)).putInt("accent2",Color.rgb(34,211,238))
+            .putInt("stage_light",Color.rgb(99,190,255)).putInt("stage_deep",Color.rgb(95,75,220))
+            .putInt("stage_rem",Color.rgb(183,99,255)).putInt("stage_awake",Color.rgb(255,164,91))
+            .putInt("heart",Color.rgb(255,82,126)).putInt("spo2",Color.rgb(44,205,255))
+            .putInt("resp",Color.rgb(80,225,184)).putInt("hrv",Color.rgb(213,96,255))
+            .putInt("glass_strength",66).putInt("blur_strength",8).putInt("neon_strength",100).putInt("glow_strength",100).apply()
+    }
     private fun designColor(key:String,fallback:Int):Int {
         val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
         return if(p.getBoolean("custom_enabled",false)) p.getInt(key,fallback) else fallback
@@ -243,7 +264,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(178,72,88,112) else Color.rgb(12,15,35));setStroke(dp(4),Color.argb(42,Color.red(stageRem),Color.green(stageRem),Color.blue(stageRem)))},
                 GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),stageRem)}
             ))
-            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}}
+            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb((110f*(designPercent("glass_strength",66)/100f)).toInt(),72,88,112))}}
         }
         val shellContent=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=null}
         shell.addView(shellContent,android.widget.FrameLayout.LayoutParams(-1,-2))
@@ -893,7 +914,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 if(light && this is eightbitlab.com.blurview.BlurView){
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
-                    settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112))}
+                    settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb((110f*(designPercent("glass_strength",66)/100f)).toInt(),72,88,112))}
                 }
                 addView(LinearLayout(this@MainActivity).apply{
                     orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16));background=null
@@ -1044,7 +1065,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 if(settingsLight && this is eightbitlab.com.blurview.BlurView) {
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
                     clipToOutline=true
-                    settingsBlurTarget?.let { target -> setupWith(target).setBlurRadius(2f).setOverlayColor(Color.argb(70,72,88,112)) }
+                    settingsBlurTarget?.let { target -> setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb((110f*(designPercent("glass_strength",66)/100f)).toInt(),72,88,112)) }
                 }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
@@ -1426,25 +1447,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val defs=intArrayOf(Color.rgb(139,92,246),Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,164,91),Color.rgb(255,82,126),Color.rgb(44,205,255),Color.rgb(80,225,184),Color.rgb(213,96,255))
         fun pickFullColor(index:Int) {
             val current=p.getInt(keys[index],defs[index])
-            var rr=Color.red(current);var gg=Color.green(current);var bb=Color.blue(current)
-            val wrap=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(22),dp(8),dp(22),0)}
-            val swatch=TextView(this).apply{text=String.format("#%06X",0xFFFFFF and current);gravity=android.view.Gravity.CENTER;textSize=16f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);background=GradientDrawable().apply{cornerRadius=dp(16).toFloat();setColor(current)};layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}}
+            val hsv=FloatArray(3);Color.colorToHSV(current,hsv)
+            var hue=hsv[0];var sat=hsv[1];var value=hsv[2]
+            val wrap=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(22),dp(8),dp(22),dp(10))}
+            val swatch=TextView(this).apply{gravity=android.view.Gravity.CENTER;textSize=16f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);layoutParams=LinearLayout.LayoutParams(-1,dp(62)).apply{setMargins(0,0,0,dp(14))}}
             wrap.addView(swatch)
-            fun channel(label:String,start:Int,onChange:(Int)->Unit){
-                val value=TextView(this).apply{text="$label   $start";textSize=13f;setTextColor(Color.WHITE)}
-                wrap.addView(value)
-                wrap.addView(android.widget.SeekBar(this).apply{max=255;progress=start;setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{
-                    override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean){onChange(v);value.text="$label   $v";val col=Color.rgb(rr,gg,bb);swatch.text=String.format("#%06X",0xFFFFFF and col);swatch.background=GradientDrawable().apply{cornerRadius=dp(16).toFloat();setColor(col)}}
-                    override fun onStartTrackingTouch(s:android.widget.SeekBar?){};override fun onStopTrackingTouch(s:android.widget.SeekBar?){}
-                })})
-            }
-            channel("Rot",rr){rr=it};channel("Grün",gg){gg=it};channel("Blau",bb){bb=it}
-            val dlg=AlertDialog.Builder(this).setTitle(names[index]).setView(wrap).setPositiveButton("Übernehmen"){_,_->p.edit().putInt(keys[index],Color.rgb(rr,gg,bb)).putBoolean("custom_enabled",true).apply();showDesignStudio()}.setNegativeButton("Abbrechen",null).create()
-            dlg.setOnShowListener{
-                dlg.window?.setBackgroundDrawable(GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.rgb(28,35,52));setStroke(dp(2),p.getInt(keys[index],defs[index]))})
-                val titleId=resources.getIdentifier("alertTitle","id","android");if(titleId!=0)dlg.findViewById<TextView>(titleId)?.setTextColor(Color.WHITE)
-                dlg.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.rgb(70,220,255));dlg.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.rgb(190,150,255))
-            };dlg.show()
+            fun update(){val col=Color.HSVToColor(floatArrayOf(hue,sat,value));swatch.text=String.format("#%06X",0xFFFFFF and col);swatch.background=GradientDrawable().apply{cornerRadius=dp(16).toFloat();setColor(col)}}
+            val spectrum=View(this).apply{background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.RED,Color.YELLOW,Color.GREEN,Color.CYAN,Color.BLUE,Color.MAGENTA,Color.RED)).apply{cornerRadius=dp(9).toFloat()};layoutParams=LinearLayout.LayoutParams(-1,dp(18)).apply{setMargins(0,0,0,dp(3))}}
+            wrap.addView(TextView(this).apply{text="FARBSPEKTRUM";textSize=11f;letterSpacing=.12f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)})
+            wrap.addView(spectrum)
+            wrap.addView(android.widget.SeekBar(this).apply{max=360;progress=hue.toInt();setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean){hue=v.toFloat();update()}override fun onStartTrackingTouch(s:android.widget.SeekBar?){};override fun onStopTrackingTouch(s:android.widget.SeekBar?){}})})
+            fun hsvSlider(title:String,start:Int,onChange:(Int)->Unit){val label=TextView(this).apply{text="$title   $start%";textSize=12f;setTextColor(Color.WHITE)};wrap.addView(label);wrap.addView(android.widget.SeekBar(this).apply{max=100;progress=start;setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean){onChange(v);label.text="$title   $v%";update()}override fun onStartTrackingTouch(s:android.widget.SeekBar?){};override fun onStopTrackingTouch(s:android.widget.SeekBar?){}})})}
+            hsvSlider("Sättigung",(sat*100).toInt()){sat=it/100f};hsvSlider("Helligkeit",(value*100).toInt()){value=it/100f};update()
+            val dlg=AlertDialog.Builder(this).setTitle(names[index]).setView(wrap).setPositiveButton("Übernehmen"){_,_->p.edit().putInt(keys[index],Color.HSVToColor(floatArrayOf(hue,sat,value))).putBoolean("custom_enabled",true).apply();recreate()}.setNegativeButton("Abbrechen",null).create()
+            dlg.setOnShowListener{dlg.window?.setBackgroundDrawable(GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.rgb(28,35,52));setStroke(dp(2),Color.HSVToColor(floatArrayOf(hue,sat,value)))});val titleId=resources.getIdentifier("alertTitle","id","android");if(titleId!=0)dlg.findViewById<TextView>(titleId)?.setTextColor(Color.WHITE);dlg.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.rgb(70,220,255));dlg.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.rgb(190,150,255))}
+            dlg.show()
         }
         fun section(t:String)=sleepCard.addView(TextView(this).apply{text=t;textSize=11f;letterSpacing=.14f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);setPadding(dp(4),dp(18),0,dp(8))})
         fun row(title:String,sub:String,tone:Int,click:()->Unit)=sleepCard.addView(MaterialCardView(this).apply{
@@ -1457,7 +1474,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         sleepCard.addView(TextView(this).apply{text="‹   Darstellung";textSize=12f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(115,210,255));setPadding(dp(4),dp(8),0,dp(12));setOnClickListener{showAppearanceSettings()}})
         // Live preview
-        sleepCard.addView(MaterialCardView(this).apply{radius=dp(24).toFloat();strokeWidth=dp(2);strokeColor=designColor("accent2",defs[1]);setCardBackgroundColor(Color.argb(p.getInt("glass_alpha",168),72,88,112));layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
+        sleepCard.addView(MaterialCardView(this).apply{radius=dp(24).toFloat();strokeWidth=dp(2);strokeColor=designColor("accent2",defs[1]);setCardBackgroundColor(Color.argb(designGlassAlpha(),72,88,112));layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,Color.red(defs[i]),Color.green(defs[i]),Color.blue(defs[i])));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
         })
         section("FARBEN")
@@ -1476,7 +1493,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         slider("Neon","neon_strength",p.getInt("neon_strength",100),100,Color.rgb(255,82,190))
         slider("Glow","glow_strength",p.getInt("glow_strength",100),100,Color.rgb(80,225,184))
         sleepCard.addView(MaterialButton(this).apply{text="✓  Übernehmen";isAllCaps=false;textSize=16f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(designColor("accent2",Color.rgb(34,211,238)));layoutParams=LinearLayout.LayoutParams(-1,dp(54)).apply{setMargins(0,dp(18),0,dp(6))};setOnClickListener{p.edit().putBoolean("custom_enabled",true).apply();recreate()}})
-        sleepCard.addView(MaterialButton(this).apply{text="↺  SleepSync Standard wiederherstellen";isAllCaps=false;setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(Color.argb(190,55,48,82));layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(16),0,dp(10))};setOnClickListener{p.edit().clear().apply();recreate()}})
+        sleepCard.addView(MaterialButton(this).apply{text="↺  SleepSync Standard wiederherstellen";isAllCaps=false;setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(Color.argb(190,55,48,82));layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(16),0,dp(10))};setOnClickListener{applySleepSyncStandard();recreate()}})
     }
 
     private fun showAppearanceSettings() {
@@ -1734,7 +1751,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
             sleepCard.addView(MaterialCardView(this).apply {
                 radius=dp(24).toFloat();strokeWidth=0;setCardBackgroundColor(Color.TRANSPARENT);cardElevation=0f;elevation=0f
-                background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),stageTone)}
+                background=GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))}
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
                 addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(15))
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
@@ -1785,8 +1802,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setCardBackgroundColor(Color.TRANSPARENT); cardElevation=0f; elevation=0f
                 background=GradientDrawable().apply {
                     cornerRadius=px(24).toFloat()
-                    setColor(if(light) Color.argb(168,72,88,112) else Color.argb(188,9,15,31))
-                    setStroke(px(2),tokenColor)
+                    setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(188,9,15,31))
+                    setStroke(px(2),Color.argb(designNeonAlpha(255),Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor)))
                 }
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(14)) }
                 addView(LinearLayout(this@MainActivity).apply {
@@ -1856,9 +1873,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun neonGlowGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
         // Light-theme overview cards: same slate-glass DNA as Verlauf/Kalender/Einstellungen.
         // Keep enough contrast for white text while letting the wallpaper breathe through.
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(168,72,88,112),Color.argb(154,66,80,108),Color.argb(162,76,82,112))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(28,Color.red(tone),Color.green(tone),Color.blue(tone))) },
-        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(5),Color.argb(112,Color.red(tone),Color.green(tone),Color.blue(tone))) },
-        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(),72,88,112),Color.argb((designGlassAlpha()*.92f).toInt(),66,80,108),Color.argb((designGlassAlpha()*.96f).toInt(),76,82,112))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(7),Color.argb(designGlowAlpha(28),Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(5),Color.argb(designGlowAlpha(112),Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone))) }
     ))
 
     private fun heroNeonGlass(radius:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
@@ -1868,8 +1885,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     ))
 
     private fun overviewNeonGlass(radius:Int, tone:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
-        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(214,18,28,48),Color.argb(204,27,38,62),Color.argb(210,16,23,44))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(5),Color.argb(38,Color.red(tone),Color.green(tone),Color.blue(tone))) },
-        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),tone) }
+        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(210),18,28,48),Color.argb((designGlassAlpha(200)*.96f).toInt(),27,38,62),Color.argb(designGlassAlpha(206),16,23,44))).apply { cornerRadius=dp(radius).toFloat(); setStroke(dp(5),Color.argb(designGlowAlpha(38),Color.red(tone),Color.green(tone),Color.blue(tone))) },
+        GradientDrawable().apply { cornerRadius=dp(radius).toFloat(); setColor(Color.TRANSPARENT); setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone))) }
     ))
 
     private fun dashboardGlass(radius:Int, dp:(Int)->Int)=LayerDrawable(arrayOf(
