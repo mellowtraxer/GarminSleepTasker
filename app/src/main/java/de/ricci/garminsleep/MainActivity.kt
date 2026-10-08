@@ -899,7 +899,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun makeOverviewTextWhite(view: View) {
-        if(view is TextView) view.setTextColor(Color.WHITE)
+        if(view is TextView && view.tag!="sleepsync_colored_pill") view.setTextColor(Color.WHITE)
         if(view is android.view.ViewGroup) {
             for(i in 0 until view.childCount) makeOverviewTextWhite(view.getChildAt(i))
         }
@@ -2277,9 +2277,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(8),dp(4),dp(4))
             addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else accent2); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-            addView(TextView(this@MainActivity).apply { text="LIVE"; textSize=8f; letterSpacing=.12f; setTextColor(if(light) Color.rgb(18,121,92) else Color.rgb(76,225,169)); setPadding(dp(7),dp(3),dp(7),dp(3)); background=GradientDrawable().apply { cornerRadius=dp(10).toFloat(); setColor(if(light) Color.argb(205,218,250,239) else Color.rgb(7,34,28)); if(light) setStroke(dp(1),Color.rgb(76,205,164)) } })
+            addView(TextView(this@MainActivity).apply { text="LIVE"; tag="sleepsync_colored_pill"; textSize=8f; letterSpacing=.12f; setTextColor(Color.rgb(9,68,44)); setPadding(dp(7),dp(3),dp(7),dp(3)); background=GradientDrawable().apply { cornerRadius=dp(10).toFloat(); setColor(Color.rgb(113,244,173)); setStroke(dp(1),Color.rgb(26,184,105)) } })
             addView(View(this@MainActivity).apply { layoutParams=LinearLayout.LayoutParams(dp(7),dp(1)) })
-            addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; textSize=9f; letterSpacing=.08f; setTextColor(if(light) Color.rgb(15,126,98) else Color.rgb(86,230,166)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(if(light) Color.argb(210,220,249,243) else Color.rgb(8,37,31)); setStroke(dp(1),if(light) Color.rgb(63,194,166) else Color.rgb(24,95,73)) } })
+            addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; tag="sleepsync_colored_pill"; textSize=9f; letterSpacing=.08f; setTextColor(Color.rgb(7,66,92)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(Color.rgb(124,225,255)); setStroke(dp(1),Color.rgb(32,165,218)) } })
         })
         val vitals = GridLayout(this).apply {
             columnCount = 2
@@ -2303,9 +2303,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(16),0,dp(7))
             addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
             addView(TextView(this@MainActivity).apply {
-                text=when { quality>=90 -> "AUSGEZEICHNET"; quality>=80 -> "GUT"; else -> "IM BLICK BEHALTEN" }
-                textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(light) Color.rgb(22,105,145) else accent2); setPadding(dp(10),dp(5),dp(10),dp(5))
-                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); setColor(if(light) Color.argb(215,224,245,255) else Color.rgb(8,34,47)); setStroke(dp(1),if(light) Color.rgb(66,177,214) else Color.rgb(28,112,137)) }
+                text=when { quality>=90 -> "AUSGEZEICHNET"; quality>=80 -> "GUT"; quality>=60 -> "MITTELMÄSSIG"; else -> "SCHLECHTE NACHT" }
+                tag="sleepsync_colored_pill"; textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(quality>=80) Color.rgb(5,69,39) else if(quality>=60) Color.rgb(90,62,0) else Color.rgb(105,16,26)); setPadding(dp(10),dp(5),dp(10),dp(5))
+                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); val pillColor=if(quality>=80) Color.rgb(111,245,153) else if(quality>=60) Color.rgb(255,219,91) else Color.rgb(255,125,132); setColor(pillColor); setStroke(dp(1),if(quality>=80) Color.rgb(31,172,91) else if(quality>=60) Color.rgb(209,154,20) else Color.rgb(216,54,70)) }
             })
         })
         sleepCard.addView(MaterialCardView(this).apply {
