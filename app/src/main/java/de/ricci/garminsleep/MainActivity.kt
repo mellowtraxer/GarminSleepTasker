@@ -514,11 +514,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         settingsBlurTarget=blurTarget
         val scene = android.widget.FrameLayout(this).apply {
-            // One continuous wallpaper and blur source in scroll-content coordinates.
-            // Android's long-screenshot capture now sees the same uninterrupted
-            // background as the cards, instead of stitching a viewport-fixed image.
+            // Match the wallpaper height to the full scroll content, not the viewport.
+            // FrameLayout MATCH_PARENT would otherwise stop at one screen height,
+            // making the background appear stationary or leave a seam below it.
             addView(blurTarget, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
+            addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
+                val contentHeight=box.height
+                if(contentHeight>0 && blurTarget.layoutParams.height!=contentHeight) {
+                    blurTarget.layoutParams=android.widget.FrameLayout.LayoutParams(-1,contentHeight)
+                }
+            }
         }
         val scroll = ScrollView(this).apply {
             isFillViewport=true
