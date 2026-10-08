@@ -276,7 +276,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         shellContent.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(secondary);setPadding(0,0,0,dp(12))})
         val list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
         val dialog=AlertDialog.Builder(this).setView(ScrollView(this).apply{background=ColorDrawable(Color.TRANSPARENT);addView(shell)}).create()
-        items.forEach{item->val selected=item.first==selectedId;list.addView(TextView(this).apply{text=(if(selected) "✓  " else "")+item.second+"\n"+item.third;textSize=14f;setTextColor(primary);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(if(light) (if(selected) Color.argb(145,83,62,145) else Color.argb(100,72,88,112)) else Color.argb(120,40,29,70));setStroke(if(selected) dp(2) else dp(1),if(selected) stageRem else Color.argb(80,stageRem shr 16 and 255,stageRem shr 8 and 255,stageRem and 255))};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
+        items.forEach{item->val selected=item.first==selectedId;list.addView(TextView(this).apply{text=(if(selected) "✓  " else "")+item.second+"\n"+item.third;textSize=14f;setTextColor(primary);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(if(light) (if(selected) Color.argb(designGlassAlpha(),83,62,145) else Color.argb(designGlassAlpha(),72,88,112)) else Color.argb(120,40,29,70));setStroke(if(selected) dp(2) else dp(1),if(selected) stageRem else Color.argb(80,stageRem shr 16 and 255,stageRem shr 8 and 255,stageRem and 255))};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
         shellContent.addView(list);dialog.setOnShowListener{dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));dialog.window?.decorView?.setLayerType(View.LAYER_TYPE_SOFTWARE,null)};dialog.show()
     }
     private fun calendarPrefs()=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE)
@@ -807,7 +807,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
             }
             items.sortedByDescending{it.endMs}.forEach { s ->
-                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(9),dp(15),dp(11)); background=GradientDrawable().apply{setColor(if(light) Color.argb(82,38,49,72) else Color.argb(70,25,32,58));setStroke(dp(1),if(light) Color.argb(42,210,225,250) else Color.TRANSPARENT)}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
+                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(9),dp(15),dp(11)); background=GradientDrawable().apply{setColor(if(light) Color.argb(designGlassAlpha(),38,49,72) else Color.argb(70,25,32,58));setStroke(dp(1),if(light) Color.argb(42,210,225,250) else Color.TRANSPARENT)}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
                     addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                         addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(if(light) Color.rgb(242,246,255) else Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
                         addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) })
@@ -947,7 +947,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(MaterialButton(this).apply{
             text="⚡  JETZT EINTRAGEN";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
             setTextColor(Color.WHITE)
-            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(145,46,62,150) else Color.rgb(64,63,205))
+            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(designGlassAlpha(),46,62,150) else Color.rgb(64,63,205))
             strokeWidth=dp(2)
             strokeColor=ColorStateList.valueOf(if(light) Color.rgb(95,125,255) else Color.TRANSPARENT)
             cornerRadius=dp(18);layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}
@@ -964,7 +964,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         })
         sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
-            val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ›";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(95,38,46,92) else Color.argb(150,45,29,73));setStroke(dp(1),if(light) stageRem else Color.TRANSPARENT)};isClickable=true;setOnClickListener{chooseCalendar()}})
+            val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ›";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),38,46,92) else Color.argb(150,45,29,73));setStroke(dp(1),if(light) stageRem else Color.TRANSPARENT)};isClickable=true;setOnClickListener{chooseCalendar()}})
             addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere Android-Kalender können hier später ausgewählt werden.";textSize=11f;setTextColor(muted);setPadding(0,dp(10),0,0)})
         })
         sleepCard.addView(card("◷  LETZTE EINTRÄGE","Zuletzt synchronisierte Nächte",stageLight){
