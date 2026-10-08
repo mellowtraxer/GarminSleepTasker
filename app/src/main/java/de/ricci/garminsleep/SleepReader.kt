@@ -34,7 +34,8 @@ class SleepReader(private val context: Context) {
 
     suspend fun latestGarminSleep(hoursBack: Long = 36): SleepSummary = garminHistory(hoursBack).maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession in den letzten $hoursBack Stunden gefunden")
 
-    suspend fun garminHistory(hoursBack: Long = 24L * 90L): List<SleepSummary> {
+    suspend fun garminHistory(hoursBack: Long = 24L * 90L, onProgress: ((String) -> Unit)? = null): List<SleepSummary> {
+        onProgress?.invoke("Health Connect · Schlafsessions suchen")
         val now = Instant.now()
         val from = now.minus(Duration.ofHours(hoursBack))
         val response = client.readRecords(
@@ -47,10 +48,14 @@ class SleepReader(private val context: Context) {
         val sleeps = response.records
             .filter { it.metadata.dataOrigin.packageName == GARMIN_PACKAGE }
             .sortedByDescending { it.endTime }
-        return sleeps.mapNotNull { sleep -> runCatching { buildSummary(sleep) }.getOrNull() }
+        return sleeps.mapIndexedNotNull { index, sleep ->
+            val date=sleep.endTime.atZone(ZoneId.systemDefault()).toLocalDate()
+            onProgress?.invoke("Nacht ${index+1}/${sleeps.size} · $date")
+            runCatching { buildSummary(sleep) { stage -> onProgress?.invoke("Nacht ${index+1}/${sleeps.size} · $stage") } }.getOrNull()
+        }
     }
 
-    private suspend fun buildSummary(sleep: SleepSessionRecord): SleepSummary {
+    private suspend fun buildSummary(sleep: SleepSessionRecord, onProgress: ((String) -> Unit)? = null): SleepSummary {
         fun stageMinutes(vararg types: Int): Long = sleep.stages
             .filter { it.stage in types }
             .sumOf { Duration.between(it.startTime, it.endTime).toMinutes() }
@@ -66,19 +71,26 @@ class SleepReader(private val context: Context) {
         val sleeping = stageMinutes(SleepSessionRecord.STAGE_TYPE_SLEEPING)
         val total = Duration.between(sleep.startTime, sleep.endTime).toMinutes()
 
+        onProgress?.invoke("Pulsdaten abrufen")
         val heartSeries = heartRateSeries(sleep.startTime, sleep.endTime)
+        onProgress?.invoke("Sauerstoffwerte abrufen")
         val spo2Points = oxygenSeries(sleep.startTime, sleep.endTime)
+        onProgress?.invoke("Atemwerte abrufen")
         val respirationPoints = respirationSeries(sleep.startTime, sleep.endTime)
         // HRV is optional: older/existing installs may not have granted the newer
         // Health Connect HRV permission yet. Never let that block the whole night.
+        onProgress?.invoke("HRV-Werte abrufen")
         val hrvPoints = runCatching { hrvSeries(sleep.startTime, sleep.endTime) }.getOrDefault(emptyList())
         val hr = heartSeries.map { it.value }.average().takeUnless { it.isNaN() }
         // Garmin does not currently export overnight SpO2/respiration to Health
         // Connect. Prefer HC if present, otherwise enrich from Garmin Connect
         // when the user has linked the account inside this app.
+        onProgress?.invoke("SpO₂-Mittelwert abrufen")
         val hcSpo2 = runCatching { averageSpo2(sleep.startTime, sleep.endTime) }.getOrNull()
+        onProgress?.invoke("Atemfrequenz-Mittelwert abrufen")
         val hcResp = runCatching { averageRespiratoryRate(sleep.startTime, sleep.endTime) }.getOrNull()
         val sleepDate = sleep.endTime.atZone(ZoneId.systemDefault()).toLocalDate()
+        onProgress?.invoke("Garmin Connect · Nachtwerte abrufen")
         val garmin = runCatching { GarminConnectClient(context).nightMetrics(sleepDate) }.getOrNull()
         val spo2 = hcSpo2 ?: garmin?.avgSpo2
         val resp = hcResp ?: garmin?.avgResp
