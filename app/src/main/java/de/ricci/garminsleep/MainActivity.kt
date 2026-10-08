@@ -513,18 +513,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
         }
         settingsBlurTarget=blurTarget
+        // Scroll only the UI; keep the wallpaper in one fixed viewport layer.
+        // A tall scroll-content ImageView can be cropped/re-measured mid-scroll,
+        // creating the horizontal wallpaper seam visible above health metrics.
         val scene = android.widget.FrameLayout(this).apply {
-            // Match the wallpaper height to the full scroll content, not the viewport.
-            // FrameLayout MATCH_PARENT would otherwise stop at one screen height,
-            // making the background appear stationary or leave a seam below it.
-            addView(blurTarget, android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
-            addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
-                val contentHeight=box.height
-                if(contentHeight>0 && blurTarget.layoutParams.height!=contentHeight) {
-                    blurTarget.layoutParams=android.widget.FrameLayout.LayoutParams(-1,contentHeight)
-                }
-            }
         }
         val scroll = ScrollView(this).apply {
             isFillViewport=true
@@ -620,7 +613,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(navShell)
         }
         val root=android.widget.FrameLayout(this).apply {
-            // The wallpaper is owned by the scroll scene, not repeated per viewport.
+            // Exactly one viewport-sized wallpaper and blur source for all cards.
+            // No scrolling, resizing, or duplicated wallpaper layers.
+            addView(blurTarget,android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(contentColumn,android.widget.FrameLayout.LayoutParams(-1,-1))
         }
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
