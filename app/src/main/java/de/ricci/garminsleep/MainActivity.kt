@@ -212,9 +212,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         return if(p.getBoolean("custom_enabled",false)) p.getInt(key,fallback).coerceIn(0,100) else fallback
     }
     private fun designGlassAlpha(defaultAlpha:Int=168):Int {
-        val strength=designPercent("glass_strength",66)
-        return (255f*(strength/100f)).toInt().coerceIn(0,255)
+        // UI value is TRANSPARENCY: 0% = fully opaque, 100% = fully transparent.
+        // Keep one global source of truth so every glass surface behaves identically.
+        val transparency=designPercent("glass_strength",34)
+        return (255f*(1f-transparency/100f)).toInt().coerceIn(0,255)
     }
+    private fun designGlassOverlayAlpha(maxAlpha:Int=110):Int =
+        (maxAlpha*(designGlassAlpha()/255f)).toInt().coerceIn(0,maxAlpha)
     private fun designNeonAlpha(base:Int):Int=(base*(designPercent("neon_strength",100)/100f)).toInt().coerceIn(0,255)
     private fun designGlowAlpha(base:Int):Int=(base*(designPercent("glow_strength",100)/100f)).toInt().coerceIn(0,255)
     private fun designBlurRadius():Float=(25f*(designPercent("blur_strength",20)/100f)).coerceAtLeast(0f)
@@ -226,7 +230,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             .putInt("stage_rem",Color.rgb(183,99,255)).putInt("stage_awake",Color.rgb(255,164,91))
             .putInt("heart",Color.rgb(255,82,126)).putInt("spo2",Color.rgb(44,205,255))
             .putInt("resp",Color.rgb(80,225,184)).putInt("hrv",Color.rgb(213,96,255))
-            .putInt("glass_strength",66).putInt("blur_strength",8).putInt("neon_strength",100).putInt("glow_strength",100).apply()
+            .putInt("glass_strength",34).putInt("blur_strength",8).putInt("neon_strength",100).putInt("glow_strength",100).apply()
     }
     private fun designColor(key:String,fallback:Int):Int {
         val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
@@ -264,7 +268,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(12,15,35));setStroke(dp(4),Color.argb(42,Color.red(stageRem),Color.green(stageRem),Color.blue(stageRem)))},
                 GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),stageRem)}
             ))
-            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb((110f*(designPercent("glass_strength",66)/100f)).toInt(),72,88,112))}}
+            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
         }
         val shellContent=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(12));background=null}
         shell.addView(shellContent,android.widget.FrameLayout.LayoutParams(-1,-2))
@@ -914,7 +918,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 if(light && this is eightbitlab.com.blurview.BlurView){
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
-                    settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb((110f*(designPercent("glass_strength",66)/100f)).toInt(),72,88,112))}
+                    settingsBlurTarget?.let{target->setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
                 }
                 addView(LinearLayout(this@MainActivity).apply{
                     orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16));background=null
@@ -1065,7 +1069,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 if(settingsLight && this is eightbitlab.com.blurview.BlurView) {
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
                     clipToOutline=true
-                    settingsBlurTarget?.let { target -> setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb((110f*(designPercent("glass_strength",66)/100f)).toInt(),72,88,112)) }
+                    settingsBlurTarget?.let { target -> setupWith(target).setBlurRadius(designBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112)) }
                 }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
@@ -1488,7 +1492,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(android.widget.SeekBar(this@MainActivity).apply{this.max=max;progress=value;progressTintList=ColorStateList.valueOf(tone);thumbTintList=ColorStateList.valueOf(tone);setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean){label.text="$title   $v%";if(u)p.edit().putInt(key,v).putBoolean("custom_enabled",true).apply()}override fun onStartTrackingTouch(s:android.widget.SeekBar?){};override fun onStopTrackingTouch(s:android.widget.SeekBar?){showDesignStudio()}})})
             };sleepCard.addView(box)
         }
-        slider("Glas-Transparenz","glass_strength",p.getInt("glass_strength",66),100,Color.rgb(90,190,255))
+        slider("Glas-Transparenz","glass_strength",p.getInt("glass_strength",34),100,Color.rgb(90,190,255))
         slider("Blur","blur_strength",p.getInt("blur_strength",20),100,Color.rgb(183,99,255))
         slider("Neon","neon_strength",p.getInt("neon_strength",100),100,Color.rgb(255,82,190))
         slider("Glow","glow_strength",p.getInt("glow_strength",100),100,Color.rgb(80,225,184))
@@ -1926,7 +1930,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         sleepCard.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(10).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(2).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(182,72,88,112),Color.argb(166,58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
+            background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(),72,88,112),Color.argb((designGlassAlpha()*.92f).toInt(),58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
