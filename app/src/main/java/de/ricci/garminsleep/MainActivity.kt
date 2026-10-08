@@ -4,6 +4,8 @@ import androidx.activity.ComponentActivity
 import android.os.Bundle
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import java.io.File
 import android.Manifest
 import android.provider.CalendarContract
@@ -280,6 +282,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         HealthPermission.getReadPermission(OxygenSaturationRecord::class),
         HealthPermission.getReadPermission(RespiratoryRateRecord::class)
     )
+    private fun saveCustomWallpaper(uri:Uri?) {
+        uri ?: return
+        runCatching {
+            runCatching { contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            val out=File(filesDir,"sleepsync_custom_wallpaper")
+            contentResolver.openInputStream(uri)?.use { input -> out.outputStream().use { input.copyTo(it) } }
+            getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit().putBoolean("custom_enabled",true).putBoolean("wallpaper_enabled",true).putString("wallpaper_source","custom").apply()
+            recreate()
+        }.onFailure { android.widget.Toast.makeText(this,"Wallpaper konnte nicht geladen werden.",android.widget.Toast.LENGTH_SHORT).show() }
+    }
+    private val photoPickerWallpaperLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? -> saveCustomWallpaper(uri) }
     private val customWallpaperLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri ?: return@registerForActivityResult
         runCatching {
@@ -1531,13 +1544,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         section("HINTERGRUND")
         val wallpaperSource=p.getString("wallpaper_source","builtin")?:"builtin"
         row("Wallpaper",if(!p.getBoolean("wallpaper_enabled",true)) "Aus · einfarbiger Hintergrund" else if(wallpaperSource=="custom") "Aktiv · Eigenes Wallpaper" else "Aktiv · SleepSync Wallpaper",Color.rgb(70,205,225)){
-            val choices=arrayOf("SleepSync Wallpaper","Eigenes Wallpaper auswählen","Kein Wallpaper","✨ KI OLED Studio · demnächst")
+            val choices=arrayOf("SleepSync Wallpaper","Eigenes Wallpaper · Google Fotos / Galerie","Eigenes Wallpaper · Dateien","Kein Wallpaper","✨ KI OLED Studio · demnächst")
             val dlg=AlertDialog.Builder(this).setTitle("Wallpaper").setItems(choices){_,which->
                 when(which){
                     0->{p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();recreate()}
-                    1->customWallpaperLauncher.launch(arrayOf("image/*"))
-                    2->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();recreate()}
-                    3->android.widget.Toast.makeText(this,"KI OLED Studio ist vorbereitet – echte OLED-KI-Generierung folgt als eigener Schritt.",android.widget.Toast.LENGTH_LONG).show()
+                    1->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    2->customWallpaperLauncher.launch(arrayOf("image/*"))
+                    3->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();recreate()}
+                    4->android.widget.Toast.makeText(this,"KI OLED Studio ist vorbereitet – echte OLED-KI-Generierung folgt als eigener Schritt.",android.widget.Toast.LENGTH_LONG).show()
                 }
             }.create()
             dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
