@@ -2195,7 +2195,28 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val quality = ((s.lightMin + s.deepMin + s.remMin) * 100 / s.totalMin.coerceAtLeast(1)).toInt().coerceIn(0,100)
         // Vorläufige Nacht-Einschätzung: Schlafdauer begrenzt die Effizienzbewertung.
         // Die Schlafeffizienz selbst bleibt als unabhängiger Messwert sichtbar.
-        val nightRating = minOf(quality, when { s.totalMin >= 420 -> 100; s.totalMin >= 360 -> 79; s.totalMin >= 300 -> 59; else -> 39 })
+        val referenceNights = sleepHistory.filter { it.startMs != s.startMs && it.totalMin > 0 && it.endMs <= s.endMs }
+            .sortedByDescending { it.endMs }.take(14)
+        val personalAverage = if(referenceNights.size >= 3) referenceNights.map { it.totalMin }.average().toInt() else null
+        val durationScore = when {
+            s.totalMin >= 480 -> 100
+            s.totalMin >= 420 -> 90
+            s.totalMin >= 360 -> 72
+            s.totalMin >= 300 -> 48
+            else -> 25
+        }
+        val nightRating = (durationScore * 0.75 + quality * 0.25).toInt().coerceIn(0,100)
+        val nightExplanation = when {
+            s.totalMin < 360 -> "Kurze Schlafdauer trotz $quality% Schlafeffizienz."
+            s.totalMin < 420 -> "Schlafdauer unter 7 Stunden · $quality% Effizienz."
+            else -> "${s.totalMin / 60} h ${s.totalMin % 60} min Schlaf · $quality% Effizienz."
+        }
+        val comparison = personalAverage?.let { average ->
+            val delta = s.totalMin - average
+            val direction = if(delta >= 0) "mehr" else "weniger"
+            "${kotlin.math.abs(delta)} min $direction als dein 14-Nächte-Schnitt"
+        } ?: "Persönlicher Vergleich ab 3 früheren Nächten"
+
         sleepCard.addView(settingsStyleCard(accent2,30,LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(10).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(2).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(),72,88,112),Color.argb((designGlassAlpha()*.92f).toInt(),58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
@@ -2323,7 +2344,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
                 addView(TextView(this@MainActivity).apply {
                     layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
-                    text=(if(s.totalMin < 360) "Kurze Schlafdauer" else if(s.totalMin < 420) "Schlafdauer ausbaufähig" else if(nightRating >= 80) "Erholsame Nacht nach Schlafdauer und Effizienz" else "Deine Nacht im Überblick") + "\n" + "${s.totalMin / 60} h ${s.totalMin % 60} min Schlaf · $quality% Schlafeffizienz."
+                    text=nightExplanation + "\n" + comparison
                     textSize=13f; setTextColor(if(light) Color.WHITE else Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
                 })
             })
