@@ -877,7 +877,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             b.cornerRadius=dp(18)
             b.textSize=12f
             b.minHeight=dp(48)
-            b.setTextColor(if(light) Color.rgb(30,36,58) else Color.WHITE)
+            b.setTextColor(Color.WHITE)
             b.backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(14,17,34))
             b.strokeWidth=dp(2)
             b.strokeColor=ColorStateList.valueOf(red)
