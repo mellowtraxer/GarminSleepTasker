@@ -820,11 +820,47 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
     }
 
+    private fun nextTimeAwareGreeting(): String {
+        val hour=java.time.LocalTime.now().hour
+        val timeOfDay=when(hour) {
+            in 4..9 -> "Morgen"
+            in 10..11 -> "Vormittag"
+            in 12..17 -> "Nachmittag"
+            in 18..21 -> "Abend"
+            else -> "Nacht"
+        }
+        val openers=when(timeOfDay) {
+            "Morgen" -> listOf("Ein frischer Start", "Die Welt erwacht", "Ein neuer Tag beginnt", "Guten Morgen", "Der Tag nimmt Fahrt auf", "Zeit für einen klaren Blick")
+            "Vormittag" -> listOf("Mitten im Vormittag", "Der Tag läuft", "Zeit für deinen Schlafcheck", "Ein kurzer Rückblick", "Klarheit für deinen Tag", "Schon gut unterwegs")
+            "Nachmittag" -> listOf("Schönen Nachmittag", "Mitten am Tag", "Ein Moment zum Durchatmen", "Zeit für einen Rückblick", "Dein Nachmittag, dein Überblick", "Der Tag ist in vollem Gange")
+            "Abend" -> listOf("Guten Abend", "Der Tag klingt aus", "Ein ruhiger Moment", "Zeit zum Runterfahren", "Der Abend gehört dir", "Der Tag wird leiser")
+            else -> listOf("Eine ruhige Nacht", "Wenn die Welt stiller wird", "Noch wach?", "Mitten in der Nacht", "Zeit für Ruhe", "Ein stiller Blick auf deinen Schlaf")
+        }
+        val endings=listOf(
+            "deine Nacht im Überblick", "dein Schlaf auf einen Blick",
+            "deine Schlafwerte im Fokus", "ein Blick auf die letzte Nacht",
+            "deine Nacht, klar ausgewertet", "was dein Schlaf erzählt",
+            "die Nacht in Zahlen", "dein persönlicher Schlafrückblick",
+            "deine Erholung im Blick", "die wichtigsten Nachtwerte"
+        )
+        val candidates=openers.flatMap { opener -> endings.map { ending -> opener + " · " + ending } }
+        val prefs=getSharedPreferences("sleepsync_greetings",MODE_PRIVATE)
+        val previous=prefs.getString("last_greeting",null)
+        val lastIndex=prefs.getInt("last_index",-1)
+        // Shuffle without repeating until every combination for this daypart has appeared.
+        val nextIndex=if(lastIndex<0 || lastIndex>=candidates.size-1 || prefs.getString("daypart",null)!=timeOfDay) 0 else lastIndex+1
+        val seed=(java.time.LocalDate.now().toEpochDay().toInt()*31+timeOfDay.hashCode())
+        val shuffled=candidates.shuffled(kotlin.random.Random(seed))
+        val chosen=shuffled[nextIndex].let { if(it==previous) shuffled[(nextIndex+1)%shuffled.size] else it }
+        prefs.edit().putString("last_greeting",chosen).putString("daypart",timeOfDay).putInt("last_index",nextIndex).apply()
+        return chosen
+    }
+
     private fun showOverview() {
         actionsTitle.visibility = View.GONE
         actionsBox.visibility = View.GONE
         pageTitle.text = "SleepSync"
-        pageSubtitle.text = "Guten Morgen  ·  Deine letzte Nacht"
+        pageSubtitle.text = nextTimeAwareGreeting()
         lastSummary?.let { renderDashboard(it) }
     }
 
