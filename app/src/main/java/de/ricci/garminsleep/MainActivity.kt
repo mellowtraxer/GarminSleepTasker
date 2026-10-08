@@ -1857,26 +1857,43 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
         val values = listOf(
-            s.lightMin to stageLight,
-            s.deepMin to stageDeep,
-            s.remMin to stageRem,
-            s.awakeMin to stageAwake
+            Triple("Leicht",s.lightMin,stageLight),
+            Triple("Tief",s.deepMin,stageDeep),
+            Triple("REM",s.remMin,stageRem),
+            Triple("Wach",s.awakeMin,stageAwake)
         )
+        val total = values.sumOf { it.second }.coerceAtLeast(1L)
+        val timeFormat=java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+            .withZone(java.time.ZoneId.systemDefault())
         return LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            background = GradientDrawable().apply {
-                cornerRadius = dp(10).toFloat()
-                setColor(Color.rgb(43, 37, 72))
+            orientation=LinearLayout.HORIZONTAL
+            background=GradientDrawable().apply {
+                cornerRadius=dp(10).toFloat()
+                setColor(Color.rgb(43,37,72))
             }
-            values.forEach { (minutes, color) ->
+            values.forEach { (name,minutes,color) ->
                 addView(View(this@MainActivity).apply {
-                    background = GradientDrawable().apply {
-                        cornerRadius = dp(8).toFloat()
+                    background=GradientDrawable().apply {
+                        cornerRadius=dp(8).toFloat()
                         setColor(color)
                     }
-                    layoutParams = LinearLayout.LayoutParams(
-                        0, dp(16), minutes.coerceAtLeast(1).toFloat()
-                    ).apply { setMargins(dp(1), 0, dp(1), 0) }
+                    val percentage=(minutes*100/total).toInt()
+                    contentDescription="$name: $minutes Minuten, $percentage Prozent"
+                    isClickable=true
+                    isFocusable=true
+                    setOnClickListener {
+                        val text="$name · $minutes min ($percentage %)\\n" +
+                            "Schlafzeit: ${timeFormat.format(java.time.Instant.ofEpochMilli(s.startMs))}–${timeFormat.format(java.time.Instant.ofEpochMilli(s.endMs))}"
+                        android.app.AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Schlafphase · $name")
+                            .setMessage(text)
+                            .setPositiveButton("Schließen",null)
+                            .setNeutralButton("Phasen im Detail") { _,_ -> showAllStageTimelines(s) }
+                            .show()
+                    }
+                    layoutParams=LinearLayout.LayoutParams(
+                        0,dp(20),minutes.coerceAtLeast(1).toFloat()
+                    ).apply { setMargins(dp(1),0,dp(1),0) }
                 })
             }
         }
