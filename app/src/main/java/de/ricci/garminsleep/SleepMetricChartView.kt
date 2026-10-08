@@ -101,7 +101,7 @@ class SleepMetricChartView(
             // Keep the chart body transparent: the surrounding SleepSync glass card is the only surface.
             fillPaint.shader=null
         }
-        setLayerType(LAYER_TYPE_SOFTWARE,p)
+        setLayerType(LAYER_TYPE_SOFTWARE,null)
         p.style=Paint.Style.STROKE; p.strokeCap=Paint.Cap.ROUND; p.strokeJoin=Paint.Join.ROUND
         p.strokeWidth=5.2f*d; p.color=Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)); c.drawPath(path,p)
         p.strokeWidth=2.15f*d; p.color=tone; p.setShadowLayer(5*d,0f,0f,tone); c.drawPath(path,p); p.clearShadowLayer()
