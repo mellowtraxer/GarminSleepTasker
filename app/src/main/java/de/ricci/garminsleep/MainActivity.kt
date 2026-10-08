@@ -1878,43 +1878,94 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if(segments.isNotEmpty() && s.endMs>s.startMs) {
                 addView(object:View(this@MainActivity) {
                     private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-                    init { isClickable=true; isFocusable=true; contentDescription="Zeitlicher Schlafverlauf. Tippen für Details der jeweiligen Schlafphase." }
+                    private var selectedTime:Long?=null
+                    private val barTop=dp(48).toFloat()
+                    private val barHeight=dp(24).toFloat()
+                    private val span=(s.endMs-s.startMs).toDouble()
+                    private fun xAt(t:Long)=(((t-s.startMs)/span)*width).toFloat().coerceIn(0f,width.toFloat())
+                    private fun stageAt(t:Long)=segments.lastOrNull { t>=it.startMs && t<it.endMs }
+                    init {
+                        isClickable=true
+                        isFocusable=true
+                        contentDescription="Interaktive Schlaf-Timeline. Finger bewegen, um Schlafphase und Uhrzeit zu sehen."
+                    }
                     override fun onDraw(canvas:android.graphics.Canvas) {
                         super.onDraw(canvas)
-                        val w=width.toFloat();val h=height.toFloat()
-                        val span=(s.endMs-s.startMs).toDouble()
-                        paint.color=Color.rgb(43,37,72)
-                        canvas.drawRoundRect(0f,0f,w,h,dp(9).toFloat(),dp(9).toFloat(),paint)
+                        val w=width.toFloat()
+                        if(w<=0f)return
+                        val radius=barHeight/2f
+                        paint.style=android.graphics.Paint.Style.FILL
+                        paint.shader=null
+                        paint.color=Color.argb(110,29,34,71)
+                        canvas.drawRoundRect(0f,barTop,w,barTop+barHeight,radius,radius,paint)
+                        canvas.save()
+                        val clip=android.graphics.Path().apply {
+                            addRoundRect(0f,barTop,w,barTop+barHeight,radius,radius,android.graphics.Path.Direction.CW)
+                        }
+                        canvas.clipPath(clip)
                         segments.forEach { segment ->
-                            val left=((segment.startMs-s.startMs)/span*w).toFloat().coerceIn(0f,w)
-                            val right=((segment.endMs-s.startMs)/span*w).toFloat().coerceIn(0f,w)
+                            val left=xAt(segment.startMs)
+                            val right=xAt(segment.endMs)
                             if(right>left) {
-                                paint.color=tones[segment.stageLabel.trim().lowercase()]?:Color.rgb(100,112,145)
-                                canvas.drawRoundRect(left,0f,right,h,dp(2).toFloat(),dp(2).toFloat(),paint)
+                                val tone=tones[segment.stageLabel.trim().lowercase()]?:Color.rgb(100,112,145)
+                                paint.color=tone
+                                paint.shader=android.graphics.LinearGradient(left,barTop,right.coerceAtLeast(left+1f),barTop+barHeight,
+                                    intArrayOf(tone,android.graphics.Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone))),
+                                    null,android.graphics.Shader.TileMode.CLAMP)
+                                canvas.drawRect(left,barTop,right,barTop+barHeight,paint)
+                                paint.shader=null
                             }
+                        }
+                        canvas.restore()
+                        selectedTime?.let { time ->
+                            val x=xAt(time)
+                            val stage=stageAt(time)
+                            val tone=stage?.let { tones[it.stageLabel.trim().lowercase()] }?:Color.WHITE
+                            paint.color=Color.WHITE
+                            paint.strokeWidth=dp(2).toFloat()
+                            canvas.drawLine(x,barTop-dp(6),x,barTop+barHeight+dp(6),paint)
+                            paint.color=tone
+                            canvas.drawCircle(x,barTop+barHeight/2f,dp(5).toFloat(),paint)
+                            paint.color=Color.WHITE
+                            canvas.drawCircle(x,barTop+barHeight/2f,dp(2).toFloat(),paint)
+                            val phase=stage?.stageLabel?:"Keine Daten"
+                            val label="${formatter.format(java.time.Instant.ofEpochMilli(time))}  ·  $phase"
+                            paint.typeface=android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT,android.graphics.Typeface.BOLD)
+                            paint.textSize=dp(12).toFloat()
+                            val bubbleWidth=(paint.measureText(label)+dp(28)).coerceAtMost(w)
+                            val center=x.coerceIn(bubbleWidth/2f,w-bubbleWidth/2f)
+                            val left=center-bubbleWidth/2f
+                            paint.color=Color.argb(238,16,22,49)
+                            canvas.drawRoundRect(left,dp(4).toFloat(),left+bubbleWidth,dp(37).toFloat(),dp(13).toFloat(),dp(13).toFloat(),paint)
+                            paint.color=tone
+                            canvas.drawCircle(left+dp(12),dp(20).toFloat(),dp(3).toFloat(),paint)
+                            paint.color=Color.WHITE
+                            canvas.drawText(label,left+dp(20),dp(25).toFloat(),paint)
                         }
                     }
                     override fun onTouchEvent(event:android.view.MotionEvent):Boolean {
-                        if(event.action==android.view.MotionEvent.ACTION_UP) {
-                            val timestamp=s.startMs+((event.x.coerceIn(0f,width.toFloat())/width.coerceAtLeast(1))*(s.endMs-s.startMs)).toLong()
-                            val selected=segments.lastOrNull { timestamp>=it.startMs && timestamp<it.endMs }
-                            if(selected!=null) {
-                                val name=selected.stageLabel
-                                val duration=((selected.endMs-selected.startMs)/60000L).coerceAtLeast(1L)
-                                android.app.AlertDialog.Builder(this@MainActivity)
-                                    .setTitle("Schlafphase · $name")
-                                    .setMessage("${formatter.format(java.time.Instant.ofEpochMilli(selected.startMs))}–${formatter.format(java.time.Instant.ofEpochMilli(selected.endMs))} · $duration min")
-                                    .setPositiveButton("Schließen",null)
-                                    .setNeutralButton("Phasen im Detail") { _,_ -> showAllStageTimelines(s) }
-                                    .show()
-                            } else showAllStageTimelines(s)
-                            performClick()
-                            return true
+                        when(event.actionMasked) {
+                            android.view.MotionEvent.ACTION_DOWN,android.view.MotionEvent.ACTION_MOVE -> {
+                                parent?.requestDisallowInterceptTouchEvent(true)
+                                selectedTime=(s.startMs+((event.x.coerceIn(0f,width.toFloat())/width.coerceAtLeast(1))*(s.endMs-s.startMs)).toLong())
+                                    .coerceIn(s.startMs,s.endMs-1)
+                                invalidate()
+                                return true
+                            }
+                            android.view.MotionEvent.ACTION_UP -> {
+                                parent?.requestDisallowInterceptTouchEvent(false)
+                                performClick()
+                                return true
+                            }
+                            android.view.MotionEvent.ACTION_CANCEL -> {
+                                parent?.requestDisallowInterceptTouchEvent(false)
+                                return true
+                            }
                         }
                         return true
                     }
                     override fun performClick():Boolean { super.performClick();return true }
-                },LinearLayout.LayoutParams(-1,dp(22)))
+                },LinearLayout.LayoutParams(-1,dp(78)))
             } else {
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL
