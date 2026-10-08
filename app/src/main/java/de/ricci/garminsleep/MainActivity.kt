@@ -335,6 +335,38 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 canvas.drawPath(path,brush)
                 brush.clearShadowLayer()
             }
+            // Four measured health timelines, using the same palette as the health cards.
+            // Missing series are omitted instead of fabricating physiological measurements.
+            val streams=listOf(
+                Triple(night.heartRateSeries,Color.rgb(255,65,125),h*.30f),
+                Triple(night.spo2Series,Color.rgb(164,255,55),h*.40f),
+                Triple(night.respirationSeries,Color.rgb(57,234,204),h*.64f),
+                Triple(night.hrvSeries,Color.rgb(207,78,240),h*.74f)
+            )
+            streams.forEach { (points,tone,centerY) ->
+                val samples=points.filter { it.timeMs>=night.startMs && it.timeMs<=night.endMs && it.value.isFinite() }
+                    .sortedBy { it.timeMs }
+                if(samples.size>=2) {
+                    val low=samples.minOf { it.value }
+                    val high=samples.maxOf { it.value }
+                    val range=(high-low).coerceAtLeast(1.0)
+                    val path=android.graphics.Path()
+                    samples.forEachIndexed { index,point ->
+                        val x=((point.timeMs-night.startMs)/span*w).toFloat().coerceIn(0f,w.toFloat())
+                        val normalized=((point.value-low)/range).toFloat()
+                        val y=centerY+(0.5f-normalized)*h*.065f
+                        if(index==0)path.moveTo(x,y) else path.lineTo(x,y)
+                    }
+                    brush.shader=null
+                    brush.style=android.graphics.Paint.Style.STROKE
+                    brush.strokeWidth=3.5f
+                    brush.color=tone
+                    brush.alpha=190
+                    brush.setShadowLayer(14f,0f,0f,tone)
+                    canvas.drawPath(path,brush)
+                    brush.clearShadowLayer()
+                }
+            }
             brush.alpha=255
             brush.style=android.graphics.Paint.Style.FILL
             brush.shader=android.graphics.RadialGradient(w*.5f,baseline,w*.43f,
