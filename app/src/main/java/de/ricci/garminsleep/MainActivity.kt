@@ -282,6 +282,77 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         HealthPermission.getReadPermission(OxygenSaturationRecord::class),
         HealthPermission.getReadPermission(RespiratoryRateRecord::class)
     )
+    private fun generateDreamScape() {
+        val night=lastSummary
+        if(night==null || night.totalMin<=0L) {
+            android.widget.Toast.makeText(this,"Für DreamScape werden zuerst Schlafdaten benötigt.",android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
+        runCatching {
+            val w=1080;val h=2400
+            val bitmap=android.graphics.Bitmap.createBitmap(w,h,android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas=android.graphics.Canvas(bitmap)
+            canvas.drawColor(Color.BLACK)
+            val brush=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            val total=(night.lightMin+night.deepMin+night.remMin+night.awakeMin).coerceAtLeast(1L)
+            val deep=night.deepMin.toFloat()/total
+            val rem=night.remMin.toFloat()/total
+            val efficiency=(night.totalMin.toFloat()/(night.endMs-night.startMs).coerceAtLeast(1L)*60000f).coerceIn(0f,1f)
+            val violet=Color.rgb(130+(rem*85).toInt(),65,190+(rem*60).toInt())
+            val cyan=Color.rgb(35,145+(deep*100).toInt(),215)
+            val seed=night.startMs xor (night.totalMin shl 11) xor (night.deepMin shl 5) xor night.remMin
+            val random=java.util.Random(seed)
+            // Subtle deterministic stars; preserve a predominantly true-black OLED canvas.
+            repeat(130) {
+                val x=random.nextFloat()*w
+                val y=random.nextFloat()*h
+                val alpha=35+random.nextInt(90)
+                brush.color=Color.argb(alpha,140+random.nextInt(100),175,255)
+                brush.style=android.graphics.Paint.Style.FILL
+                canvas.drawCircle(x,y,.5f+random.nextFloat()*1.4f,brush)
+            }
+            val baseline=h*.53f
+            val phases=night.stageSeries.filter { it.endMs>it.startMs }.sortedBy { it.startMs }
+            val span=(night.endMs-night.startMs).coerceAtLeast(1L).toDouble()
+            repeat(7) { layer ->
+                val path=android.graphics.Path()
+                val spread=18f+layer*27f
+                for(x in 0..w step 5) {
+                    val fraction=x.toDouble()/w
+                    val time=night.startMs+(fraction*span).toLong()
+                    val phase=phases.lastOrNull { time>=it.startMs && time<it.endMs }?.stageLabel?.trim()?.lowercase()
+                    val amplitude=when(phase) { "tief"->.35f;"rem"->1.35f;"wach"->1.6f;else->.8f }
+                    val y=baseline+layer*30f+
+                        kotlin.math.sin(fraction*18.85+layer*.55).toFloat()*spread*amplitude+
+                        kotlin.math.sin(fraction*44.0+layer*.9).toFloat()*spread*.25f
+                    if(x==0)path.moveTo(x.toFloat(),y) else path.lineTo(x.toFloat(),y)
+                }
+                brush.style=android.graphics.Paint.Style.STROKE
+                brush.strokeWidth=2f+(7-layer)*.3f
+                brush.color=if(layer%2==0) cyan else violet
+                brush.alpha=(125-layer*12).coerceAtLeast(35)
+                brush.setShadowLayer(12f,0f,0f,brush.color)
+                canvas.drawPath(path,brush)
+                brush.clearShadowLayer()
+            }
+            brush.alpha=255
+            brush.style=android.graphics.Paint.Style.FILL
+            brush.shader=android.graphics.RadialGradient(w*.5f,baseline,w*.43f,
+                intArrayOf(Color.argb((efficiency*40).toInt(),85,40,160),Color.TRANSPARENT),
+                null,android.graphics.Shader.TileMode.CLAMP)
+            canvas.drawCircle(w*.5f,baseline,w*.43f,brush)
+            brush.shader=null
+            val output=File(filesDir,"sleepsync_dreamscape.png")
+            output.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }
+            bitmap.recycle()
+            getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit()
+                .putBoolean("custom_enabled",true).putBoolean("wallpaper_enabled",true)
+                .putString("wallpaper_source","dreamscape").apply()
+            recreate()
+        }.onFailure {
+            android.widget.Toast.makeText(this,"DreamScape konnte nicht erstellt werden.",android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
     private fun saveCustomWallpaper(uri:Uri?) {
         uri ?: return
         runCatching {
@@ -524,7 +595,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
                 adjustViewBounds=false
                 val custom=File(filesDir,"sleepsync_custom_wallpaper")
-                if(designPrefs.getString("wallpaper_source","builtin")=="custom" && custom.exists()) setImageURI(Uri.fromFile(custom))
+                if(designPrefs.getString("wallpaper_source","builtin")=="dreamscape" && File(filesDir,"sleepsync_dreamscape.png").exists()) setImageURI(Uri.fromFile(File(filesDir,"sleepsync_dreamscape.png")))
+                else if(designPrefs.getString("wallpaper_source","builtin")=="custom" && custom.exists()) setImageURI(Uri.fromFile(custom))
                 else setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
                 alpha=1f
             }, android.widget.FrameLayout.LayoutParams(-1,-1))
@@ -1682,16 +1754,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);row(names[i],String.format("#%06X",0xFFFFFF and tone),tone){pickFullColor(i)}}
         section("HINTERGRUND")
         val wallpaperSource=p.getString("wallpaper_source","builtin")?:"builtin"
-        row("Wallpaper",if(!p.getBoolean("wallpaper_enabled",true)) "Aus · einfarbiger Hintergrund" else if(wallpaperSource=="custom") "Aktiv · Eigenes Wallpaper" else "Aktiv · SleepSync Wallpaper",Color.rgb(70,205,225)){
-            val choices=arrayOf("SleepSync Wallpaper","Eigenes Wallpaper · Google Fotos / Galerie","Eigenes Wallpaper · Dateien","Installierte Wallpaper-Apps · Bild auswählen","Kein Wallpaper","✨ KI OLED Studio · demnächst")
+        row("Wallpaper",if(!p.getBoolean("wallpaper_enabled",true)) "Aus · einfarbiger Hintergrund" else if(wallpaperSource=="dreamscape") "Aktiv · DreamScape OLED" else if(wallpaperSource=="custom") "Aktiv · Eigenes Wallpaper" else "Aktiv · SleepSync Wallpaper",Color.rgb(70,205,225)){
+            val choices=arrayOf("SleepSync Wallpaper","Eigenes Wallpaper · Google Fotos / Galerie","Eigenes Wallpaper · Dateien","Installierte Wallpaper-Apps · Bild auswählen","✨ DreamScape · Aus Schlafdaten generieren","Kein Wallpaper","✨ KI OLED Studio · demnächst")
             val dlg=AlertDialog.Builder(this).setTitle("Wallpaper").setItems(choices){_,which->
                 when(which){
                     0->{p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();recreate()}
                     1->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     2->customWallpaperLauncher.launch(arrayOf("image/*"))
                     3->openInstalledWallpaperApps()
-                    4->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();recreate()}
-                    5->android.widget.Toast.makeText(this,"KI OLED Studio ist vorbereitet – echte OLED-KI-Generierung folgt als eigener Schritt.",android.widget.Toast.LENGTH_LONG).show()
+                    4->generateDreamScape()
+                    5->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();recreate()}
+                    6->android.widget.Toast.makeText(this,"KI OLED Studio ist vorbereitet – echte OLED-KI-Generierung folgt als eigener Schritt.",android.widget.Toast.LENGTH_LONG).show()
                 }
             }.create()
             dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
