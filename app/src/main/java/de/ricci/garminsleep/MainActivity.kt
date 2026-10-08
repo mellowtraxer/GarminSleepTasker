@@ -1700,23 +1700,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
-        val primary=if(light) Color.rgb(22,27,45) else Color.WHITE
-        val secondary=if(light) Color.rgb(78,88,112) else Color.rgb(165,175,205)
-        val timeColor=if(light) Color.rgb(91,104,132) else Color.rgb(135,147,180)
+        val stageTone=when(label){"Leicht"->stageLight;"Tief"->stageDeep;"REM"->stageRem;"Wach"->stageAwake;else->tone}
+        val primary=Color.WHITE
+        val secondary=if(light) Color.rgb(225,232,248) else Color.rgb(165,175,205)
+        val timeColor=if(light) Color.rgb(210,222,244) else Color.rgb(135,147,180)
         pageTitle.text="Schlafphasen"; pageSubtitle.text=label+" · Verlauf dieser Nacht"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
         sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
         val intervals=s.stageSeries.filter { it.stageLabel==label }
         sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=tone; setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=dashboardGlass(24,::dp); cardElevation=dp(14).toFloat() } else { setCardBackgroundColor(Color.argb(190,9,15,31)); cardElevation=dp(3).toFloat() }
+            radius=dp(24).toFloat(); strokeWidth=dp(2); strokeColor=stageTone; setCardBackgroundColor(if(light) Color.argb(168,72,88,112) else Color.argb(190,9,15,31)); cardElevation=dp(if(light) 8 else 3).toFloat(); if(light){ elevation=dp(8).toFloat(); outlineAmbientShadowColor=stageTone; outlineSpotShadowColor=stageTone }
             addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(18),dp(18),dp(18),dp(18))
-                addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(tone); setTypeface(typeface,Typeface.BOLD) })
+                addView(TextView(this@MainActivity).apply { text=label.uppercase(); textSize=12f; setTextColor(stageTone); setTypeface(typeface,Typeface.BOLD) })
                 addView(TextView(this@MainActivity).apply { text=(minutes/60).toString()+" h "+(minutes%60).toString()+" min"; textSize=31f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(8),0,dp(4)) })
                 val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
                 addView(TextView(this@MainActivity).apply { text=pct.toString()+" % der Nacht · "+intervals.size+" Abschnitte"; textSize=11f; setTextColor(secondary); setPadding(0,0,0,dp(14)) })
                 addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
                     val duration=(s.endMs-s.startMs).coerceAtLeast(1); var cursor=s.startMs
-                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(if(active) tone else if(light) Color.argb(72,120,135,165) else Color.argb(38,120,130,160)) }; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 18),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(dp(1),0,dp(1),0) } }
+                    fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply { background=GradientDrawable().apply { cornerRadius=dp(5).toFloat(); setColor(if(active) stageTone else if(light) Color.argb(72,120,135,165) else Color.argb(38,120,130,160)) }; layoutParams=LinearLayout.LayoutParams(0,dp(if(active) 54 else 18),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply { gravity=android.view.Gravity.CENTER_VERTICAL; setMargins(dp(1),0,dp(1),0) } }
                     intervals.sortedBy { it.startMs }.forEach { st -> if(st.startMs>cursor) addView(seg(st.startMs-cursor,false)); addView(seg(st.endMs-st.startMs,true)); cursor=st.endMs }; if(cursor<s.endMs) addView(seg(s.endMs-cursor,false))
                 })
                 val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
@@ -1742,34 +1743,37 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(px(2),px(8),0,px(12))
             setOnClickListener { showOverview() }
         })
-        fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>) =
-            MaterialCardView(this).apply {
-                radius=px(24).toFloat(); strokeWidth=if(light) 0 else px(1); strokeColor=Color.argb(180,Color.red(color),Color.green(color),Color.blue(color))
-                setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=dashboardGlass(24,::px); cardElevation=px(14).toFloat() } else { setCardBackgroundColor(Color.argb(188,9,15,31)); cardElevation=px(3).toFloat() }
+        fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>):View {
+            val tokenColor=when(name){"Puls"->designColor("heart",Color.rgb(255,82,126));"SpO₂"->designColor("spo2",Color.rgb(44,205,255));"Atmung"->designColor("resp",Color.rgb(80,225,184));"HRV"->designColor("hrv",Color.rgb(213,96,255));else->color}
+            return MaterialCardView(this).apply {
+                radius=px(24).toFloat(); strokeWidth=px(2); strokeColor=tokenColor
+                setCardBackgroundColor(if(light) Color.argb(168,72,88,112) else Color.argb(188,9,15,31)); cardElevation=px(if(light) 8 else 3).toFloat()
+                if(light){ elevation=px(8).toFloat();outlineAmbientShadowColor=tokenColor;outlineSpotShadowColor=tokenColor }
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(14)) }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.VERTICAL; setPadding(px(16),px(15),px(16),px(12))
                     addView(LinearLayout(this@MainActivity).apply {
                         orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
-                        addView(TextView(this@MainActivity).apply { text=glyph+"  "+name.uppercase(); textSize=12f; letterSpacing=.08f; setTextColor(color); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                        addView(TextView(this@MainActivity).apply { text=value; textSize=22f; setTextColor(if(light) Color.rgb(20,31,62) else Color.WHITE); setTypeface(typeface,Typeface.BOLD); setShadowLayer(px(7).toFloat(),0f,0f,Color.argb(75,Color.red(color),Color.green(color),Color.blue(color))) })
+                        addView(TextView(this@MainActivity).apply { text=glyph+"  "+name.uppercase(); textSize=12f; letterSpacing=.08f; setTextColor(tokenColor); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
+                        addView(TextView(this@MainActivity).apply { text=value; textSize=22f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setShadowLayer(px(7).toFloat(),0f,0f,Color.argb(75,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor))) })
                     })
                     if(points.isNotEmpty()) {
                         addView(TextView(this@MainActivity).apply {
                             text="●  "+points.size.toString()+" Messpunkte  ·  Garmin"
-                            textSize=9f; setTextColor(Color.argb(175,Color.red(color),Color.green(color),Color.blue(color))); setPadding(0,px(4),0,0)
+                            textSize=9f; setTextColor(Color.argb(175,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor))); setPadding(0,px(4),0,0)
                         })
                         val min=points.minOf { it.value }; val max=points.maxOf { it.value }
                         fun fv(v:Double)=if(kotlin.math.abs(v-kotlin.math.round(v))<0.05) kotlin.math.round(v).toInt().toString() else String.format(java.util.Locale.GERMANY,"%.1f",v)
                         val unit=when(name) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
                         addView(TextView(this@MainActivity).apply {
                             text="MIN  "+fv(min)+" "+unit+"     •     MAX  "+fv(max)+" "+unit
-                            textSize=10f; letterSpacing=.05f; setTextColor(if(light) Color.rgb(88,101,132) else Color.rgb(154,164,191)); setPadding(0,px(7),0,px(2))
+                            textSize=10f; letterSpacing=.05f; setTextColor(if(light) Color.rgb(220,228,245) else Color.rgb(154,164,191)); setPadding(0,px(7),0,px(2))
                         })
                     }
-                    addView(SleepMetricChartView(this@MainActivity,color,name,s.startMs,s.endMs,points))
+                    addView(SleepMetricChartView(this@MainActivity,tokenColor,name,s.startMs,s.endMs,points))
                 })
             }
+        }
         fun n(v:Double?,suffix:String)=v?.let { String.format(java.util.Locale.GERMANY,"%.1f %s",it,suffix) } ?: "–"
         val cards=listOf(
             chartCard("Puls","❤️",Color.rgb(255,82,126),n(s.avgHr,"bpm"),s.heartRateSeries),
@@ -1779,7 +1783,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         )
         sleepCard.addView(TextView(this).apply {
             text="NACHTVERLAUF  ·  "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.startMs))+" – "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))
-            textSize=10f; letterSpacing=.08f; setTextColor(if(light) Color.rgb(75,91,126) else Color.rgb(112,122,153)); setPadding(px(2),0,0,px(10))
+            textSize=10f; letterSpacing=.08f; setTextColor(if(light) Color.rgb(210,222,244) else Color.rgb(112,122,153)); setPadding(px(2),0,0,px(10))
         })
         cards.forEach { sleepCard.addView(it) }
         cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
