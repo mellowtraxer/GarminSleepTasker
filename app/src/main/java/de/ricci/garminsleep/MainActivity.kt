@@ -1796,25 +1796,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     text=statusText;textSize=12f
                     setTextColor(if(light) Color.rgb(235,240,252) else muted)
                 },LinearLayout.LayoutParams(0,-2,1f))
-                addView(LinearLayout(this@MainActivity).apply {
-                    orientation=LinearLayout.VERTICAL
+                addView(TextView(this@MainActivity).apply {
+                    text=if(lastAuto>0) "✓  Eingetragen" else if(calendarAutoEnabled()) "●  Aktiv" else "○  Pausiert"
+                    textSize=11f
+                    setTypeface(typeface,Typeface.BOLD)
+                    setTextColor(if(calendarAutoEnabled()) Color.rgb(106,240,199) else muted)
                     gravity=android.view.Gravity.CENTER
-                    setPadding(dp(11),dp(10),dp(11),dp(10))
+                    setPadding(dp(11),dp(7),dp(11),dp(7))
                     background=GradientDrawable().apply {
-                        cornerRadius=dp(16).toFloat()
-                        setColor(Color.rgb(13,35,51))
-                        setStroke(dp(1),Color.rgb(67,195,190))
+                        cornerRadius=dp(30).toFloat()
+                        setColor(Color.argb(230,14,39,48))
+                        setStroke(dp(1),Color.argb(180,65,204,178))
                     }
-                    addView(TextView(this@MainActivity).apply {
-                        text=if(lastAuto>0) "✓" else "◉"
-                        textSize=24f;gravity=android.view.Gravity.CENTER
-                        setTextColor(Color.rgb(100,241,213))
-                    })
-                    addView(TextView(this@MainActivity).apply {
-                        text=if(lastAuto>0) "Eintrag erfolgt" else "Prüfung aktiv"
-                        textSize=10f;setTextColor(primary)
-                    })
-                },LinearLayout.LayoutParams(dp(112),-2).apply { leftMargin=dp(7) })
+                },LinearLayout.LayoutParams(-2,-2).apply { leftMargin=dp(8) })
             })
         })
     }
