@@ -2672,25 +2672,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             Triple("Dynamisch",Color.rgb(140,82,250),Color.rgb(27,217,243))
         )
         val currentAccent=p.getInt("accent",defs[0])
-        val colorGrid=GridLayout(this).apply{columnCount=4;rowCount=2}
+        val colorGrid=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
         palettes.forEachIndexed{index,(name,primary,secondary)->
             val selected=currentAccent==primary
             val tile=LinearLayout(this).apply{
                 orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
                 setPadding(dp(3),dp(11),dp(3),dp(9))
-                background=GradientDrawable().apply{
-                    cornerRadius=dp(17).toFloat()
-                    setColor(Color.argb(185,15,21,49))
-                    if(selected)setStroke(dp(2),Color.rgb(111,236,255))
-                    else setStroke(dp(1),Color.argb(80,137,133,221))
-                }
+                background=null
                 val orb=android.widget.FrameLayout(this@MainActivity).apply{
                     background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
                         Color.WHITE,primary,secondary,Color.rgb(21,15,62)
                     )).apply{shape=GradientDrawable.OVAL;setStroke(dp(if(selected) 3 else 2),if(selected Color.rgb(128,248,255) else Color.argb(205,255,255,255))}
-                    elevation=dp(if(selected) 11 else 5).toFloat()
+                    elevation=dp(if(selected) 16 else 7).toFloat()
                 }
-                addView(orb,LinearLayout.LayoutParams(dp(49),dp(49)))
+                addView(orb,LinearLayout.LayoutParams(dp(68),dp(68)))
                 addView(TextView(this@MainActivity).apply{
                     text=name;textSize=10f;gravity=android.view.Gravity.CENTER
                     setTextColor(if(selected) Color.rgb(130,236,255) else Color.WHITE)
@@ -2702,11 +2697,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     showDesignStudio()
                 }
             }
-            colorGrid.addView(tile,GridLayout.LayoutParams(
-                GridLayout.spec(index/4),GridLayout.spec(index%4)
-            ).apply{width=0;height=dp(103);columnSpec=GridLayout.spec(index%4,1f);setMargins(dp(3),dp(3),dp(3),dp(3))})
+            colorGrid.addView(tile,LinearLayout.LayoutParams(dp(94),dp(112)).apply{setMargins(dp(3),dp(3),dp(3),dp(3))})
         }
-        sleepCard.addView(colorGrid,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(13)})
+        sleepCard.addView(android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(colorGrid)},LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(13)})
         // Live preview
         sleepCard.addView(eightbitlab.com.blurview.BlurView(this).apply{val tone=designColor("accent2",defs[1]);background=opticsGlassBackground(tone);outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))};layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,Color.red(defs[i]),Color.green(defs[i]),Color.blue(defs[i])));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
