@@ -2032,9 +2032,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             override fun onDraw(canvas:Canvas) {
                 val w=width.toFloat();val h=height.toFloat()
                 if(w<=0f||h<=0f)return
-                val cx=w*(if(moon) .78f else .82f)
+                val cx=w*(if(moon) .76f else .78f)
                 val cy=h*(if(moon) .53f else .55f)
-                val radius=minOf(w,h)*(if(moon) .33f else .39f)
+                val radius=minOf(w,h)*(if(moon) .255f else .30f)
                 p.shader=android.graphics.RadialGradient(cx,cy,radius*2.05f,
                     intArrayOf(Color.argb(160,96,42,198),Color.argb(100,28,100,181),Color.TRANSPARENT),
                     floatArrayOf(0f,.49f,1f),Shader.TileMode.CLAMP)
@@ -2087,9 +2087,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(LinearLayout(this@MainActivity).apply{
             orientation=LinearLayout.VERTICAL
             setPadding(dp(23),dp(25),dp(23),dp(23))
-            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                Color.rgb(15,17,53),Color.rgb(33,15,72),Color.rgb(6,34,63)
-            )).apply{cornerRadius=dp(29).toFloat();setStroke(dp(2),cyan)}
             addView(TextView(this@MainActivity).apply{
                 text="✦  SLEEPSYNC / YOUR UNIVERSE";textSize=10f;letterSpacing=.14f
                 setTypeface(typeface,Typeface.BOLD);setTextColor(cyan)
