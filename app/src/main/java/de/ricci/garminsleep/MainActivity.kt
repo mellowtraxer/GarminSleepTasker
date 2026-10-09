@@ -2276,7 +2276,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val light=theme=="light" || (theme=="system" && !sysDark)
         val primary=Color.WHITE
         val secondary=if(light) Color.rgb(225,232,248) else Color.rgb(165,175,205)
-        val timeColor=if(light) Color.rgb(210,222,244) else Color.rgb(135,147,180)
+        val timeColor=if(light) Color.rgb(240,245,255) else Color.rgb(184,198,225)
         val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
         fun fmtMin(m:Long)=if(m>=60) (m/60).toString()+" h "+(m%60).toString()+" min" else m.toString()+" min"
         pageTitle.text="Schlafphasen"; pageSubtitle.text="Die Architektur deiner Nacht"
@@ -2287,7 +2287,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
             background=LayerDrawable(arrayOf(
                 GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(42,Color.red(accent2),Color.green(accent2),Color.blue(accent2)))},
-                GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(accent2),Color.green(accent2),Color.blue(accent2)))}
+                GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(accent2),Color.green(accent2),Color.blue(accent2)))},
+                GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(if(light) 60 else 22,255,255,255),Color.TRANSPARENT,Color.argb(if(light) 35 else 20,6,8,25))).apply{cornerRadius=dp(22).toFloat()}
             ))
             if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
@@ -2338,10 +2339,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         ));layoutParams=LinearLayout.LayoutParams(0,dp(if(active)44 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply{gravity=android.view.Gravity.CENTER_VERTICAL;setMargins(if(active)dp(1) else 0,0,if(active)dp(1) else 0,0)}}
                         intervals.forEach{st->if(st.startMs>cursor)addView(seg(st.startMs-cursor,false));addView(seg(st.endMs-st.startMs,true));cursor=st.endMs};if(cursor<s.endMs)addView(seg(s.endMs-cursor,false))
                     })
+                    if(intervals.isEmpty()) addView(TextView(this@MainActivity).apply {
+                        text="Keine Wachphasen erkannt"
+                        textSize=12f;setTextColor(secondary);gravity=android.view.Gravity.CENTER
+                        setPadding(0,dp(12),0,dp(12))
+                    })
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(7),0,0)
-                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs));textSize=9f;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
-                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2));textSize=9f;gravity=android.view.Gravity.CENTER;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
-                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.endMs));textSize=9f;gravity=android.view.Gravity.END;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs));textSize=10f;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2));textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.endMs));textSize=10f;gravity=android.view.Gravity.END;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
                     })
                 })
             })
