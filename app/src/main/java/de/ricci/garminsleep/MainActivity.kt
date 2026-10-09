@@ -691,10 +691,74 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         shell.addView(shellContent,android.widget.FrameLayout.LayoutParams(-1,-2))
         shellContent.addView(TextView(this).apply{text="📅  ZIELKALENDER";textSize=18f;setTextColor(stageRem);setTypeface(typeface,Typeface.BOLD);setPadding(0,0,0,dp(4))})
         shellContent.addView(TextView(this).apply{text="Wohin soll SleepSync deine Nächte schreiben?";textSize=12f;setTextColor(secondary);setPadding(0,0,0,dp(12))})
-        val list=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
-        val dialog=AlertDialog.Builder(this).setView(ScrollView(this).apply{background=ColorDrawable(Color.TRANSPARENT);addView(shell)}).create()
-        items.forEach{item->val selected=item.first==selectedId;list.addView(TextView(this).apply{text=(if(selected) "✓  " else "")+item.second+"\n"+item.third;textSize=14f;setTextColor(primary);setPadding(dp(14),dp(11),dp(14),dp(11));background=GradientDrawable().apply{cornerRadius=dp(13).toFloat();setColor(if(light) (if(selected) Color.argb(designGlassAlpha(),83,62,145) else Color.argb(designGlassAlpha(),72,88,112)) else Color.argb(120,40,29,70));setStroke(if(selected) dp(2) else dp(1),if(selected) stageRem else Color.argb(80,stageRem shr 16 and 255,stageRem shr 8 and 255,stageRem and 255))};layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(7))};setOnClickListener{getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit().putLong("calendar_id",item.first).putString("calendar_name",item.second).putString("calendar_account",item.third).apply();dialog.dismiss();showCalendarPlaceholder()}})}
-        shellContent.addView(list);dialog.setOnShowListener{dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));dialog.window?.decorView?.setLayerType(View.LAYER_TYPE_SOFTWARE,null)};dialog.show()
+        val dialog=AlertDialog.Builder(this).create()
+        val list=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
+        val scroll=ScrollView(this).apply {
+            isFillViewport=false
+            clipToPadding=false
+            addView(list)
+        }
+        // Keep the header visible and the list comfortably scrollable on smaller phones.
+        shellContent.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+        val ordered=items.sortedWith(compareByDescending<Triple<Long,String,String>> { it.first==selectedId }.thenBy { it.second.lowercase() })
+        ordered.forEach { item ->
+            val selected=item.first==selectedId
+            val row=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                gravity=android.view.Gravity.CENTER_VERTICAL
+                setPadding(dp(13),dp(12),dp(12),dp(12))
+                background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,if(selected)
+                    intArrayOf(Color.rgb(35,30,74),Color.rgb(20,35,61))
+                else intArrayOf(Color.rgb(18,26,45),Color.rgb(21,25,49))).apply {
+                    cornerRadius=dp(15).toFloat()
+                    setStroke(dp(if(selected) 2 else 1),if(selected) stageRem else Color.argb(85,110,130,180))
+                }
+                isClickable=true
+                isFocusable=true
+                setOnClickListener {
+                    getSharedPreferences("sleepsync_calendar",MODE_PRIVATE).edit()
+                        .putLong("calendar_id",item.first)
+                        .putString("calendar_name",item.second)
+                        .putString("calendar_account",item.third).apply()
+                    dialog.dismiss()
+                    showCalendarPlaceholder()
+                }
+            }
+            row.addView(TextView(this).apply {
+                text=if(selected) "✓" else "▢"
+                textSize=18f
+                setTextColor(if(selected) Color.rgb(170,115,255) else Color.rgb(94,109,145))
+                gravity=android.view.Gravity.CENTER
+            },LinearLayout.LayoutParams(dp(30),-2))
+            row.addView(LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                addView(TextView(this@MainActivity).apply {
+                    text=item.second
+                    textSize=14f
+                    setTypeface(typeface,if(selected) Typeface.BOLD else Typeface.NORMAL)
+                    setTextColor(Color.WHITE)
+                    maxLines=2
+                    ellipsize=android.text.TextUtils.TruncateAt.END
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text=item.third
+                    textSize=11f
+                    setTextColor(Color.rgb(155,172,202))
+                    maxLines=1
+                    ellipsize=android.text.TextUtils.TruncateAt.MIDDLE
+                })
+            },LinearLayout.LayoutParams(0,-2,1f))
+            list.addView(row,LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(8)) })
+        }
+        val maxHeight=(resources.displayMetrics.heightPixels*0.76f).toInt()
+        dialog.setView(shell)
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            dialog.window?.setLayout((resources.displayMetrics.widthPixels*0.91f).toInt(),maxHeight)
+        }
+        dialog.show()
+        shell.layoutParams=android.view.ViewGroup.LayoutParams(-1,maxHeight)
+
     }
     private fun calendarPrefs()=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE)
     private fun calendarAutoEnabled()=calendarPrefs().getBoolean("auto_enabled",true)
