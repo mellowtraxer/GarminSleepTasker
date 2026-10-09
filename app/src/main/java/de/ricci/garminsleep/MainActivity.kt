@@ -2916,8 +2916,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             if(sweep<=0f)return@forEach
                             val tone=palette[phase.stageLabel.trim().lowercase()]?:Color.rgb(122,134,161)
                             ink.color=tone
-                            ink.strokeWidth=dp(5.5f+1.2f*breathWave)
-                            ink.setShadowLayer(dp(3f+10f*breathWave),0f,0f,tone)
+                            ink.strokeWidth=(resources.displayMetrics.density*(5.5f+1.2f*breathWave))
+                            ink.setShadowLayer((resources.displayMetrics.density*(3f+10f*breathWave)),0f,0f,tone)
                             canvas.drawArc(track,start-90f,sweep,false,ink)
                             ink.clearShadowLayer()
                             ink.strokeWidth=dp(1.2f.toInt()).toFloat()
@@ -2935,8 +2935,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         phaseValues.forEach { (minutes,tone) ->
                             val sweep=minutes.toFloat()/phaseSum*360f
                             ink.color=tone
-                            ink.strokeWidth=dp(3.7f+.7f*breathWave)
-                            ink.setShadowLayer(dp(2f+6f*breathWave),0f,0f,tone)
+                            ink.strokeWidth=(resources.displayMetrics.density*(3.7f+.7f*breathWave))
+                            ink.setShadowLayer((resources.displayMetrics.density*(2f+6f*breathWave)),0f,0f,tone)
                             canvas.drawArc(phaseTrack,phaseStart,sweep,false,ink)
                             ink.clearShadowLayer()
                             phaseStart+=sweep
@@ -2947,8 +2947,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         var start=-90f
                         values.forEach { (minutes,tone) ->
                             val sweep=minutes.toFloat()/total*360f
-                            ink.color=tone;ink.strokeWidth=dp(5.5f+1.2f*breathWave)
-                            ink.setShadowLayer(dp(3f+10f*breathWave),0f,0f,tone)
+                            ink.color=tone;ink.strokeWidth=(resources.displayMetrics.density*(5.5f+1.2f*breathWave))
+                            ink.setShadowLayer((resources.displayMetrics.density*(3f+10f*breathWave)),0f,0f,tone)
                             canvas.drawArc(track,start,sweep,false,ink)
                             ink.clearShadowLayer()
                             start+=sweep
