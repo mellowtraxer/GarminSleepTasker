@@ -1895,7 +1895,26 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         setPadding(dp(8),0,0,0)
                     })
                 }
+                val details=TextView(this@MainActivity).apply {
+                    text="LEICHT  ${s0.lightMin/60}h ${s0.lightMin%60}m    ·    TIEF  ${s0.deepMin/60}h ${s0.deepMin%60}m\nREM  ${s0.remMin/60}h ${s0.remMin%60}m    ·    WACH  ${s0.awakeMin/60}h ${s0.awakeMin%60}m"
+                    textSize=11f;setTextColor(primary)
+                    setPadding(dp(14),dp(10),dp(10),dp(12))
+                    visibility=View.GONE
+                    background=GradientDrawable().apply {
+                        cornerRadius=dp(12).toFloat()
+                        setColor(Color.argb(120,17,27,57))
+                        setStroke(dp(1),Color.argb(110,104,229,213))
+                    }
+                }
+                row.isClickable=true
+                row.contentDescription="Schlafdetails anzeigen oder ausblenden"
+                row.setOnClickListener {
+                    val opening=details.visibility!=View.VISIBLE
+                    details.visibility=if(opening) View.VISIBLE else View.GONE
+                    if(opening) { details.alpha=0f;details.animate().alpha(1f).setDuration(220).start() }
+                }
                 addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(6) })
+                addView(details,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(7) })
                 if(android.animation.ValueAnimator.areAnimatorsEnabled()) {
                     row.alpha=0f
                     row.animate().alpha(1f).setStartDelay(index*55L).setDuration(250L).start()
