@@ -2545,6 +2545,64 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setTextColor(Color.rgb(116,235,205));setPadding(0,dp(19),0,0)
             })
         },LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(3),0,dp(16))})
+        val activeWallpaper=p.getString("wallpaper_source","builtin") ?: "builtin"
+        val wallpaperFile=when(activeWallpaper) {
+            "dreamscape" -> File(filesDir,"sleepsync_dreamscape.png")
+            "custom" -> File(filesDir,"sleepsync_custom_wallpaper")
+            else -> null
+        }
+        val previewFrame=android.widget.FrameLayout(this).apply {
+            background=opticsGlassBackground(Color.rgb(99,213,255),27)
+            clipToOutline=true
+            outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+            layoutParams=LinearLayout.LayoutParams(-1,dp(255)).apply{setMargins(0,0,0,dp(14))}
+        }
+        val previewImage=android.widget.ImageView(this).apply {
+            scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
+            if(p.getBoolean("wallpaper_enabled",true) && wallpaperFile?.exists()==true) {
+                setImageURI(Uri.fromFile(wallpaperFile))
+            } else {
+                setImageDrawable(GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(
+                    Color.rgb(9,12,29),Color.rgb(40,17,85),Color.rgb(13,72,106),Color.rgb(5,8,24)
+                )))
+            }
+        }
+        previewFrame.addView(previewImage,android.widget.FrameLayout.LayoutParams(-1,-1))
+        previewFrame.addView(View(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
+                Color.TRANSPARENT,Color.argb(140,4,8,29),Color.rgb(7,10,29)
+            ))
+        },android.widget.FrameLayout.LayoutParams(-1,-1))
+        previewFrame.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(20),dp(15),dp(20),dp(19))
+            addView(TextView(this@MainActivity).apply {
+                text="✦  AKTUELLES WALLPAPER";textSize=10f;letterSpacing=.13f
+                setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(116,235,255))
+            })
+            addView(android.widget.Space(this@MainActivity),LinearLayout.LayoutParams(1,0,1f))
+            addView(TextView(this@MainActivity).apply {
+                text=when {
+                    !p.getBoolean("wallpaper_enabled",true) -> "OLED Black"
+                    activeWallpaper=="dreamscape" -> "DreamScape"
+                    activeWallpaper=="custom" -> "Dein Wallpaper"
+                    else -> "SleepSync Cosmos"
+                }
+                textSize=25f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
+                setShadowLayer(dp(10).toFloat(),0f,0f,Color.rgb(92,89,230))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="Dein Schlafkosmos. In deinem Licht."
+                textSize=12f;setTextColor(Color.rgb(209,227,247))
+                setPadding(0,dp(4),0,dp(12))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="✦  WALLPAPER UNTEN AUSWÄHLEN  ↓"
+                textSize=11f;setTypeface(typeface,Typeface.BOLD)
+                setTextColor(Color.rgb(104,231,255))
+            })
+        },android.widget.FrameLayout.LayoutParams(-1,-1))
+        sleepCard.addView(previewFrame)
         sleepCard.addView(TextView(this).apply {
             text="DEINE FARBWELT";textSize=11f;letterSpacing=.15f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(160,177,255))
