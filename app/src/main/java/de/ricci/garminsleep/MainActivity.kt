@@ -2870,6 +2870,56 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val tf = java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault())
         sleepCard.removeAllViews()
         sleepCard.background = null
+        // Organize the overview without discarding any of the existing interactive cards.
+        fun collapseDashboardSection(start:Int,heading:String,summary:String,tone:Int) {
+            val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
+            while(sleepCard.childCount>start) {
+                val child=sleepCard.getChildAt(start)
+                sleepCard.removeViewAt(start)
+                details.addView(child)
+            }
+            val header=LinearLayout(this).apply {
+                orientation=LinearLayout.HORIZONTAL
+                gravity=android.view.Gravity.CENTER_VERTICAL
+                setPadding(dp(15),dp(15),dp(13),dp(15))
+                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(Color.argb(226,24,31,59),Color.argb(219,16,23,46))).apply {
+                    cornerRadius=dp(21).toFloat()
+                    setStroke(dp(1),tone)
+                }
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.VERTICAL
+                    layoutParams=LinearLayout.LayoutParams(0,-2,1f)
+                    addView(TextView(this@MainActivity).apply {
+                        text=heading;textSize=14f;setTypeface(typeface,Typeface.BOLD)
+                        setTextColor(Color.WHITE)
+                    })
+                    addView(TextView(this@MainActivity).apply {
+                        text=summary;textSize=11f
+                        setTextColor(Color.rgb(192,205,232))
+                        setPadding(0,dp(5),0,0)
+                    })
+                })
+                val arrow=TextView(this@MainActivity).apply {
+                    text="⌄";textSize=24f;setTextColor(tone)
+                    gravity=android.view.Gravity.CENTER
+                    setPadding(dp(10),0,dp(3),0)
+                }
+                addView(arrow)
+                isClickable=true;isFocusable=true
+                contentDescription="$heading, Details anzeigen oder ausblenden"
+                setOnClickListener {
+                    val open=details.visibility!=View.VISIBLE
+                    details.visibility=if(open)View.VISIBLE else View.GONE
+                    arrow.text=if(open)"⌃" else "⌄"
+                }
+            }
+            sleepCard.addView(header,LinearLayout.LayoutParams(-1,-2).apply {
+                setMargins(dp(4),dp(12),dp(4),dp(5))
+            })
+            sleepCard.addView(details)
+        }
+
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val light=theme=="light" || (theme=="system" && !sysDark)
@@ -3050,6 +3100,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(metricCard("👀","Wach",fmt(s.awakeMin), onClick={ showAllStageTimelines(s) }, sleep=s))
         }
         sleepCard.addView(stages)
+        val healthSectionStart=sleepCard.childCount
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(8),dp(4),dp(4))
             addView(TextView(this@MainActivity).apply { text="GESUNDHEITSWERTE"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else accent2); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
@@ -3075,6 +3126,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(TextView(this@MainActivity).apply { text="GARMIN"; textSize=9f; letterSpacing=.12f; setTypeface(typeface,Typeface.BOLD); setTextColor(accent2) })
             })
         })
+        collapseDashboardSection(healthSectionStart,"GESUNDHEITSWERTE",
+            "Puls ${num(s.avgHr,"bpm")}  ·  SpO₂ ${num(s.avgSpo2,"%")}  ·  Atmung & HRV",accent2)
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(16),0,dp(7))
             addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
@@ -3101,6 +3154,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(4),dp(10),dp(4),0) }
         })
+        val dnaSectionStart=sleepCard.childCount
         // Sleep DNA 2.0: a touch-driven fingerprint, entirely derived from measured intervals.
         val dnaSegments=s.stageSeries.filter { it.endMs>it.startMs && it.endMs>s.startMs && it.startMs<s.endMs }
             .sortedBy { it.startMs }
@@ -3441,6 +3495,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         }
 
+
+        collapseDashboardSection(dnaSectionStart,"SLEEPDNA  ·  DEINE NACHTSIGNATUR",
+            "Interaktiver Schlafring · Phasenanalyse · 7-Nächte-Trend",stageRem)
 
         makeOverviewTextWhite(sleepCard)
     }
