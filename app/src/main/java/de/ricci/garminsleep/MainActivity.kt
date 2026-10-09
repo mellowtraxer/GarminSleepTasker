@@ -1657,7 +1657,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     gravity=android.view.Gravity.CENTER_VERTICAL
                     addView(HistoryMoonView(this@MainActivity,s.totalMin,stageRem).apply {
                         contentDescription="SleepMoon · Vorschau der letzten Nacht"
-                    },LinearLayout.LayoutParams(dp(84),dp(84)).apply { rightMargin=dp(14) })
+                    },LinearLayout.LayoutParams(dp(104),dp(104)).apply { rightMargin=dp(16) })
                     addView(TextView(this@MainActivity).apply {
                         text=fmt(s.totalMin)+"\n"+tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs))+"\n"+DateTimeFormatter.ofPattern("EEE, dd. MMMM",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(s.endMs))
                         textSize=19f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)
@@ -1697,13 +1697,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
             })
         })
-        sleepCard.addView(MaterialButton(this).apply{
-            text="▣   JETZT EINTRAGEN   ❯";isAllCaps=false;textSize=16f;setTypeface(typeface,Typeface.BOLD)
+        val actionButton=MaterialButton(this).apply{
+            text="▣    JETZT EINTRAGEN    ❯";isAllCaps=false;textSize=16f;setTypeface(typeface,Typeface.BOLD)
             setTextColor(Color.WHITE)
-            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(designGlassAlpha(),46,62,150) else Color.rgb(81,44,170))
-            strokeWidth=dp(2)
+            backgroundTintList=ColorStateList.valueOf(Color.TRANSPARENT)
+            strokeWidth=0
             strokeColor=ColorStateList.valueOf(if(light) Color.rgb(95,125,255) else Color.rgb(117,209,255))
-            cornerRadius=dp(18);elevation=dp(4).toFloat();layoutParams=LinearLayout.LayoutParams(-1,dp(66)).apply{setMargins(0,0,0,dp(12))}
+            cornerRadius=dp(18);insetTop=0;insetBottom=0;layoutParams=android.widget.FrameLayout.LayoutParams(-1,-1)
             setOnClickListener{
                 animate().scaleX(.975f).scaleY(.975f).setDuration(90).withEndAction {
                     animate().scaleX(1f).scaleY(1f).setDuration(190).start()
@@ -1718,7 +1718,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     else -> text="⚠  Eintrag fehlgeschlagen"
                 }
             }
-        })
+        }
+        sleepCard.addView(android.widget.FrameLayout(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(
+                Color.rgb(19,103,166),Color.rgb(56,48,167),Color.rgb(143,31,194)
+            )).apply { cornerRadius=dp(19).toFloat();setStroke(dp(2),Color.rgb(118,212,255)) }
+            elevation=dp(5).toFloat()
+            addView(actionButton)
+        },LinearLayout.LayoutParams(-1,dp(72)).apply { setMargins(0,dp(4),0,dp(14)) })
         sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
             val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ⌄";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),38,46,92) else Color.argb(205,26,24,63));setStroke(dp(1),stageRem)};isClickable=true;setOnClickListener{chooseCalendar()}})
             addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere verfügbare Android-Kalender";textSize=11f;setTextColor(muted);setPadding(0,dp(10),0,0)})
