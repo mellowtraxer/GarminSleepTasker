@@ -3545,6 +3545,67 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
 
 
+        // Personal 14-night signature: compare with earlier recorded nights only.
+        val dna14=(sleepHistory+listOf(s)).distinctBy { it.endMs }
+            .filter { it.totalMin>0L && it.endMs<=s.endMs }
+            .sortedByDescending { it.endMs }.take(14)
+        val dna14Baseline=dna14.filter { it.endMs!=s.endMs }
+        if(dna14Baseline.size>=3) {
+            val typicalMinutes=dna14Baseline.map { it.totalMin.toDouble() }.average().toLong()
+            val deviation=s.totalMin-typicalMinutes
+            val typicalDeep=dna14Baseline.filter { it.lightMin+it.deepMin+it.remMin>0L }
+            val typicalRem=typicalDeep
+            val stageAvailable=s.lightMin+s.deepMin+s.remMin>0L && typicalDeep.size>=3
+            fun fmtDNA(minutes:Long)="$"+"{minutes/60} h $"+"{(minutes%60).toString().padStart(2,'0')} min"
+            val dnaSignature=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                setPadding(dp(17),dp(15),dp(17),dp(15))
+                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(Color.argb(226,32,24,66),Color.argb(218,12,37,55))).apply {
+                    cornerRadius=dp(20).toFloat()
+                    setStroke(dp(1),Color.argb(155,178,112,247))
+                }
+                addView(TextView(this@MainActivity).apply {
+                    text="SLEEPDNA  ·  DEINE 14-NÄCHTE-SIGNATUR"
+                    textSize=12f;letterSpacing=.08f
+                    setTypeface(typeface,Typeface.BOLD)
+                    setTextColor(Color.rgb(212,164,255))
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text="Typische Schlafdauer: $"+"{fmtDNA(typicalMinutes)}"
+                    textSize=13f;setTypeface(typeface,Typeface.BOLD)
+                    setTextColor(Color.WHITE)
+                    setPadding(0,dp(10),0,dp(5))
+                })
+                val deviationLabel=when {
+                    kotlin.math.abs(deviation)<10L -> "Diese Nacht liegt nahe an deinem bisherigen Durchschnitt."
+                    deviation>0L -> "Diese Nacht: $"+ "{deviation} min länger als dein bisheriger Durchschnitt."
+                    else -> "Diese Nacht: $"+ "{-deviation} min kürzer als dein bisheriger Durchschnitt."
+                }
+                addView(TextView(this@MainActivity).apply {
+                    text=deviationLabel;textSize=12f
+                    setTextColor(Color.rgb(196,222,247))
+                })
+                if(stageAvailable) {
+                    val avgDeep=typicalDeep.map { it.deepMin.toDouble() }.average().toLong()
+                    val avgRem=typicalRem.map { it.remMin.toDouble() }.average().toLong()
+                    addView(TextView(this@MainActivity).apply {
+                        text="Typischer Tiefschlaf: $"+"{fmtDNA(avgDeep)}  ·  REM: $"+"{fmtDNA(avgRem)}"
+                        textSize=11f;setTextColor(Color.rgb(210,191,252))
+                        setPadding(0,dp(9),0,0)
+                    })
+                }
+                addView(TextView(this@MainActivity).apply {
+                    text="Dein persönlicher Vergleich mit $"+"{dna14Baseline.size} früheren Nächten · kein medizinischer Referenzwert"
+                    textSize=10f;setTextColor(Color.rgb(166,183,209))
+                    setPadding(0,dp(11),0,0)
+                })
+            }
+            sleepCard.addView(dnaSignature,LinearLayout.LayoutParams(-1,-2).apply {
+                setMargins(dp(4),dp(8),dp(4),dp(9))
+            })
+        }
+
         collapseDashboardSection(dnaSectionStart,"SLEEPDNA  ·  DEINE NACHTSIGNATUR",
             "Interaktiver Schlafring · Phasenanalyse · 7-Nächte-Trend",stageRem)
 
