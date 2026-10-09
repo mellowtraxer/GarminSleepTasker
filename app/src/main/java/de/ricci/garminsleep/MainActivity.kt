@@ -1983,205 +1983,143 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     }
     private fun showSettings() {
-        val d = resources.displayMetrics.density
-        fun dp(v: Int) = (v * d).toInt()
-        actionsTitle.visibility = View.VISIBLE
-        actionsBox.visibility = View.VISIBLE
-        pageTitle.text = "Einstellungen"
-        pageSubtitle.text = "Verbindungen, Automatik & Darstellung"
+        val density=resources.displayMetrics.density
+        fun dp(n:Int)=(n*density).toInt()
+        pageTitle.text="SleepSync"
+        pageSubtitle.text="CONTROL CENTER"
+        actionsTitle.visibility=View.GONE
+        actionsBox.visibility=View.GONE
         sleepCard.removeAllViews()
-        val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0); clipChildren=false; clipToPadding=false }
-        sleepCard.clipChildren=false
-        sleepCard.clipToPadding=false
-        val prefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
-        val selectedTheme=prefs.getString("theme","dark") ?: "dark"
-        val selectedThemeLabel=when(selectedTheme) { "light"->"Neon Sunrise"; "system"->"Automatisch"; else->"OLED Night" }
-        val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
-        val settingsLight=selectedTheme=="light" || (selectedTheme=="system" && !sysDark)
-        fun setting(icon:String, title:String, sub:String, color:Int, onClick:(() -> Unit)?=null) {
-            val fill = if(settingsLight) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb((Color.red(color)*0.14f).toInt()+8,(Color.green(color)*0.14f).toInt()+8,(Color.blue(color)*0.14f).toInt()+12)
-            val glowSpace=if(settingsLight) dp(14) else 0
-            val host=android.widget.FrameLayout(this).apply {
-                clipChildren=false
-                clipToPadding=false
-                layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply{
-                    setMargins(dp(4),dp(9),dp(4),dp(9))
-                }
-            }
-            run {
-                host.addView(object:View(this) {
-                    private val glowPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        style=Paint.Style.STROKE
-                        strokeWidth=dp(2).toFloat()
-                        strokeJoin=Paint.Join.ROUND
-                    }
-                    init { setLayerType(View.LAYER_TYPE_SOFTWARE,null) }
-                    override fun onDraw(canvas:Canvas) {
-                        super.onDraw(canvas)
-                        val inset=dp(1).toFloat()
-                        // Real neon aura: blur the alpha mask OUTSIDE the card contour.
-                        // This view is software-rendered so BlurMaskFilter is applied reliably.
-                        glowPaint.clearShadowLayer()
-                        glowPaint.style=Paint.Style.STROKE
-                        glowPaint.strokeWidth=dp(3).toFloat()
-                        glowPaint.color=Color.argb(if(settingsLight) 210 else 175,Color.red(color),Color.green(color),Color.blue(color))
-                        glowPaint.maskFilter=android.graphics.BlurMaskFilter(
-                            dp(14).toFloat(),
-                            android.graphics.BlurMaskFilter.Blur.OUTER
-                        )
-                        canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
-
-                        // Crisp neon core over the diffuse outer aura.
-                        glowPaint.maskFilter=null
-                        glowPaint.strokeWidth=dp(2).toFloat()
-                        glowPaint.color=color
-                        canvas.drawRoundRect(inset,inset,width-inset,height-inset,dp(22).toFloat(),dp(22).toFloat(),glowPaint)
-                    }
-                },android.widget.FrameLayout.LayoutParams(-1,-1))
-            }
-            val card=eightbitlab.com.blurview.BlurView(this).apply {
-                background=LayerDrawable(arrayOf(
-                    GradientDrawable().apply {
-                        cornerRadius=dp(22).toFloat()
-                        setColor(fill)
-                        setStroke(dp(4),Color.argb(42,Color.red(color),Color.green(color),Color.blue(color)))
-                    },
-                    GradientDrawable().apply {
-                        cornerRadius=dp(22).toFloat()
-                        setColor(Color.TRANSPARENT)
-                        setStroke(dp(2),Color.argb(255,Color.red(color),Color.green(color),Color.blue(color)))
-                    }
-                ))
-                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
-                isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
-                if(true) {
-                    outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-                    clipToOutline=true
-                    settingsBlurTarget?.let { target -> setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(if(settingsLight) Color.argb(designGlassOverlayAlpha(),72,88,112) else Color.argb(92,9,13,32)) }
-                }
-                addView(LinearLayout(this@MainActivity).apply {
-                    orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
-                    if(settingsLight) background=null
-                    addView(TextView(this@MainActivity).apply {
-                        text=icon; textSize=25f; gravity=android.view.Gravity.CENTER; setTextColor(if(settingsLight) Color.WHITE else color); setPadding(dp(6),dp(6),dp(6),dp(6))
-                        background=GradientDrawable().apply { cornerRadius=dp(15).toFloat(); setColor(Color.argb(205,Color.red(color),Color.green(color),Color.blue(color))); setStroke(dp(1),Color.argb(230,255,255,255)) }
-                        layoutParams=LinearLayout.LayoutParams(dp(50),dp(50)).apply { setMargins(0,0,dp(12),0) }
-                    })
-                    addView(LinearLayout(this@MainActivity).apply {
-                        orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
-                        addView(TextView(this@MainActivity).apply { text=title; textSize=15f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD) })
-                        addView(TextView(this@MainActivity).apply { text=sub; textSize=12f; setTextColor(if(settingsLight) Color.argb(210,245,248,255) else Color.rgb(166,172,202)); setPadding(0,dp(3),0,0) })
-                    })
-                    addView(TextView(this@MainActivity).apply { text="›"; textSize=28f; setTextColor(color) })
+        val ui=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
+        val mode=ui.getString("theme","dark") ?: "dark"
+        val themeLabel=when(mode){"light"->"Neon Sunrise";"system"->"Automatisch";else->"OLED Night"}
+        val cyan=Color.rgb(70,220,248)
+        val violet=Color.rgb(169,114,255)
+        val ink=Color.rgb(8,13,33)
+        val muted=Color.rgb(181,197,226)
+        fun panel(color:Int)=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+            Color.argb(244,9,16,40),Color.argb(238,20,16,52),Color.argb(246,7,13,31)
+        )).apply {cornerRadius=dp(24).toFloat();setStroke(dp(1),Color.argb(150,Color.red(color),Color.green(color),Color.blue(color)))}
+        fun label(t:String)=TextView(this).apply{
+            text=t;textSize=10f;letterSpacing=.17f;setTypeface(typeface,Typeface.BOLD)
+            setTextColor(cyan);setPadding(dp(6),dp(17),0,dp(10))
+        }
+        fun tile(symbol:String,title:String,subtitle:String,color:Int,click:()->Unit):LinearLayout {
+            return LinearLayout(this).apply{
+                orientation=LinearLayout.VERTICAL
+                setPadding(dp(16),dp(18),dp(14),dp(17))
+                background=panel(color)
+                isClickable=true;isFocusable=true
+                setOnClickListener{click()}
+                addView(TextView(this@MainActivity).apply{
+                    text=symbol;textSize=26f;setTextColor(color)
+                    setShadowLayer(dp(8).toFloat(),0f,0f,color)
+                })
+                addView(TextView(this@MainActivity).apply{
+                    text=title;textSize=17f;setTypeface(typeface,Typeface.BOLD)
+                    setTextColor(Color.WHITE);setPadding(0,dp(10),0,dp(5))
+                })
+                addView(TextView(this@MainActivity).apply{
+                    text=subtitle;textSize=11f;setTextColor(muted)
+                    maxLines=2
                 })
             }
-            host.addView(card)
-            settingsGrid.addView(host)
         }
-        // Distinct visual hierarchy: premium hero, featured controls and quiet utility footer.
-        val hero=LinearLayout(this).apply {
+        // Editorial masthead: the whole screen is a navigation dashboard, not a list of settings.
+        sleepCard.addView(LinearLayout(this).apply{
             orientation=LinearLayout.VERTICAL
-            setPadding(dp(23),dp(24),dp(23),dp(23))
+            setPadding(dp(23),dp(25),dp(23),dp(23))
             background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                Color.rgb(28,27,69),Color.rgb(12,27,54),Color.rgb(37,17,65)
-            )).apply { cornerRadius=dp(27).toFloat();setStroke(dp(2),accent2) }
-            addView(TextView(this@MainActivity).apply {
-                text="✦  DEIN SLEEPSYNC";textSize=11f;letterSpacing=.17f;setTextColor(stageRem)
-                setTypeface(typeface,Typeface.BOLD)
+                Color.rgb(15,17,53),Color.rgb(33,15,72),Color.rgb(6,34,63)
+            )).apply{cornerRadius=dp(29).toFloat();setStroke(dp(2),cyan)}
+            addView(TextView(this@MainActivity).apply{
+                text="✦  SLEEPSYNC / YOUR UNIVERSE";textSize=10f;letterSpacing=.14f
+                setTypeface(typeface,Typeface.BOLD);setTextColor(cyan)
             })
-            addView(TextView(this@MainActivity).apply {
-                text="Alles im Einklang.";textSize=25f;setTextColor(Color.WHITE)
-                setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(12),0,dp(8))
-                setShadowLayer(dp(10).toFloat(),0f,0f,accent2)
+            addView(TextView(this@MainActivity).apply{
+                text="Alles unter\neinem Himmel."
+                textSize=29f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
+                setPadding(0,dp(16),0,dp(11))
+                setShadowLayer(dp(14).toFloat(),0f,0f,violet)
             })
-            addView(TextView(this@MainActivity).apply {
-                text="Verbinde deine Daten, automatisiere deine Nächte und gestalte deinen persönlichen Schlafkosmos."
-                textSize=13f;setTextColor(Color.rgb(202,219,244));setLineSpacing(dp(3).toFloat(),1f)
+            addView(TextView(this@MainActivity).apply{
+                text="Dein Schlaf. Deine Daten. Dein Design."
+                textSize=13f;setTextColor(Color.rgb(212,223,248))
             })
-            addView(TextView(this@MainActivity).apply {
-                text="●  ${if(garminClient.isLinked()) "GARMIN VERBUNDEN" else "GARMIN NICHT VERBUNDEN"}    ✦  $selectedThemeLabel"
-                textSize=10f;letterSpacing=.05f;setTextColor(Color.rgb(124,235,219))
+            addView(TextView(this@MainActivity).apply{
+                text="●  ${if(garminClient.isLinked()) "GARMIN VERBUNDEN" else "GARMIN OFFLINE"}     ✦  $themeLabel"
+                textSize=10f;setTextColor(Color.rgb(119,237,215))
                 setPadding(0,dp(19),0,0)
             })
+        },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),dp(5),dp(3),dp(10))})
+        sleepCard.addView(label("✦  DEIN KOSMOS"))
+        val studio=tile("☾","DESIGN STUDIO","Wallpaper · Farben · Neon · Glas",violet){showDesignStudio()}
+        studio.addView(TextView(this).apply{
+            text="DEIN LOOK  →";textSize=12f;letterSpacing=.1f
+            setTypeface(typeface,Typeface.BOLD);setTextColor(cyan)
+            setPadding(0,dp(15),0,0)
+        })
+        sleepCard.addView(studio,LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),0,dp(3),dp(8))})
+        sleepCard.addView(label("✦  SCHNELLZUGRIFF"))
+        val quick=android.widget.GridLayout(this).apply{columnCount=2}
+        val quickItems=listOf(
+            tile("↻","UPDATES","Neue Version prüfen",cyan){checkForPreviewUpdate()},
+            tile("⚡","AUTOMATIK","Sync & Kalender",Color.rgb(255,183,104)){showAutomationSettings()},
+            tile("⌚","GARMIN","Verbindung & Daten",Color.rgb(116,206,255)){showGarminSettings()},
+            tile("♥","HEALTH CONNECT","Gesundheitsdaten",Color.rgb(245,119,191)){showHealthSettings()}
+        )
+        quickItems.forEachIndexed{i,v->
+            quick.addView(v,android.widget.GridLayout.LayoutParams(
+                android.widget.GridLayout.spec(i/2),android.widget.GridLayout.spec(i%2,1f)
+            ).apply{width=0;columnSpec=android.widget.GridLayout.spec(i%2,1f);setMargins(dp(3),dp(3),dp(3),dp(3))})
         }
-        sleepCard.addView(hero,LinearLayout.LayoutParams(-1,-2).apply {setMargins(dp(4),dp(5),dp(4),dp(18))})
-        fun sectionTitle(title:String,sub:String) {
-            settingsGrid.addView(LinearLayout(this).apply {
-                orientation=LinearLayout.VERTICAL;setPadding(dp(9),dp(15),dp(9),dp(5))
-                addView(TextView(this@MainActivity).apply {
-                    text=title;textSize=12f;letterSpacing=.15f;setTextColor(stageRem)
-                    setTypeface(typeface,Typeface.BOLD)
-                })
-                addView(TextView(this@MainActivity).apply {
-                    text=sub;textSize=12f;setTextColor(Color.rgb(172,190,220));setPadding(0,dp(4),0,0)
-                })
-            })
+        sleepCard.addView(quick)
+        sleepCard.addView(label("✦  SYSTEM & WERKZEUGE"))
+        fun compact(symbol:String,title:String,sub:String,color:Int,click:()->Unit) {
+            sleepCard.addView(LinearLayout(this).apply{
+                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
+                setPadding(dp(17),dp(15),dp(15),dp(15))
+                background=panel(color)
+                setOnClickListener{click()}
+                addView(TextView(this@MainActivity).apply{
+                    text=symbol;textSize=22f;setTextColor(color)
+                },LinearLayout.LayoutParams(dp(42),-2))
+                addView(LinearLayout(this@MainActivity).apply{
+                    orientation=LinearLayout.VERTICAL
+                    addView(TextView(this@MainActivity).apply{
+                        text=title;textSize=15f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
+                    })
+                    addView(TextView(this@MainActivity).apply{
+                        text=sub;textSize=11f;setTextColor(muted);setPadding(0,dp(3),0,0)
+                    })
+                },LinearLayout.LayoutParams(0,-2,1f))
+                addView(TextView(this@MainActivity).apply{text="›";textSize=25f;setTextColor(color)})
+            },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),dp(4),dp(3),dp(4))})
         }
-        sectionTitle("VERBINDUNGEN","Deine Datenquellen auf einen Blick")
-        val garminLabel=if(garminClient.isLinked()) "Verbunden · Schlafdaten synchronisieren" else "Nicht verbunden · Jetzt verbinden"
-        setting("⌚","Garmin Connect",garminLabel,accent2) { showGarminSettings() }
-        setting("♥","Health Connect","Berechtigungen & Gesundheitsdaten",stageRem) { showHealthSettings() }
-        sectionTitle("DEIN SCHLAFKOSMOS","Automatik und Design im Mittelpunkt")
-        setting("⚡","Automatik","Hintergrund-Sync & Kalender",stageAwake) { showAutomationSettings() }
-        setting("✦","Darstellung","$selectedThemeLabel · Wallpaper, Glow & Glas",accent) { showAppearanceSettings() }
-        sectionTitle("SLEEPSYNC SYSTEM","Privatsphäre, Wartung und Informationen")
-        setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight) { showPrivacySettings() }
-        setting("↻","Updates","Nach neuer SleepSync-Version suchen",Color.rgb(70,205,225)) { checkForPreviewUpdate() }
-        setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
-        sleepCard.addView(settingsGrid)
-        // Collapsible diagnostics: keep the settings page clean until explicitly opened.
-        var diagnosticsOpen=false
-        actionsTitle.text="DIAGNOSE   ›"
-        actionsTitle.setTextColor(if(settingsLight) Color.rgb(215,225,245) else stageAwake)
-        actionsTitle.textSize=11f
-        actionsTitle.letterSpacing=.14f
-        actionsTitle.setPadding(dp(4),dp(14),dp(4),dp(10))
-        actionsTitle.isClickable=true
-        actionsTitle.isFocusable=true
-
-        val diagnosticRed=Color.rgb(255,70,82)
-        listOf(0,1,2,3,4).forEach { i ->
-            val b=actionsBox.getChildAt(i) as? MaterialButton ?: return@forEach
-            b.cornerRadius=dp(18)
-            b.textSize=12f
-            b.minHeight=dp(48)
-            b.setTextColor(Color.WHITE)
-            b.backgroundTintList=ColorStateList.valueOf(
-                if(settingsLight) Color.argb(designGlassAlpha(),72,88,112) else Color.rgb(14,17,34)
-            )
-            b.strokeWidth=dp(2)
-            b.strokeColor=ColorStateList.valueOf(diagnosticRed)
-            // Keep the MaterialButton paint untouched so its label stays crisp.
-            // Use Android's software shadow only for the red outer aura.
-            b.setLayerType(View.LAYER_TYPE_SOFTWARE,null)
-            b.paint.maskFilter=null
-            b.setShadowLayer(
-                dp(8).toFloat(),
-                0f,
-                0f,
-                Color.argb(190,Color.red(diagnosticRed),Color.green(diagnosticRed),Color.blue(diagnosticRed))
-            )
-            b.layoutParams=(b.layoutParams ?: LinearLayout.LayoutParams(-1,-2)).apply {
-                height=dp(48)
-                if(this is LinearLayout.LayoutParams) setMargins(0,dp(5),0,dp(5))
-            }
-            b.visibility=View.GONE
+        compact("◈","Datenschutz","Lokale Daten & Berechtigungen",Color.rgb(131,189,255)){showPrivacySettings()}
+        compact("ⓘ","Über SleepSync","Version, Build & Informationen",violet){showAboutSettings()}
+        var toolsOpen=false
+        val toolContainer=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;visibility=View.GONE}
+        compact("⚙","TOOLS & DIAGNOSE","Verbindungen, Datenabruf und Systemprüfung",cyan){
+            toolsOpen=!toolsOpen
+            toolContainer.visibility=if(toolsOpen)View.VISIBLE else View.GONE
         }
-        actionsTitle.setOnClickListener {
-            diagnosticsOpen=!diagnosticsOpen
-            actionsTitle.text=if(diagnosticsOpen) "DIAGNOSE   ⌄" else "DIAGNOSE   ›"
-            listOf(0,1,2,3,4).forEach { i ->
-                actionsBox.getChildAt(i)?.visibility=if(diagnosticsOpen) View.VISIBLE else View.GONE
-            }
+        val toolNames=listOf("Health Connect · Berechtigungen","Garmin Connect · Verbinden","Garmin Connect · Trennen","Schlafdaten neu laden","App-Signatur anzeigen")
+        for(i in 0 until minOf(5,actionsBox.childCount)){
+            val original=actionsBox.getChildAt(i)
+            toolContainer.addView(TextView(this).apply{
+                text="↗   ${toolNames[i]}";textSize=13f;setTextColor(Color.rgb(213,232,250))
+                setPadding(dp(21),dp(15),dp(14),dp(15))
+                background=panel(Color.rgb(77,136,199))
+                setOnClickListener{original.performClick()}
+            },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(9),dp(3),dp(9),dp(3))})
         }
-        // showSettings() can be opened repeatedly; keep exactly one footer.
-        while(actionsBox.childCount>5) actionsBox.removeViewAt(actionsBox.childCount-1)
-        actionsBox.addView(TextView(this).apply {
-            text="😴\nSleep well."
-            textSize=12f
-            gravity=android.view.Gravity.CENTER
-            setTextColor(if(settingsLight) Color.argb(135,58,72,105) else Color.argb(125,175,185,215))
-            setPadding(0,dp(28),0,dp(24))
+        sleepCard.addView(toolContainer)
+        sleepCard.addView(TextView(this).apply{
+            text="NEVER GO BACK. ALWAYS FORWARD.  ✦"
+            textSize=10f;letterSpacing=.11f;gravity=android.view.Gravity.CENTER
+            setTextColor(Color.rgb(160,136,225))
+            setPadding(0,dp(30),0,dp(28))
         })
     }
 
