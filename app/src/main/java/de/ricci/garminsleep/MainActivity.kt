@@ -2604,6 +2604,59 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         },android.widget.FrameLayout.LayoutParams(-1,-1))
         sleepCard.addView(previewFrame)
         sleepCard.addView(TextView(this).apply {
+            text="WALLPAPER GALERIE";textSize=11f;letterSpacing=.16f
+            setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(165,196,255))
+            setPadding(dp(5),dp(4),0,dp(10))
+        })
+        val wallpaperGallery=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        listOf(
+            Triple("DreamScape","✦",Color.rgb(116,80,216)),
+            Triple("SleepSync","☾",Color.rgb(31,146,192)),
+            Triple("Eigenes","▧",Color.rgb(219,88,176)),
+            Triple("OLED","●",Color.rgb(39,47,76))
+        ).forEachIndexed{index,(name,symbol,tone)->
+            val selected=when(index){
+                0->activeWallpaper=="dreamscape" && p.getBoolean("wallpaper_enabled",true)
+                1->activeWallpaper=="builtin" && p.getBoolean("wallpaper_enabled",true)
+                2->activeWallpaper=="custom" && p.getBoolean("wallpaper_enabled",true)
+                else->!p.getBoolean("wallpaper_enabled",true)
+            }
+            wallpaperGallery.addView(LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
+                setPadding(dp(3),dp(13),dp(3),dp(12))
+                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                    tone,Color.rgb(11,14,35)
+                )).apply {
+                    cornerRadius=dp(16).toFloat()
+                    setStroke(dp(if(selected) 3 else 1),if(selected) Color.rgb(123,243,255) else tone)
+                }
+                addView(TextView(this@MainActivity).apply {
+                    text=symbol;textSize=29f;gravity=android.view.Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    setShadowLayer(dp(9).toFloat(),0f,0f,tone)
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text=name;textSize=10f;gravity=android.view.Gravity.CENTER
+                    setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
+                    setPadding(0,dp(8),0,0)
+                })
+                setOnClickListener {
+                    when(index) {
+                        0->{
+                            if(File(filesDir,"sleepsync_dreamscape.png").exists()){
+                                p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","dreamscape").putBoolean("custom_enabled",true).apply()
+                                showDesignStudio()
+                            } else generateDreamScape()
+                        }
+                        1->{p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();showDesignStudio()}
+                        2->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        3->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();showDesignStudio()}
+                    }
+                }
+            },LinearLayout.LayoutParams(0,dp(96),1f).apply{setMargins(dp(3),0,dp(3),dp(14))})
+        }
+        sleepCard.addView(wallpaperGallery)
+        sleepCard.addView(TextView(this).apply {
             text="DEINE FARBWELT";textSize=11f;letterSpacing=.15f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(160,177,255))
             setPadding(dp(5),dp(9),0,dp(10))
