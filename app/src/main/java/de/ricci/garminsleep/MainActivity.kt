@@ -2286,6 +2286,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     progress.show()
                     CoroutineScope(Dispatchers.Main).launch {
                         val devices=withContext(Dispatchers.IO) { runCatching { garminClient.devices() }.getOrDefault(emptyList()) }
+                        val insights=withContext(Dispatchers.IO) {
+                            runCatching { garminClient.dailyInsights(java.time.LocalDate.now()) }.getOrDefault(emptyList())
+                        }
                         progress.dismiss()
                         val message=if(devices.isEmpty())
                             "Garmin hat keine auswertbaren Geräteinformationen geliefert. Deine Schlafdatenverbindung bleibt unverändert."
@@ -2294,8 +2297,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                                 else d.details.joinToString("\n") { (label,value) -> "$label: $value" }
                             "⌚ ${d.name}\nModell: ${d.model ?: "Nicht verfügbar"}\nFirmware: ${d.firmware ?: "Nicht verfügbar"}\nLetzter Sync: ${d.lastSync ?: "Nicht verfügbar"}\n\nWEITERE GERÄTEDATEN\n$extra"
                         }
-                        AlertDialog.Builder(this@MainActivity).setTitle("Meine Garmin-Geräte")
-                            .setMessage(message).setPositiveButton("Fertig",null).show()
+                        val wellness=if(insights.isEmpty())
+                            "\n\nTAGESDATEN\nKeine zusätzlichen Garmin-Werte verfügbar."
+                        else "\n\nTAGESDATEN · HEUTE\n"+insights.joinToString("\n") { "${it.label}: ${it.value}" }
+                        AlertDialog.Builder(this@MainActivity).setTitle("Garmin Intelligence · Diagnose")
+                            .setMessage(message+wellness).setPositiveButton("Fertig",null).show()
                     }
                 }
             }
