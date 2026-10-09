@@ -207,6 +207,72 @@ private class MetricSparklineView(context:android.content.Context, private val p
 }
 
 
+private class HistoryMoonView(context:android.content.Context, private val sleepMinutes:Long, private val tint:Int):View(context){
+    private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
+    init{setLayerType(LAYER_TYPE_SOFTWARE,null);contentDescription="Schlafdauer-Symbol, keine astronomische Mondphase"}
+    override fun onDraw(c:Canvas){
+        super.onDraw(c)
+        val d=resources.displayMetrics.density
+        val r=kotlin.math.min(width,height)*.32f
+        val x=width*.5f;val y=height*.5f
+        val quality=when{sleepMinutes>=480L->3;sleepMinutes>=360L->2;sleepMinutes>=240L->1;else->0}
+        val glow=when(quality){3->Color.rgb(126,210,255);2->Color.rgb(135,125,255);1->Color.rgb(188,100,255);else->Color.rgb(126,110,177)}
+        paint.style=Paint.Style.FILL;paint.shader=null
+        paint.color=glow;paint.setShadowLayer(8f*d,0f,0f,glow)
+        c.drawCircle(x,y,r,paint);paint.clearShadowLayer()
+        paint.shader=android.graphics.RadialGradient(x-r*.35f,y-r*.4f,r*2f,
+            intArrayOf(Color.WHITE,glow,Color.argb(210,40,38,93)),
+            floatArrayOf(0f,.55f,1f),android.graphics.Shader.TileMode.CLAMP)
+        c.drawCircle(x,y,r,paint);paint.shader=null
+        if(quality<3){
+            paint.color=Color.rgb(16,22,43)
+            val cut=when(quality){2->.60f;1->.35f;else->.12f}
+            c.drawCircle(x+r*cut,y-r*.16f,r*.91f,paint)
+        }
+    }
+}
+
+private class HistoryWaveView(context:android.content.Context, private val tone:Int, private val values:List<Long>):View(context){
+    private val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeCap=Paint.Cap.ROUND;strokeJoin=Paint.Join.ROUND}
+    private var phase=0f
+    private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
+        duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
+        interpolator=android.view.animation.LinearInterpolator()
+        addUpdateListener{phase=it.animatedValue as Float;invalidate()}
+    }
+    init{setLayerType(LAYER_TYPE_SOFTWARE,null)}
+    override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
+    override fun onDetachedFromWindow(){animator.cancel();super.onDetachedFromWindow()}
+    override fun onDraw(c:Canvas){
+        super.onDraw(c);if(width<=0||height<=0)return
+        val d=resources.displayMetrics.density
+        val w=width.toFloat();val h=height.toFloat()
+        val points=if(values.size>=2)values else listOf(240L,300L,270L,360L,320L)
+        val min=points.minOrNull()?:0L;val max=points.maxOrNull()?:1L
+        val span=(max-min).coerceAtLeast(60L).toFloat()
+        val path=Path()
+        points.forEachIndexed{i,v->
+            val x=i.toFloat()/(points.size-1).coerceAtLeast(1)*w
+            val y=h*.72f-((v-min)/span)*h*.48f
+            if(i==0)path.moveTo(x,y) else path.lineTo(x,y)
+        }
+        paint.color=Color.argb(120,Color.red(tone),Color.green(tone),Color.blue(tone))
+        paint.strokeWidth=1.2f*d;paint.setShadowLayer(4f*d,0f,0f,tone);c.drawPath(path,paint)
+        paint.color=tone;paint.strokeWidth=1.7f*d
+        paint.setShadowLayer(8f*d,0f,0f,tone);c.drawPath(path,paint);paint.clearShadowLayer()
+        val measure=android.graphics.PathMeasure(path,false)
+        val len=measure.length
+        if(len>0f){
+            val pos=FloatArray(2)
+            measure.getPosTan(len*phase,pos,null)
+            val fade=kotlin.math.sin(Math.PI*phase).toFloat().coerceIn(0f,1f)
+            paint.style=Paint.Style.FILL;paint.color=Color.argb((245*fade).toInt(),255,255,255)
+            paint.setShadowLayer(10f*d*fade,0f,0f,tone);c.drawCircle(pos[0],pos[1],2.6f*d,paint)
+            paint.clearShadowLayer();paint.style=Paint.Style.STROKE
+        }
+    }
+}
+
 private class StageNeonView(context:android.content.Context, private val stages:List<StagePoint>, private val target:String, private val tone:Int, private val startMs:Long, private val endMs:Long):View(context){
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
     private var breath=0f
@@ -1244,6 +1310,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL;setPadding(dp(16),dp(15),dp(15),dp(15))
                 val title=TextView(this@MainActivity).apply{text="KW $kw · $year";textSize=17f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setShadowLayer(dp(4).toFloat(),0f,0f,tone)}
                 addView(title,LinearLayout.LayoutParams(0,-2,1f))
+                addView(HistoryWaveView(this@MainActivity,tone,items.sortedBy{it.endMs}.map{it.totalMin}).apply{
+                    alpha=.9f
+                },LinearLayout.LayoutParams(0,dp(33),.75f).apply{setMargins(dp(5),0,dp(7),0)})
                 val summary=LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.END}
                 summary.addView(TextView(this@MainActivity).apply{text="Ø ${avg/60} h ${avg%60} min  ·  ${items.size} Nächte";textSize=11f;setTextColor(primary);gravity=android.view.Gravity.END})
                 if(delta!=null)summary.addView(TextView(this@MainActivity).apply{
@@ -1273,7 +1342,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 }
                 nightCard.addView(LinearLayout(this).apply{
                     orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                    addView(TextView(this@MainActivity).apply{text="☾";textSize=25f;setTextColor(tone);setShadowLayer(dp(7).toFloat(),0f,0f,tone)},LinearLayout.LayoutParams(dp(36),-2))
+                    addView(HistoryMoonView(this@MainActivity,night.totalMin,tone),LinearLayout.LayoutParams(dp(36),dp(36)))
                     addView(LinearLayout(this@MainActivity).apply{
                         orientation=LinearLayout.VERTICAL
                         addView(TextView(this@MainActivity).apply{text=dateFmt.format(Instant.ofEpochMilli(night.endMs));textSize=13f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)})
@@ -1292,6 +1361,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             ))
                         }
                         barRow.addView(bar,LinearLayout.LayoutParams(0,dp(9),mins.toFloat()).apply{setMargins(0,0,dp(3),0)})
+                        val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
+                            duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
+                            interpolator=android.view.animation.LinearInterpolator()
+                            addUpdateListener{
+                                val wave=.5f+.5f*kotlin.math.sin(((it.animatedValue as Float)*2f*Math.PI).toFloat())
+                                bar.alpha=.65f+.35f*wave
+                            }
+                        }
+                        bar.addOnAttachStateChangeListener(object:View.OnAttachStateChangeListener{
+                            override fun onViewAttachedToWindow(v:View){if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
+                            override fun onViewDetachedFromWindow(v:View){pulse.cancel()}
+                        })
                     }
                 nightCard.addView(barRow)
                 rows.addView(nightCard)
