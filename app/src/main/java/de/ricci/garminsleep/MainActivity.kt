@@ -2414,14 +2414,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL
                         val duration=(s.endMs-s.startMs).coerceAtLeast(1);var cursor=s.startMs
                         fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply{
+                            val segmentView=this
                             if(active && android.animation.ValueAnimator.areAnimatorsEnabled()){
                                 val anim=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
                                     duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
                                     interpolator=android.view.animation.LinearInterpolator()
                                     addUpdateListener{v->
                                         val wave=(.5f+.5f*kotlin.math.sin(((v.animatedValue as Float)*2f*Math.PI).toFloat()))
-                                        alpha=.80f+.20f*wave
-                                        elevation=dp(2).toFloat()+dp(5)*wave
+                                        segmentView.alpha=.80f+.20f*wave
+                                        segmentView.elevation=dp(2).toFloat()+dp(5)*wave
                                     }
                                 }
                                 addOnAttachStateChangeListener(object:android.view.View.OnAttachStateChangeListener{
