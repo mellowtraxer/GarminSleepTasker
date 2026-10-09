@@ -143,7 +143,7 @@ private class MetricSparklineView(context:android.content.Context, private val p
         duration=9000L
         repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener { pulseProgress=it.animatedValue as Float; if(touchX<0f) invalidate() }
+        addUpdateListener { pulseProgress=it.animatedValue as Float; if(touchX<0f && !HistoryScrollGate.scrolling) invalidate() }
     }
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -389,7 +389,7 @@ private class StageNeonView(context:android.content.Context, private val stages:
     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{breath=it.animatedValue as Float;invalidate()}
+        addUpdateListener{breath=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
     }
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(stages.isNotEmpty() && android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
     override fun onDetachedFromWindow(){animator.cancel();super.onDetachedFromWindow()}
@@ -877,7 +877,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         repeatCount=android.animation.ValueAnimator.INFINITE
                         repeatMode=android.animation.ValueAnimator.RESTART
                         interpolator=android.view.animation.LinearInterpolator()
-                        addUpdateListener { progress=it.animatedValue as Float;invalidate() }
+                        addUpdateListener { progress=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate() }
                     }
                     override fun onAttachedToWindow() {
                         super.onAttachedToWindow()
@@ -975,15 +975,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(scene)
             layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
         }
+        // Pause expensive animation redraws while scrolling on any SleepSync page.
         val historyScrollResume=Runnable {
             HistoryScrollGate.scrolling=false
-            if(pageTitle.text.toString()=="Verlauf")sleepCard.invalidate()
+            sleepCard.invalidate()
+            brandGlow.invalidate()
         }
         scroll.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-            if(pageTitle.text.toString()=="Verlauf" && scrollY!=oldScrollY){
+            if(scrollY!=oldScrollY){
                 HistoryScrollGate.scrolling=true
                 scroll.removeCallbacks(historyScrollResume)
-                scroll.postDelayed(historyScrollResume,180L)
+                scroll.postDelayed(historyScrollResume,220L)
             }
         }
         var swipeDownX=0f
@@ -1199,7 +1201,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addUpdateListener { a ->
                 val phase=a.animatedValue as Float
                 brandGlow.setTag(phase)
-                brandGlow.invalidate()
+                if(!HistoryScrollGate.scrolling)brandGlow.invalidate()
             }
             start()
         }
