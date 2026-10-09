@@ -2308,7 +2308,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
                 background=LayerDrawable(arrayOf(
                     GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(42,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
-                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))}
+                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
+                    GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
+                        Color.argb(if(light) 64 else 25,255,255,255),
+                        Color.TRANSPARENT,
+                        Color.argb(if(light) 44 else 25,6,8,25)
+                    )).apply{cornerRadius=dp(22).toFloat()}
                 ))
                 if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
@@ -2321,7 +2326,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     addView(TextView(this@MainActivity).apply{text=intervals.size.toString()+" "+if(intervals.size==1)"Abschnitt" else "Abschnitte";textSize=10f;setTextColor(secondary);setPadding(0,0,0,dp(9))})
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL
                         val duration=(s.endMs-s.startMs).coerceAtLeast(1);var cursor=s.startMs
-                        fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply{if(active)background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(stageTone)};layoutParams=LinearLayout.LayoutParams(0,dp(if(active)44 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply{gravity=android.view.Gravity.CENTER_VERTICAL;setMargins(if(active)dp(1) else 0,0,if(active)dp(1) else 0,0)}}
+                        fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply{if(active)background=LayerDrawable(arrayOf(
+                            GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(Color.argb(68,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
+                            GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
+                                Color.argb(235,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)),
+                                Color.argb(110,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)),
+                                Color.argb(42,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone))
+                            )).apply{cornerRadius=dp(4).toFloat()}
+                        ));layoutParams=LinearLayout.LayoutParams(0,dp(if(active)44 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply{gravity=android.view.Gravity.CENTER_VERTICAL;setMargins(if(active)dp(1) else 0,0,if(active)dp(1) else 0,0)}}
                         intervals.forEach{st->if(st.startMs>cursor)addView(seg(st.startMs-cursor,false));addView(seg(st.endMs-st.startMs,true));cursor=st.endMs};if(cursor<s.endMs)addView(seg(s.endMs-cursor,false))
                     })
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(7),0,0)
