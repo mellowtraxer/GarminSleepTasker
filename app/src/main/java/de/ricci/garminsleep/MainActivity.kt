@@ -208,6 +208,15 @@ private class MetricSparklineView(context:android.content.Context, private val p
 
 
 private class HistoryMoonView(context:android.content.Context, private val sleepMinutes:Long, private val tint:Int):View(context){
+    private var breath=0f
+    private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
+        duration=5400L;repeatCount=android.animation.ValueAnimator.INFINITE
+        interpolator=android.view.animation.LinearInterpolator()
+        addUpdateListener{breath=it.animatedValue as Float;invalidate()}
+    }
+    override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
+    override fun onDetachedFromWindow(){pulse.cancel();super.onDetachedFromWindow()}
+
     private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
     init{setLayerType(LAYER_TYPE_SOFTWARE,null);contentDescription="Schlafdauer-Symbol, keine astronomische Mondphase"}
     override fun onDraw(c:Canvas){
@@ -218,7 +227,8 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
         val quality=when{sleepMinutes>=480L->3;sleepMinutes>=360L->2;sleepMinutes>=240L->1;else->0}
         val glow=when(quality){3->Color.rgb(126,210,255);2->Color.rgb(135,125,255);1->Color.rgb(188,100,255);else->Color.rgb(126,110,177)}
         paint.style=Paint.Style.FILL;paint.shader=null
-        paint.color=glow;paint.setShadowLayer(8f*d,0f,0f,glow)
+        val wave=.5f+.5f*kotlin.math.sin((breath*2f*Math.PI).toFloat())
+        paint.color=glow;paint.setShadowLayer((5f+11f*wave)*d,0f,0f,glow)
         c.drawCircle(x,y,r,paint);paint.clearShadowLayer()
         paint.shader=android.graphics.RadialGradient(x-r*.35f,y-r*.4f,r*2f,
             intArrayOf(Color.WHITE,glow,Color.argb(210,40,38,93)),
@@ -228,6 +238,47 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
             paint.color=Color.rgb(16,22,43)
             val cut=when(quality){2->.60f;1->.35f;else->.12f}
             c.drawCircle(x+r*cut,y-r*.16f,r*.91f,paint)
+        }
+    }
+}
+
+private class HistoryStageBarView(context:android.content.Context,private val values:List<Pair<Long,Int>>):View(context){
+    private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
+    private var phase=0f
+    private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
+        duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
+        interpolator=android.view.animation.LinearInterpolator()
+        addUpdateListener{phase=it.animatedValue as Float;invalidate()}
+    }
+    init{setLayerType(LAYER_TYPE_SOFTWARE,null)}
+    override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
+    override fun onDetachedFromWindow(){pulse.cancel();super.onDetachedFromWindow()}
+    override fun onDraw(c:Canvas){
+        super.onDraw(c)
+        val valid=values.filter{it.first>0L};if(valid.isEmpty()||width<=0||height<=0)return
+        val d=resources.displayMetrics.density
+        val gap=3f*d
+        val usable=(width-gap*(valid.size-1)).coerceAtLeast(1f)
+        val total=valid.sumOf{it.first}.coerceAtLeast(1L).toFloat()
+        val wave=.5f+.5f*kotlin.math.sin((phase*2f*Math.PI).toFloat())
+        var x=0f
+        valid.forEach{(minutes,color)->
+            val segmentWidth=usable*minutes/total
+            val rect=android.graphics.RectF(x,2f*d,x+segmentWidth,(height-2f*d))
+            paint.style=Paint.Style.FILL;paint.shader=null
+            paint.color=color;paint.alpha=(205+50*wave).toInt()
+            paint.setShadowLayer((2f+5f*wave)*d,0f,0f,color)
+            c.drawRoundRect(rect,5f*d,5f*d,paint)
+            paint.clearShadowLayer();paint.alpha=255
+            val highlightX=width*phase
+            if(highlightX>=x && highlightX<=x+segmentWidth){
+                val fade=kotlin.math.sin(Math.PI*phase).toFloat().coerceIn(0f,1f)
+                paint.color=Color.argb((200*fade).toInt(),255,255,255)
+                paint.setShadowLayer(7f*d*fade,0f,0f,color)
+                c.drawCircle(highlightX,height*.5f,2.2f*d,paint)
+                paint.clearShadowLayer()
+            }
+            x+=segmentWidth+gap
         }
     }
 }
@@ -1351,30 +1402,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     addView(TextView(this@MainActivity).apply{text="${night.totalMin/60} h ${night.totalMin%60} min";textSize=14f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)})
                     addView(TextView(this@MainActivity).apply{text="  ›";textSize=24f;setTextColor(tone)})
                 })
-                val barRow=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;setPadding(dp(36),dp(8),dp(12),0)}
-                listOf(night.lightMin to stageLight,night.deepMin to stageDeep,night.remMin to stageRem,night.awakeMin to stageAwake)
-                    .filter{it.first>0}.forEach{(mins,color)->
-                        val bar=View(this).apply{
-                            background=LayerDrawable(arrayOf(
-                                GradientDrawable().apply{cornerRadius=dp(6).toFloat();setColor(Color.argb(65,Color.red(color),Color.green(color),Color.blue(color)))},
-                                GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(color,Color.argb(175,Color.red(color),Color.green(color),Color.blue(color)))).apply{cornerRadius=dp(6).toFloat()}
-                            ))
-                        }
-                        barRow.addView(bar,LinearLayout.LayoutParams(0,dp(9),mins.toFloat()).apply{setMargins(0,0,dp(3),0)})
-                        val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
-                            duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
-                            interpolator=android.view.animation.LinearInterpolator()
-                            addUpdateListener{
-                                val wave=.5f+.5f*kotlin.math.sin(((it.animatedValue as Float)*2f*Math.PI).toFloat())
-                                bar.alpha=.65f+.35f*wave
-                            }
-                        }
-                        bar.addOnAttachStateChangeListener(object:View.OnAttachStateChangeListener{
-                            override fun onViewAttachedToWindow(v:View){if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
-                            override fun onViewDetachedFromWindow(v:View){pulse.cancel()}
-                        })
-                    }
-                nightCard.addView(barRow)
+                nightCard.addView(HistoryStageBarView(this,
+                    listOf(night.lightMin to stageLight,night.deepMin to stageDeep,night.remMin to stageRem,night.awakeMin to stageAwake)
+                ),LinearLayout.LayoutParams(-1,dp(16)).apply{setMargins(dp(36),dp(5),dp(12),0)})
                 rows.addView(nightCard)
             }
             rows.addView(LinearLayout(this).apply{
