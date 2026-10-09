@@ -943,7 +943,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
                         duration=36000L
                         repeatCount=android.animation.ValueAnimator.INFINITE
-                        repeatMode=android.animation.ValueAnimator.RESTART
+                        repeatMode=android.animation.ValueAnimator.REVERSE
                         interpolator=android.view.animation.LinearInterpolator()
                         addUpdateListener { progress=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate() }
                     }
