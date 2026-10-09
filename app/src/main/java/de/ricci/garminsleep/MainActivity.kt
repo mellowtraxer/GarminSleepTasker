@@ -2657,39 +2657,56 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         sleepCard.addView(wallpaperGallery)
         sleepCard.addView(TextView(this).apply {
-            text="DEINE FARBWELT";textSize=11f;letterSpacing=.15f
-            setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(160,177,255))
-            setPadding(dp(5),dp(9),0,dp(10))
+            text="FARBSCHEMA";textSize=11f;letterSpacing=.16f
+            setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(177,201,255))
+            setPadding(dp(5),dp(9),0,dp(12))
         })
-        val paletteRow=LinearLayout(this).apply {orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER}
-        listOf(
-            Triple("Cosmic",Color.rgb(139,92,246),Color.rgb(34,211,238)),
-            Triple("Aurora",Color.rgb(45,220,173),Color.rgb(92,190,255)),
-            Triple("Neon",Color.rgb(255,75,177),Color.rgb(159,91,255)),
-            Triple("Solar",Color.rgb(255,175,69),Color.rgb(255,102,137))
-        ).forEach { (name,main,secondary) ->
-            paletteRow.addView(LinearLayout(this).apply {
+        val palettes=listOf(
+            Triple("Blau",Color.rgb(75,126,255),Color.rgb(35,220,255)),
+            Triple("Lila",Color.rgb(161,73,242),Color.rgb(105,73,255)),
+            Triple("Cyan",Color.rgb(10,212,234),Color.rgb(33,125,255)),
+            Triple("Pink",Color.rgb(245,62,156),Color.rgb(161,69,249)),
+            Triple("Orange",Color.rgb(255,155,49),Color.rgb(255,85,117)),
+            Triple("Grün",Color.rgb(33,216,151),Color.rgb(24,168,207)),
+            Triple("Gold",Color.rgb(255,197,65),Color.rgb(255,120,54)),
+            Triple("Dynamisch",Color.rgb(140,82,250),Color.rgb(27,217,243))
+        )
+        val currentAccent=p.getInt("accent",defs[0])
+        val colorGrid=GridLayout(this).apply{columnCount=4;rowCount=2}
+        palettes.forEachIndexed{index,(name,primary,secondary)->
+            val selected=currentAccent==primary
+            val tile=LinearLayout(this).apply{
                 orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
-                setPadding(dp(4),dp(11),dp(4),dp(10))
-                background=GradientDrawable().apply {
-                    cornerRadius=dp(16).toFloat();setColor(Color.rgb(20,25,52));setStroke(dp(2),main)
+                setPadding(dp(3),dp(11),dp(3),dp(9))
+                background=GradientDrawable().apply{
+                    cornerRadius=dp(17).toFloat()
+                    setColor(Color.argb(185,15,21,49))
+                    if(selected)setStroke(dp(2),Color.rgb(111,236,255))
+                    else setStroke(dp(1),Color.argb(80,137,133,221))
                 }
-                addView(View(this@MainActivity).apply {
-                    background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(main,secondary)).apply {
-                        shape=GradientDrawable.OVAL;setStroke(dp(2),Color.WHITE)
-                    }
-                },LinearLayout.LayoutParams(dp(34),dp(34)))
-                addView(TextView(this@MainActivity).apply {
-                    text=name;textSize=10f;setTextColor(Color.WHITE)
-                    setPadding(0,dp(8),0,0)
+                val orb=android.widget.FrameLayout(this@MainActivity).apply{
+                    background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                        Color.WHITE,primary,secondary,Color.rgb(21,15,62)
+                    )).apply{shape=GradientDrawable.OVAL;setStroke(dp(if(selected) 3 else 2),if(selected Color.rgb(128,248,255) else Color.argb(205,255,255,255))}
+                    elevation=dp(if(selected) 11 else 5).toFloat()
+                }
+                addView(orb,LinearLayout.LayoutParams(dp(49),dp(49)))
+                addView(TextView(this@MainActivity).apply{
+                    text=name;textSize=10f;gravity=android.view.Gravity.CENTER
+                    setTextColor(if(selected) Color.rgb(130,236,255) else Color.WHITE)
+                    setTypeface(typeface,if(selected) Typeface.BOLD else Typeface.NORMAL)
+                    setPadding(0,dp(9),0,0)
                 })
-                setOnClickListener {
-                    p.edit().putInt("accent",main).putInt("accent2",secondary).putBoolean("custom_enabled",true).apply()
+                setOnClickListener{
+                    p.edit().putInt("accent",primary).putInt("accent2",secondary).putBoolean("custom_enabled",true).apply()
                     showDesignStudio()
                 }
-            },LinearLayout.LayoutParams(0,-2,1f).apply{setMargins(dp(3),0,dp(3),0)})
+            }
+            colorGrid.addView(tile,GridLayout.LayoutParams(
+                GridLayout.spec(index/4),GridLayout.spec(index%4)
+            ).apply{width=0;height=dp(103);columnSpec=GridLayout.spec(index%4,1f);setMargins(dp(3),dp(3),dp(3),dp(3))})
         }
-        sleepCard.addView(paletteRow,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(16)})
+        sleepCard.addView(colorGrid,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(13)})
         // Live preview
         sleepCard.addView(eightbitlab.com.blurview.BlurView(this).apply{val tone=designColor("accent2",defs[1]);background=opticsGlassBackground(tone);outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))};layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,Color.red(defs[i]),Color.green(defs[i]),Color.blue(defs[i])));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
