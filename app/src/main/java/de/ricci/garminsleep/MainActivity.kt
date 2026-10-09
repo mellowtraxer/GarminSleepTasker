@@ -1735,13 +1735,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val primary=Color.WHITE
         val secondary=if(light) Color.rgb(225,232,248) else Color.rgb(150,165,195)
         val muted=if(light) Color.rgb(215,225,245) else Color.rgb(165,175,205)
-        val glass=if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(225,12,18,40)
+        val glass=Color.argb(designGlassAlpha(if(light) 168 else 205),if(light) 72 else 12,if(light) 88 else 18,if(light) 112 else 40)
         // Calendar animations are short, interaction-driven and never loop.
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         pageTitle.text="Kalender"; pageSubtitle.text="Deine Nächte · automatisch dort, wo du sie willst"
         sleepCard.removeAllViews(); sleepCard.background=null
         fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit):View {
-            val fill=if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(225,12,18,40)
+            val fill=Color.argb(designGlassAlpha(if(light) 168 else 205),if(light) 72 else 12,if(light) 88 else 18,if(light) 112 else 40)
             val cleanBottom=title.contains("LETZTE") || title.contains("STATUS")
             val host=android.widget.FrameLayout(this).apply {
                 clipChildren=false;clipToPadding=false
@@ -1841,8 +1841,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val lastCheck=bgPrefs.getLong("last_background_check",0L)
         val lastAuto=bgPrefs.getLong("last_auto_insert_at",0L)
         val statusFmt=DateTimeFormatter.ofPattern("dd.MM. · HH:mm").withZone(ZoneId.systemDefault())
+        val selectedCalendar=bgPrefs.getString("calendar_name",null)
+        val lastNightForStatus=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
+        val existingNight=if(calendarPermissionReady() && bgPrefs.getLong("calendar_id",-1)>=0 && lastNightForStatus!=null)
+            runCatching{calendarEventExists(lastNightForStatus)}.getOrNull() else null
         val statusText=buildString{
             append(if(calendarAutoEnabled()) "●  Automatik aktiv" else "○  Automatik aus")
+            append("\\nZielkalender: ").append(selectedCalendar ?: "nicht ausgewählt")
+            append("\\nLetzte Nacht: ").append(when(existingNight){true->"✓ Im Zielkalender vorhanden";false->if(calendarPermissionReady() && selectedCalendar!=null) "○ Noch nicht eingetragen" else "Kalenderzugriff oder Ziel fehlt";null->"Status nicht prüfbar"})
             append("\nLetzte Hintergrundprüfung: ")
             append(if(lastCheck>0) statusFmt.format(Instant.ofEpochMilli(lastCheck))+" Uhr" else "noch keine")
             append("\nLetzter automatischer Eintrag: ")
