@@ -1986,7 +1986,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val density=resources.displayMetrics.density
         fun dp(n:Int)=(n*density).toInt()
         pageTitle.text="SleepSync"
-        pageSubtitle.text="CONTROL CENTER"
+        pageSubtitle.text="Einstellungen · Dein Schlaf. Dein Stil. Deine Kontrolle."
         actionsTitle.visibility=View.GONE
         actionsBox.visibility=View.GONE
         sleepCard.removeAllViews()
@@ -1998,7 +1998,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val ink=Color.rgb(8,13,33)
         val muted=Color.rgb(181,197,226)
         fun panel(color:Int)=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-            Color.argb(244,9,16,40),Color.argb(238,20,16,52),Color.argb(246,7,13,31)
+            Color.argb(247,5,13,38),Color.argb(244,13,16,53),Color.argb(249,5,11,33)
         )).apply {cornerRadius=dp(24).toFloat();setStroke(dp(1),Color.argb(150,Color.red(color),Color.green(color),Color.blue(color)))}
         fun label(t:String)=TextView(this).apply{
             text=t;textSize=10f;letterSpacing=.17f;setTypeface(typeface,Typeface.BOLD)
@@ -2037,7 +2037,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setTypeface(typeface,Typeface.BOLD);setTextColor(cyan)
             })
             addView(TextView(this@MainActivity).apply{
-                text="Alles unter\neinem Himmel."
+                text="Dein Kosmos.\nDeine Kontrolle."
                 textSize=29f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
                 setPadding(0,dp(16),0,dp(11))
                 setShadowLayer(dp(14).toFloat(),0f,0f,violet)
@@ -2053,20 +2053,61 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),dp(5),dp(3),dp(10))})
         sleepCard.addView(label("✦  DEIN KOSMOS"))
-        val studio=tile("☾","DESIGN STUDIO","Wallpaper · Farben · Neon · Glas",violet){showDesignStudio()}
-        studio.addView(TextView(this).apply{
-            text="DEIN LOOK  →";textSize=12f;letterSpacing=.1f
-            setTypeface(typeface,Typeface.BOLD);setTextColor(cyan)
-            setPadding(0,dp(15),0,0)
+        val studio=android.widget.FrameLayout(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                Color.rgb(14,11,46),Color.rgb(57,17,98),Color.rgb(9,47,92),Color.rgb(7,12,35)
+            )).apply {cornerRadius=dp(27).toFloat();setStroke(dp(2),cyan)}
+            clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+            setOnClickListener{showDesignStudio()}
+            addView(object:View(this@MainActivity){
+                private val brush=Paint(Paint.ANTI_ALIAS_FLAG)
+                override fun onDraw(canvas:Canvas){
+                    super.onDraw(canvas)
+                    val cx=width*.77f;val cy=height*.45f;val radius=dp(83).toFloat()
+                    brush.shader=android.graphics.RadialGradient(cx,cy,radius*1.65f,
+                        intArrayOf(Color.argb(160,232,90,244),Color.argb(35,105,66,238),Color.TRANSPARENT),
+                        null,android.graphics.Shader.TileMode.CLAMP)
+                    canvas.drawCircle(cx,cy,radius*1.65f,brush)
+                    brush.shader=android.graphics.LinearGradient(cx-radius,cy-radius,cx+radius,cy+radius,
+                        Color.rgb(255,190,230),Color.rgb(148,58,235),android.graphics.Shader.TileMode.CLAMP)
+                    canvas.drawCircle(cx,cy,radius,brush)
+                    brush.shader=null;brush.color=Color.rgb(30,15,76)
+                    canvas.drawCircle(cx+radius*.38f,cy-radius*.16f,radius*.94f,brush)
+                }
+            },android.widget.FrameLayout.LayoutParams(-1,-1))
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.VERTICAL;setPadding(dp(20),dp(22),dp(17),dp(20))
+                addView(TextView(this@MainActivity).apply {
+                    text="✦  DESIGN STUDIO";textSize=11f;letterSpacing=.16f
+                    setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(131,225,255))
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text="Dein Universum.\nDeine Regeln.";textSize=26f
+                    setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
+                    setPadding(0,dp(13),0,dp(8))
+                    setShadowLayer(dp(12).toFloat(),0f,0f,violet)
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text="Wallpaper, Farben, Effekte\nund Animationen."
+                    textSize=12f;setTextColor(Color.rgb(225,231,255))
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text="✦  DESIGN STUDIO ÖFFNEN   →"
+                    textSize=12f;setTypeface(typeface,Typeface.BOLD)
+                    setTextColor(Color.rgb(105,244,255));setPadding(0,dp(24),0,0)
+                })
+            },android.widget.FrameLayout.LayoutParams(-1,-1))
+        }
+        sleepCard.addView(studio,LinearLayout.LayoutParams(-1,dp(245)).apply {
+            setMargins(dp(3),0,dp(3),dp(10))
         })
-        sleepCard.addView(studio,LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),0,dp(3),dp(8))})
         sleepCard.addView(label("✦  SCHNELLZUGRIFF"))
         val quick=android.widget.GridLayout(this).apply{columnCount=2}
         val quickItems=listOf(
-            tile("↻","UPDATES","Neue Version prüfen",cyan){checkForPreviewUpdate()},
-            tile("⚡","AUTOMATIK","Sync & Kalender",Color.rgb(255,183,104)){showAutomationSettings()},
-            tile("⌚","GARMIN","Verbindung & Daten",Color.rgb(116,206,255)){showGarminSettings()},
-            tile("♥","HEALTH CONNECT","Gesundheitsdaten",Color.rgb(245,119,191)){showHealthSettings()}
+            tile("↻","Updates","Neue Version prüfen",cyan){checkForPreviewUpdate()},
+            tile("⚙","Automatik","Sync & Kalender",violet){showAutomationSettings()},
+            tile("⌚","Garmin","Verbindung & Daten",Color.rgb(241,113,225)){showGarminSettings()},
+            tile("♥","Health Connect","Gesundheitsdaten",cyan){showHealthSettings()}
         )
         quickItems.forEachIndexed{i,v->
             quick.addView(v,android.widget.GridLayout.LayoutParams(
@@ -2074,7 +2115,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             ).apply{width=0;columnSpec=android.widget.GridLayout.spec(i%2,1f);setMargins(dp(3),dp(3),dp(3),dp(3))})
         }
         sleepCard.addView(quick)
-        sleepCard.addView(label("✦  SYSTEM & WERKZEUGE"))
+        sleepCard.addView(label("✦  TOOLS & DIAGNOSE"))
         fun compact(symbol:String,title:String,sub:String,color:Int,click:()->Unit) {
             sleepCard.addView(LinearLayout(this).apply{
                 orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
