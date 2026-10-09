@@ -1604,6 +1604,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.removeAllViews(); sleepCard.background=null
         fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit):View {
             val fill=if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(225,12,18,40)
+            val cleanBottom=title.contains("LETZTE") || title.contains("STATUS")
             val host=android.widget.FrameLayout(this).apply {
                 clipChildren=false;clipToPadding=false
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
@@ -1623,7 +1624,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 background=if(light) LayerDrawable(arrayOf(
                     GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(fill);setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},
                     GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}
-                )) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                )) else GradientDrawable(GradientDrawable.Orientation.TL_BR,if(cleanBottom) intArrayOf(
+                    Color.rgb(12,21,39),Color.rgb(20,23,48),Color.rgb(11,26,43)
+                ) else intArrayOf(
                     Color.argb(244,17,26,59),
                     Color.argb(237,28,21,66),
                     Color.argb(242,10,35,55)
@@ -1786,7 +1789,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             append("\nLetzter automatischer Eintrag: ")
             append(if(lastAuto>0) statusFmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
         }
-        sleepCard.addView(card("●  STATUS","Kalender-Automatik",if(calendarAutoEnabled()) Color.rgb(74,224,181) else muted){
+        sleepCard.addView(card("◈  STATUS","Kalender-Automatik",if(calendarAutoEnabled()) Color.rgb(74,224,181) else muted){
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
                 addView(TextView(this@MainActivity).apply {
@@ -1799,12 +1802,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setPadding(dp(11),dp(10),dp(11),dp(10))
                     background=GradientDrawable().apply {
                         cornerRadius=dp(16).toFloat()
-                        setColor(Color.argb(150,7,61,68))
-                        setStroke(dp(1),Color.rgb(72,220,192))
+                        setColor(Color.rgb(13,35,51))
+                        setStroke(dp(1),Color.rgb(67,195,190))
                     }
                     addView(TextView(this@MainActivity).apply {
-                        text=if(lastAuto>0) "✓" else "◷"
-                        textSize=28f;gravity=android.view.Gravity.CENTER
+                        text=if(lastAuto>0) "✓" else "◉"
+                        textSize=24f;gravity=android.view.Gravity.CENTER
                         setTextColor(Color.rgb(100,241,213))
                     })
                     addView(TextView(this@MainActivity).apply {
