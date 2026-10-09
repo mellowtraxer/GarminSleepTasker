@@ -2384,13 +2384,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         root.addView(label("Nur tatsächlich gelieferte Werte · Keine Schätzungen",10f,0xFF91A2C7.toInt()).apply {
             setPadding(0,dp(14),0,0)
         })
-        val scroll=ScrollView(this).apply {
-            isFillViewport=false
-            addView(root)
+        lateinit var dialog:AlertDialog
+        val actions=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            setPadding(0,dp(18),0,dp(4))
         }
-        val dialog=AlertDialog.Builder(this).setView(scroll)
-            .setNeutralButton("30 TAGE TESTEN") { _,_ ->
-                val loading=AlertDialog.Builder(this)
+        val testButton=label("✦ 30 TAGE TESTEN",13f,cyan,true).apply {
+            gravity=android.view.Gravity.CENTER
+            setPadding(dp(10),dp(15),dp(10),dp(15))
+            background=surface(intArrayOf(0xFF14344A.toInt(),0xFF172644.toInt()),cyan)
+            setOnClickListener {
+                dialog.dismiss()
+                val loading=AlertDialog.Builder(this@MainActivity)
                     .setTitle("Garmin · Historische Daten")
                     .setMessage("Prüfe sieben Stichproben aus 30 Tagen …")
                     .setCancelable(false).create()
@@ -2401,7 +2406,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     runOnUiThread {
                         if(!isFinishing && !isDestroyed) {
                             loading.dismiss()
-                            AlertDialog.Builder(this)
+                            AlertDialog.Builder(this@MainActivity)
                                 .setTitle("Garmin · 30-Tage-Datencheck")
                                 .setMessage(result)
                                 .setPositiveButton("FERTIG",null).show()
@@ -2409,11 +2414,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     }
                 }.start()
             }
-            .setPositiveButton("SCHLIESSEN",null).create()
+        }
+        actions.addView(testButton,LinearLayout.LayoutParams(0,dp(52),1f).apply {
+            marginEnd=dp(8)
+        })
+        actions.addView(label("SCHLIESSEN",12f,0xFFB7C9E8.toInt(),true).apply {
+            gravity=android.view.Gravity.CENTER
+            setOnClickListener { dialog.dismiss() }
+        },LinearLayout.LayoutParams(dp(102),dp(52)))
+        root.addView(actions)
+        val scroll=ScrollView(this).apply {
+            isFillViewport=false
+            addView(root)
+        }
+        dialog=AlertDialog.Builder(this).setView(scroll).create()
         dialog.setOnShowListener {
             dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             dialog.window?.setLayout((resources.displayMetrics.widthPixels*0.93f).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(cyan)
         }
         dialog.show()
     }
