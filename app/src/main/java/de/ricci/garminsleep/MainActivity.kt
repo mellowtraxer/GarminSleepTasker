@@ -2864,6 +2864,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             } else setCardBackgroundColor(Color.argb(220,22,25,56))
             addView(object:View(this@MainActivity) {
                 private val ink=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                private var dnaBreath=0f
+                private val dnaAnimator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
+                    duration=5200L
+                    repeatCount=android.animation.ValueAnimator.INFINITE
+                    interpolator=android.view.animation.LinearInterpolator()
+                    addUpdateListener { dnaBreath=it.animatedValue as Float;invalidate() }
+                }
+                override fun onAttachedToWindow() {
+                    super.onAttachedToWindow()
+                    if(android.animation.ValueAnimator.areAnimatorsEnabled()) dnaAnimator.start()
+                }
+                override fun onDetachedFromWindow() {
+                    dnaAnimator.cancel()
+                    super.onDetachedFromWindow()
+                }
                 private var focusedTime:Long?=null
                 private val palette=mapOf("leicht" to stageLight,"tief" to stageDeep,"rem" to stageRem,"wach" to stageAwake)
                 private val span=(s.endMs-s.startMs).coerceAtLeast(1L).toDouble()
@@ -2871,6 +2886,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     .withZone(java.time.ZoneId.systemDefault())
                 private fun angle(t:Long)=(((t-s.startMs)/span)*360.0).toFloat().coerceIn(0f,360f)
                 init {
+                    setLayerType(View.LAYER_TYPE_SOFTWARE,null)
                     isClickable=true; isFocusable=true
                     contentDescription="Interaktive Sleep DNA. Ring berühren, um Schlafphase und Uhrzeit zu erkunden."
                 }
@@ -2879,6 +2895,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     val w=width.toFloat();val h=height.toFloat()
                     if(w<=0f||h<=0f)return
                     val cx=w/2f;val cy=h/2f
+                    val breathWave=.5f+.5f*kotlin.math.sin((dnaBreath*2f*Math.PI).toFloat())
                     val outer=kotlin.math.min(w,h)*.36f
                     val inner=outer-dp(37)
                     val track=android.graphics.RectF(cx-outer,cy-outer,cx+outer,cy+outer)
@@ -2899,8 +2916,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             if(sweep<=0f)return@forEach
                             val tone=palette[phase.stageLabel.trim().lowercase()]?:Color.rgb(122,134,161)
                             ink.color=tone
-                            ink.strokeWidth=dp(6).toFloat()
+                            ink.strokeWidth=dp(5.5f+1.2f*breathWave)
+                            ink.setShadowLayer(dp(3f+10f*breathWave),0f,0f,tone)
                             canvas.drawArc(track,start-90f,sweep,false,ink)
+                            ink.clearShadowLayer()
                             ink.strokeWidth=dp(1.2f.toInt()).toFloat()
                             ink.color=Color.argb(90,Color.red(tone),Color.green(tone),Color.blue(tone))
                             canvas.drawArc(track,start-90f,sweep,false,ink)
@@ -2916,8 +2935,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         phaseValues.forEach { (minutes,tone) ->
                             val sweep=minutes.toFloat()/phaseSum*360f
                             ink.color=tone
-                            ink.strokeWidth=dp(4).toFloat()
+                            ink.strokeWidth=dp(3.7f+.7f*breathWave)
+                            ink.setShadowLayer(dp(2f+6f*breathWave),0f,0f,tone)
                             canvas.drawArc(phaseTrack,phaseStart,sweep,false,ink)
+                            ink.clearShadowLayer()
                             phaseStart+=sweep
                         }
                     } else {
@@ -2926,8 +2947,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         var start=-90f
                         values.forEach { (minutes,tone) ->
                             val sweep=minutes.toFloat()/total*360f
-                            ink.color=tone;ink.strokeWidth=dp(6).toFloat()
+                            ink.color=tone;ink.strokeWidth=dp(5.5f+1.2f*breathWave)
+                            ink.setShadowLayer(dp(3f+10f*breathWave),0f,0f,tone)
                             canvas.drawArc(track,start,sweep,false,ink)
+                            ink.clearShadowLayer()
                             start+=sweep
                         }
                     }
