@@ -1905,6 +1905,83 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ⌄";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),38,46,92) else Color.argb(205,26,24,63));setStroke(dp(1),stageRem)};isClickable=true;setOnClickListener{chooseCalendar()}})
             addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere verfügbare Android-Kalender";textSize=11f;setTextColor(muted);setPadding(0,dp(10),0,0)})
         })
+        sleepCard.addView(card("☾  MONATS-SCHLAFKALENDER","Deine Nächte auf einen Blick · zum Aufklappen",stageRem){
+            val monthHost=LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
+            val monthTitle=TextView(this@MainActivity).apply {
+                textSize=14f;setTypeface(typeface,Typeface.BOLD);setTextColor(primary)
+                setPadding(0,dp(10),0,dp(10))
+            }
+            var shownMonth=java.time.YearMonth.now()
+            val daysGrid=android.widget.GridLayout(this@MainActivity).apply { columnCount=7 }
+            val detail=TextView(this@MainActivity).apply {
+                textSize=12f;setTextColor(primary);setPadding(dp(8),dp(12),dp(8),dp(8))
+                visibility=View.GONE
+            }
+            fun renderMonth() {
+                monthTitle.text=shownMonth.month.getDisplayName(java.time.format.TextStyle.FULL,java.util.Locale.GERMAN)
+                    .replaceFirstChar { it.uppercase() }+" "+shownMonth.year
+                daysGrid.removeAllViews()
+                listOf("Mo","Di","Mi","Do","Fr","Sa","So").forEach { day ->
+                    daysGrid.addView(TextView(this@MainActivity).apply {
+                        text=day;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(muted)
+                    },android.widget.GridLayout.LayoutParams().apply { width=0;height=dp(28);columnSpec=android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED,1f) })
+                }
+                val offset=shownMonth.atDay(1).dayOfWeek.value-1
+                repeat(offset){daysGrid.addView(View(this@MainActivity),
+                    android.widget.GridLayout.LayoutParams().apply{width=0;height=dp(48);columnSpec=android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED,1f)})}
+                for(day in 1..shownMonth.lengthOfMonth()){
+                    val date=shownMonth.atDay(day)
+                    val night=sleepHistory.filter {
+                        Instant.ofEpochMilli(it.endMs).atZone(ZoneId.systemDefault()).toLocalDate()==date
+                    }.maxByOrNull { it.endMs }
+                    val tile=LinearLayout(this@MainActivity).apply {
+                        orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
+                        setPadding(dp(1),dp(3),dp(1),dp(3))
+                        background=GradientDrawable().apply {
+                            cornerRadius=dp(10).toFloat()
+                            setColor(if(night!=null) Color.argb(100,65,42,116) else Color.argb(30,40,58,95))
+                            if(night!=null)setStroke(dp(1),Color.argb(170,172,112,255))
+                        }
+                        addView(TextView(this@MainActivity).apply {
+                            text="$day";textSize=10f;setTextColor(primary);gravity=android.view.Gravity.CENTER
+                        })
+                        if(night!=null) {
+                            addView(HistoryMoonView(this@MainActivity,night.totalMin,stageRem),
+                                LinearLayout.LayoutParams(dp(26),dp(26)))
+                            isClickable=true
+                            setOnClickListener {
+                                detail.text="$date  ·  ${night.totalMin/60} h ${night.totalMin%60} min\n"+
+                                    "Leicht: ${night.lightMin} min  ·  Tief: ${night.deepMin} min\n"+
+                                    "REM: ${night.remMin} min  ·  Wach: ${night.awakeMin} min"
+                                detail.visibility=View.VISIBLE
+                            }
+                        }
+                    }
+                    daysGrid.addView(tile,android.widget.GridLayout.LayoutParams().apply {
+                        width=0;height=dp(53);columnSpec=android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED,1f)
+                        setMargins(dp(2),dp(2),dp(2),dp(2))
+                    })
+                }
+            }
+            val header=LinearLayout(this@MainActivity).apply {gravity=android.view.Gravity.CENTER_VERTICAL}
+            val previous=TextView(this@MainActivity).apply {text="‹";textSize=27f;setTextColor(stageRem);setPadding(dp(10),0,dp(12),0);setOnClickListener{shownMonth=shownMonth.minusMonths(1);detail.visibility=View.GONE;renderMonth()}}
+            val next=TextView(this@MainActivity).apply {text="›";textSize=27f;setTextColor(stageRem);setPadding(dp(12),0,dp(10),0);setOnClickListener{shownMonth=shownMonth.plusMonths(1);detail.visibility=View.GONE;renderMonth()}}
+            header.addView(previous)
+            header.addView(monthTitle,LinearLayout.LayoutParams(0,-2,1f))
+            header.addView(next)
+            monthHost.addView(header);monthHost.addView(daysGrid);monthHost.addView(detail)
+            val toggle=TextView(this@MainActivity).apply {
+                text="MONATSÜBERSICHT ANZEIGEN   ⌄";textSize=12f;setTypeface(typeface,Typeface.BOLD)
+                setTextColor(Color.rgb(162,217,255));setPadding(dp(8),dp(8),dp(8),dp(8))
+                setOnClickListener {
+                    val opening=monthHost.visibility!=View.VISIBLE
+                    monthHost.visibility=if(opening)View.VISIBLE else View.GONE
+                    text=if(opening)"MONATSÜBERSICHT SCHLIESSEN   ⌃" else "MONATSÜBERSICHT ANZEIGEN   ⌄"
+                    if(opening){renderMonth();monthHost.alpha=0f;monthHost.animate().alpha(1f).setDuration(250).start()}
+                }
+            }
+            addView(toggle);addView(monthHost)
+        })
         sleepCard.addView(card("◷  LETZTE EINTRÄGE","Zuletzt synchronisierte Nächte",stageLight){
             val recent=sleepHistory.sortedByDescending{it.endMs}.take(4)
             if(recent.isEmpty()) addView(TextView(this@MainActivity).apply{text="Noch keine Einträge";setTextColor(if(light) Color.rgb(92,104,132) else Color.rgb(180,190,215))})
