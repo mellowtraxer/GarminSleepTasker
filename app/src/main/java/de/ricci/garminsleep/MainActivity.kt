@@ -209,6 +209,14 @@ private class MetricSparklineView(context:android.content.Context, private val p
 
 private class StageNeonView(context:android.content.Context, private val stages:List<StagePoint>, private val target:String, private val tone:Int, private val startMs:Long, private val endMs:Long):View(context){
     private val p=Paint(Paint.ANTI_ALIAS_FLAG)
+    private var breath=0f
+    private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
+        duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
+        interpolator=android.view.animation.LinearInterpolator()
+        addUpdateListener{breath=it.animatedValue as Float;invalidate()}
+    }
+    override fun onAttachedToWindow(){super.onAttachedToWindow();if(stages.isNotEmpty() && android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
+    override fun onDetachedFromWindow(){animator.cancel();super.onDetachedFromWindow()}
     init{setLayerType(LAYER_TYPE_SOFTWARE,null)}
     override fun onDraw(c:Canvas){
         super.onDraw(c); if(stages.isEmpty()||endMs<=startMs)return
@@ -223,7 +231,9 @@ private class StageNeonView(context:android.content.Context, private val stages:
             }
         }
         p.style=Paint.Style.STROKE;p.strokeWidth=resources.displayMetrics.density*2.6f;p.strokeCap=Paint.Cap.ROUND;p.color=tone
-        p.setShadowLayer(resources.displayMetrics.density*8f,0f,0f,tone);c.drawPath(path,p);p.clearShadowLayer()
+        val glowWave=(.5f+.5f*kotlin.math.sin((breath*2f*Math.PI).toFloat()))
+        p.setShadowLayer(resources.displayMetrics.density*(7f+4f*glowWave),0f,0f,tone)
+        p.alpha=(195+60*glowWave).toInt();c.drawPath(path,p);p.clearShadowLayer();p.alpha=255
         p.style=Paint.Style.FILL;p.color=Color.argb(35,Color.red(tone),Color.green(tone),Color.blue(tone))
         stages.filter{it.stageLabel.equals(target,true)}.forEach{s->c.drawRoundRect(x(s.startMs),y+5f,x(s.endMs),h,5f,5f,p)}
     }
@@ -2403,7 +2413,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     addView(TextView(this@MainActivity).apply{text=intervals.size.toString()+" "+if(intervals.size==1)"Abschnitt" else "Abschnitte";textSize=10f;setTextColor(secondary);setPadding(0,0,0,dp(9))})
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL
                         val duration=(s.endMs-s.startMs).coerceAtLeast(1);var cursor=s.startMs
-                        fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply{if(active)background=LayerDrawable(arrayOf(
+                        fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply{
+                            if(active && android.animation.ValueAnimator.areAnimatorsEnabled()){
+                                val anim=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
+                                    duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
+                                    interpolator=android.view.animation.LinearInterpolator()
+                                    addUpdateListener{v->
+                                        val wave=(.5f+.5f*kotlin.math.sin(((v.animatedValue as Float)*2f*Math.PI).toFloat()))
+                                        alpha=.80f+.20f*wave
+                                        elevation=dp(2).toFloat()+dp(5)*wave
+                                    }
+                                }
+                                addOnAttachStateChangeListener(object:android.view.View.OnAttachStateChangeListener{
+                                    override fun onViewAttachedToWindow(v:View){anim.start()}
+                                    override fun onViewDetachedFromWindow(v:View){anim.cancel()}
+                                })
+                            }
+                            if(active)background=LayerDrawable(arrayOf(
                             GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(Color.argb(68,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
                             GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
                                 Color.argb(235,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)),
