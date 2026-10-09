@@ -637,7 +637,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
                     private var progress=0f
                     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
-                        duration=18000L
+                        duration=36000L
                         repeatCount=android.animation.ValueAnimator.INFINITE
                         repeatMode=android.animation.ValueAnimator.RESTART
                         interpolator=android.view.animation.LinearInterpolator()
