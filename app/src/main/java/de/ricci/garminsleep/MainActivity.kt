@@ -2011,7 +2011,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setMargins(dp(4),dp(9),dp(4),dp(9))
                 }
             }
-            if(settingsLight) {
+            run {
                 host.addView(object:View(this) {
                     private val glowPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply {
                         style=Paint.Style.STROKE
@@ -2027,7 +2027,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         glowPaint.clearShadowLayer()
                         glowPaint.style=Paint.Style.STROKE
                         glowPaint.strokeWidth=dp(3).toFloat()
-                        glowPaint.color=Color.argb(210,Color.red(color),Color.green(color),Color.blue(color))
+                        glowPaint.color=Color.argb(if(settingsLight) 210 else 175,Color.red(color),Color.green(color),Color.blue(color))
                         glowPaint.maskFilter=android.graphics.BlurMaskFilter(
                             dp(14).toFloat(),
                             android.graphics.BlurMaskFilter.Blur.OUTER
@@ -2042,8 +2042,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     }
                 },android.widget.FrameLayout.LayoutParams(-1,-1))
             }
-            val card=(if(settingsLight) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
-                background=if(settingsLight) LayerDrawable(arrayOf(
+            val card=eightbitlab.com.blurview.BlurView(this).apply {
+                background=LayerDrawable(arrayOf(
                     GradientDrawable().apply {
                         cornerRadius=dp(22).toFloat()
                         setColor(fill)
@@ -2054,17 +2054,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         setColor(Color.TRANSPARENT)
                         setStroke(dp(2),Color.argb(255,Color.red(color),Color.green(color),Color.blue(color)))
                     }
-                )) else GradientDrawable().apply {
-                    cornerRadius=dp(22).toFloat()
-                    setColor(fill)
-                    setStroke(dp(1),color)
-                }
+                ))
                 layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 isClickable=onClick!=null; isFocusable=onClick!=null; if(onClick!=null) setOnClickListener { onClick() }
-                if(settingsLight && this is eightbitlab.com.blurview.BlurView) {
+                if(true) {
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
                     clipToOutline=true
-                    settingsBlurTarget?.let { target -> setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112)) }
+                    settingsBlurTarget?.let { target -> setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(if(settingsLight) Color.argb(designGlassOverlayAlpha(),72,88,112) else Color.argb(92,9,13,32)) }
                 }
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(16),dp(14),dp(16),dp(14))
