@@ -1823,6 +1823,40 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     }
                 })
             })
+        val bgPrefs=calendarPrefs()
+        val lastCheck=bgPrefs.getLong("last_background_check",0L)
+        val lastAuto=bgPrefs.getLong("last_auto_insert_at",0L)
+        val statusFmt=DateTimeFormatter.ofPattern("dd.MM. · HH:mm").withZone(ZoneId.systemDefault())
+        val statusText=buildString{
+            append(if(calendarAutoEnabled()) "●  Automatik aktiv" else "○  Automatik aus")
+            append("\nLetzte Hintergrundprüfung: ")
+            append(if(lastCheck>0) statusFmt.format(Instant.ofEpochMilli(lastCheck))+" Uhr" else "noch keine")
+            append("\nLetzter automatischer Eintrag: ")
+            append(if(lastAuto>0) statusFmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
+        }
+        addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.VERTICAL; setPadding(0,dp(12),0,0)
+            addView(TextView(this@MainActivity).apply { text="◈  SYNCHRONISATIONSSTATUS";textSize=11f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(94,242,201));setPadding(0,0,0,dp(8)) })
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
+                addView(TextView(this@MainActivity).apply {
+                    text=statusText;textSize=12f
+                    setTextColor(if(light) Color.rgb(235,240,252) else muted)
+                },LinearLayout.LayoutParams(0,-2,1f))
+                addView(TextView(this@MainActivity).apply {
+                    text=if(lastAuto>0) "✓  Eingetragen" else if(calendarAutoEnabled()) "●  Aktiv" else "○  Pausiert"
+                    textSize=11f
+                    setTypeface(typeface,Typeface.BOLD)
+                    setTextColor(if(calendarAutoEnabled()) Color.rgb(106,240,199) else muted)
+                    gravity=android.view.Gravity.CENTER
+                    setPadding(dp(11),dp(7),dp(11),dp(7))
+                    background=GradientDrawable().apply {
+                        cornerRadius=dp(30).toFloat()
+                        setColor(Color.argb(230,14,39,48))
+                        setStroke(dp(1),Color.argb(180,65,204,178))
+                    }
+                },LinearLayout.LayoutParams(-2,-2).apply { leftMargin=dp(8) })
+            })
+        })
         })
         val actionButton=MaterialButton(this).apply{
             text="▣    JETZT EINTRAGEN    ❯";isAllCaps=false;textSize=16f;setTypeface(typeface,Typeface.BOLD)
@@ -1921,39 +1955,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 }
             }
         })
-        val bgPrefs=calendarPrefs()
-        val lastCheck=bgPrefs.getLong("last_background_check",0L)
-        val lastAuto=bgPrefs.getLong("last_auto_insert_at",0L)
-        val statusFmt=DateTimeFormatter.ofPattern("dd.MM. · HH:mm").withZone(ZoneId.systemDefault())
-        val statusText=buildString{
-            append(if(calendarAutoEnabled()) "●  Automatik aktiv" else "○  Automatik aus")
-            append("\nLetzte Hintergrundprüfung: ")
-            append(if(lastCheck>0) statusFmt.format(Instant.ofEpochMilli(lastCheck))+" Uhr" else "noch keine")
-            append("\nLetzter automatischer Eintrag: ")
-            append(if(lastAuto>0) statusFmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
-        }
-        sleepCard.addView(card("◈  STATUS","Kalender-Automatik",if(calendarAutoEnabled()) Color.rgb(74,224,181) else muted){
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                addView(TextView(this@MainActivity).apply {
-                    text=statusText;textSize=12f
-                    setTextColor(if(light) Color.rgb(235,240,252) else muted)
-                },LinearLayout.LayoutParams(0,-2,1f))
-                addView(TextView(this@MainActivity).apply {
-                    text=if(lastAuto>0) "✓  Eingetragen" else if(calendarAutoEnabled()) "●  Aktiv" else "○  Pausiert"
-                    textSize=11f
-                    setTypeface(typeface,Typeface.BOLD)
-                    setTextColor(if(calendarAutoEnabled()) Color.rgb(106,240,199) else muted)
-                    gravity=android.view.Gravity.CENTER
-                    setPadding(dp(11),dp(7),dp(11),dp(7))
-                    background=GradientDrawable().apply {
-                        cornerRadius=dp(30).toFloat()
-                        setColor(Color.argb(230,14,39,48))
-                        setStroke(dp(1),Color.argb(180,65,204,178))
-                    }
-                },LinearLayout.LayoutParams(-2,-2).apply { leftMargin=dp(8) })
-            })
-        })
+
     }
     private fun showSettings() {
         val d = resources.displayMetrics.density
