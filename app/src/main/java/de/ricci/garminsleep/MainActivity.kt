@@ -1623,7 +1623,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 background=if(light) LayerDrawable(arrayOf(
                     GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(fill);setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},
                     GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}
-                )) else GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(fill);setStroke(dp(1),tone)}
+                )) else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                    Color.argb(244,17,26,59),
+                    Color.argb(237,28,21,66),
+                    Color.argb(242,10,35,55)
+                )).apply {
+                    cornerRadius=dp(22).toFloat()
+                    setStroke(dp(2),Color.argb(225,Color.red(tone),Color.green(tone),Color.blue(tone)))
+                }
                 layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
                 if(light && this is eightbitlab.com.blurview.BlurView){
                     outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
@@ -1631,7 +1638,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 }
                 addView(LinearLayout(this@MainActivity).apply{
                     orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16));background=null
-                    addView(TextView(this@MainActivity).apply{text=title;textSize=12f;letterSpacing=.08f;setTextColor(tone);setTypeface(typeface,Typeface.BOLD)})
+                    addView(TextView(this@MainActivity).apply{
+                        text=title;textSize=12f;letterSpacing=.08f
+                        setTextColor(tone);setTypeface(typeface,Typeface.BOLD)
+                    })
                     addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(if(light) Color.argb(215,245,248,255) else secondary);setPadding(0,dp(3),0,dp(12))})
                     body()
                 })
@@ -1640,26 +1650,41 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             return host
         }
         val s=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
-        sleepCard.addView(card("✦  NÄCHSTER KALENDEREINTRAG","Vorschau deiner synchronisierten Nacht",accent2){
+        sleepCard.addView(card("✦  NÄCHSTER KALENDEREINTRAG","Vorschau deiner zuletzt erfassten Nacht",accent2){
             if(s!=null){val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault());val fmt={m:Long->(m/60).toString()+" h "+(m%60).toString()+" min"}
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL
                     gravity=android.view.Gravity.CENTER_VERTICAL
                     addView(HistoryMoonView(this@MainActivity,s.totalMin,stageRem).apply {
                         contentDescription="SleepMoon · Vorschau der letzten Nacht"
-                    },LinearLayout.LayoutParams(dp(58),dp(58)).apply { rightMargin=dp(9) })
+                    },LinearLayout.LayoutParams(dp(84),dp(84)).apply { rightMargin=dp(14) })
                     addView(TextView(this@MainActivity).apply {
-                        text=fmt(s.totalMin)+"  ·  "+tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs))
-                        textSize=18f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)
+                        text=fmt(s.totalMin)+"\n"+tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs))+"\n"+DateTimeFormatter.ofPattern("EEE, dd. MMMM",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(s.endMs))
+                        textSize=19f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)
+                        setLineSpacing(dp(3).toFloat(),1f)
                     },LinearLayout.LayoutParams(0,-2,1f))
                 })
-                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(13),0,dp(8));listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach{q->addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(q.second)}},LinearLayout.LayoutParams(0,dp(9),q.first.toFloat()).apply{setMargins(0,0,dp(2),0)})}})
-                addView(TextView(this@MainActivity).apply{text="Leicht "+fmt(s.lightMin)+"  ·  Tief "+fmt(s.deepMin)+"  ·  REM "+fmt(s.remMin)+"  ·  Wach "+fmt(s.awakeMin);textSize=11f;setTextColor(if(light) Color.rgb(235,240,252) else Color.rgb(190,200,225))})
+                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(15),0,dp(11));listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach{q->addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(q.second)}},LinearLayout.LayoutParams(0,dp(11),q.first.toFloat()).apply{setMargins(0,0,dp(2),0)})}})
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    listOf(Triple("LEICHT",s.lightMin,stageLight),Triple("TIEF",s.deepMin,stageDeep),
+                        Triple("REM",s.remMin,stageRem),Triple("WACH",s.awakeMin,stageAwake)).forEach { (name,minutes,color) ->
+                        addView(LinearLayout(this@MainActivity).apply {
+                            orientation=LinearLayout.VERTICAL
+                            addView(TextView(this@MainActivity).apply {
+                                text="●  $name";textSize=10f;setTextColor(color)
+                            })
+                            addView(TextView(this@MainActivity).apply {
+                                text=fmt(minutes);textSize=10f;setTextColor(primary)
+                            })
+                        },LinearLayout.LayoutParams(0,-2,1f))
+                    }
+                })
             } else addView(TextView(this@MainActivity).apply{text="Noch keine Nacht synchronisiert";setTextColor(primary)})
         })
         sleepCard.addView(card("⚡  AUTOMATIK","Neue Nächte selbstständig eintragen",Color.rgb(74,224,181)){
             addView(LinearLayout(this@MainActivity).apply{gravity=android.view.Gravity.CENTER_VERTICAL
-                addView(TextView(this@MainActivity).apply{text="Automatisch eintragen\n"+if(calendarAutoEnabled()) "Aktiv" else "Aus";textSize=14f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
+                addView(TextView(this@MainActivity).apply{text=if(calendarAutoEnabled()) "●  Aktiv  ·  Neue Nächte werden geprüft" else "○  Automatik deaktiviert";textSize=13f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
                 addView(android.widget.Switch(this@MainActivity).apply {
                     isChecked=calendarAutoEnabled()
                     thumbTintList=ColorStateList.valueOf(if(calendarAutoEnabled()) Color.rgb(94,242,201) else Color.rgb(182,177,197))
@@ -1673,12 +1698,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(MaterialButton(this).apply{
-            text="⚡  JETZT EINTRAGEN";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
+            text="▣   JETZT EINTRAGEN   ›";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
             setTextColor(Color.WHITE)
             backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(designGlassAlpha(),46,62,150) else Color.rgb(41,46,117))
             strokeWidth=dp(2)
             strokeColor=ColorStateList.valueOf(if(light) Color.rgb(95,125,255) else Color.rgb(126,115,255))
-            cornerRadius=dp(18);layoutParams=LinearLayout.LayoutParams(-1,dp(58)).apply{setMargins(0,0,0,dp(12))}
+            cornerRadius=dp(18);elevation=dp(4).toFloat();layoutParams=LinearLayout.LayoutParams(-1,dp(66)).apply{setMargins(0,0,0,dp(12))}
             setOnClickListener{
                 animate().scaleX(.975f).scaleY(.975f).setDuration(90).withEndAction {
                     animate().scaleX(1f).scaleY(1f).setDuration(190).start()
@@ -1695,36 +1720,51 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         })
         sleepCard.addView(card("📅  ZIELKALENDER","Wähle einen Kalender auf diesem Gerät",stageRem){
-            val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ⌄";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),38,46,92) else Color.argb(150,45,29,73));setStroke(dp(1),if(light) stageRem else Color.TRANSPARENT)};isClickable=true;setOnClickListener{chooseCalendar()}})
-            addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere Android-Kalender können hier später ausgewählt werden.";textSize=11f;setTextColor(muted);setPadding(0,dp(10),0,0)})
+            val cp=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE); val selected=cp.getString("calendar_name",null); addView(TextView(this@MainActivity).apply{text=(selected ?: if(calendarPermissionReady()) "Kalender auswählen" else "Kalenderzugriff erlauben")+"  ⌄";textSize=16f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(dp(12),dp(12),dp(12),dp(12));background=GradientDrawable().apply{cornerRadius=dp(15).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),38,46,92) else Color.argb(205,26,24,63));setStroke(dp(1),stageRem)};isClickable=true;setOnClickListener{chooseCalendar()}})
+            addView(TextView(this@MainActivity).apply{text="Google · Outlook · Exchange und weitere verfügbare Android-Kalender";textSize=11f;setTextColor(muted);setPadding(0,dp(10),0,0)})
         })
         sleepCard.addView(card("◷  LETZTE EINTRÄGE","Zuletzt synchronisierte Nächte",stageLight){
             val recent=sleepHistory.sortedByDescending{it.endMs}.take(4)
             if(recent.isEmpty()) addView(TextView(this@MainActivity).apply{text="Noch keine Einträge";setTextColor(if(light) Color.rgb(92,104,132) else Color.rgb(180,190,215))})
             recent.forEachIndexed { index,s0 ->
                 val df=DateTimeFormatter.ofPattern("EEE, dd.MM.",java.util.Locale.GERMAN).withZone(ZoneId.systemDefault())
+                val clock=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
                 val row=LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL
                     gravity=android.view.Gravity.CENTER_VERTICAL
-                    setPadding(dp(4),dp(9),dp(4),dp(9))
+                    setPadding(dp(7),dp(9),dp(7),dp(9))
+                    background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                        intArrayOf(Color.argb(100,30,47,92),Color.argb(65,27,25,63))).apply {
+                        cornerRadius=dp(13).toFloat()
+                        setStroke(dp(1),Color.argb(85,85,196,248))
+                    }
+                    addView(HistoryMoonView(this@MainActivity,s0.totalMin,stageRem),
+                        LinearLayout.LayoutParams(dp(38),dp(38)).apply{rightMargin=dp(8)})
+                    addView(LinearLayout(this@MainActivity).apply {
+                        orientation=LinearLayout.VERTICAL
+                        addView(TextView(this@MainActivity).apply {
+                            text=df.format(Instant.ofEpochMilli(s0.endMs))
+                            textSize=12f;setTypeface(typeface,Typeface.BOLD);setTextColor(primary)
+                        })
+                        addView(TextView(this@MainActivity).apply {
+                            text=clock.format(Instant.ofEpochMilli(s0.startMs))+" – "+clock.format(Instant.ofEpochMilli(s0.endMs))
+                            textSize=10f;setTextColor(muted)
+                        })
+                    },LinearLayout.LayoutParams(0,-2,1f))
                     addView(TextView(this@MainActivity).apply {
-                        text="●";textSize=13f;setTextColor(Color.rgb(89,223,208))
-                        setPadding(0,0,dp(13),0)
+                        text="${s0.totalMin/60} h ${s0.totalMin%60} min"
+                        textSize=12f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)
                     })
                     addView(TextView(this@MainActivity).apply {
-                        text=df.format(Instant.ofEpochMilli(s0.endMs))
-                        textSize=13f;setTextColor(primary)
-                        layoutParams=LinearLayout.LayoutParams(0,-2,1f)
-                    })
-                    addView(TextView(this@MainActivity).apply {
-                        text="${s0.totalMin/60} h ${s0.totalMin%60} min  ✓"
-                        textSize=13f;setTextColor(Color.rgb(170,242,221))
+                        // These are recorded nights, not proof of successful calendar insertion.
+                        text="›";textSize=22f;setTextColor(Color.rgb(104,229,213))
+                        setPadding(dp(8),0,0,0)
                     })
                 }
-                addView(row)
+                addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(6) })
                 if(android.animation.ValueAnimator.areAnimatorsEnabled()) {
                     row.alpha=0f
-                    row.animate().alpha(1f).setStartDelay(index*65L).setDuration(280L).start()
+                    row.animate().alpha(1f).setStartDelay(index*55L).setDuration(250L).start()
                 }
             }
         })
@@ -1740,7 +1780,32 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             append(if(lastAuto>0) statusFmt.format(Instant.ofEpochMilli(lastAuto))+" Uhr" else "noch keiner")
         }
         sleepCard.addView(card("●  STATUS","Kalender-Automatik",if(calendarAutoEnabled()) Color.rgb(74,224,181) else muted){
-            addView(TextView(this@MainActivity).apply{text=statusText;textSize=12f;setTextColor(if(light) Color.rgb(235,240,252) else muted);setPadding(dp(2),0,dp(2),0)})
+            addView(LinearLayout(this@MainActivity).apply {
+                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
+                addView(TextView(this@MainActivity).apply {
+                    text=statusText;textSize=12f
+                    setTextColor(if(light) Color.rgb(235,240,252) else muted)
+                },LinearLayout.LayoutParams(0,-2,1f))
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.VERTICAL
+                    gravity=android.view.Gravity.CENTER
+                    setPadding(dp(11),dp(10),dp(11),dp(10))
+                    background=GradientDrawable().apply {
+                        cornerRadius=dp(16).toFloat()
+                        setColor(Color.argb(150,7,61,68))
+                        setStroke(dp(1),Color.rgb(72,220,192))
+                    }
+                    addView(TextView(this@MainActivity).apply {
+                        text=if(lastAuto>0) "✓" else "◷"
+                        textSize=28f;gravity=android.view.Gravity.CENTER
+                        setTextColor(Color.rgb(100,241,213))
+                    })
+                    addView(TextView(this@MainActivity).apply {
+                        text=if(lastAuto>0) "Eintrag erfolgt" else "Prüfung aktiv"
+                        textSize=10f;setTextColor(primary)
+                    })
+                },LinearLayout.LayoutParams(dp(112),-2).apply { leftMargin=dp(7) })
+            })
         })
     }
     private fun showSettings() {
