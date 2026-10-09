@@ -2284,7 +2284,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         .setMessage("Geräteinformationen werden abgefragt …")
                         .setCancelable(false).create()
                     progress.show()
-                    lifecycleScope.launch {
+                    CoroutineScope(Dispatchers.Main).launch {
                         val devices=withContext(Dispatchers.IO) { runCatching { garminClient.devices() }.getOrDefault(emptyList()) }
                         progress.dismiss()
                         val message=if(devices.isEmpty())
