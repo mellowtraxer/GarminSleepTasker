@@ -2300,8 +2300,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         val wellness=if(insights.isEmpty())
                             "\n\nTAGESDATEN\nKeine zusätzlichen Garmin-Werte verfügbar."
                         else "\n\nTAGESDATEN · HEUTE\n"+insights.joinToString("\n") { "${it.label}: ${it.value}" }
-                        AlertDialog.Builder(this@MainActivity).setTitle("Garmin Intelligence · Diagnose")
-                            .setMessage(message+wellness).setPositiveButton("Fertig",null).show()
+                        showGarminIntelligence(devices.firstOrNull()?.name ?: "Garmin Connect", insights, message)
+
                     }
                 }
             }
@@ -2309,6 +2309,92 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             .setNegativeButton("Schließen",null)
             .create()
         dialog.setOnShowListener { styleSleepSyncDialog(dialog) }
+        dialog.show()
+    }
+
+    private fun showGarminIntelligence(
+        deviceName:String,
+        insights:List<GarminConnectClient.DailyInsight>,
+        deviceDetails:String
+    ) {
+        val density=resources.displayMetrics.density
+        fun dp(n:Int)=(n*density).toInt()
+        fun surface(colors:IntArray,stroke:Int):GradientDrawable =
+            GradientDrawable(GradientDrawable.Orientation.TL_BR,colors).apply {
+                cornerRadius=dp(22).toFloat()
+                setStroke(dp(1),stroke)
+            }
+        val cyan=Color.rgb(43,217,242)
+        val violet=Color.rgb(170,103,255)
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(18),dp(20),dp(18),dp(18))
+            background=surface(intArrayOf(0xFF080D22.toInt(),0xFF1A1038.toInt()),cyan)
+        }
+        fun label(text:String,size:Float,color:Int,bold:Boolean=false):TextView =
+            TextView(this).apply {
+                this.text=text
+                textSize=size
+                setTextColor(color)
+                if(bold) setTypeface(null,Typeface.BOLD)
+            }
+        root.addView(label("✦ GARMIN INTELLIGENCE",12f,cyan,true))
+        root.addView(label("Dein Körper. Deine Daten.",23f,Color.WHITE,true).apply {
+            setPadding(0,dp(8),0,dp(5))
+        })
+        root.addView(label("⌚ $deviceName · Live aus Garmin Connect",12f,0xFFB4C4E4.toInt()).apply {
+            setPadding(0,0,0,dp(18))
+        })
+        val grid=GridLayout(this).apply { columnCount=2 }
+        val metrics=listOf(
+            Triple("BODY BATTERY","Body Battery",0xFF32E6B2.toInt()),
+            Triple("STRESS Ø","Stress",0xFFB67CFF.toInt()),
+            Triple("RUHEPULS","Ruhepuls",0xFFFF668D.toInt()),
+            Triple("SCHRITTE","Schritte",cyan),
+            Triple("STRESS MAX","Stress Maximum",0xFFFFB45C.toInt())
+        )
+        metrics.forEachIndexed { index,(title,key,color) ->
+            val raw=insights.firstOrNull { it.label==key }?.value
+                ?: if(key=="Stress") insights.firstOrNull { it.label=="Stress Ø" }?.value else null
+            val tile=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                setPadding(dp(13),dp(13),dp(10),dp(13))
+                background=surface(intArrayOf(0xFF13243B.toInt(),0xFF1D1238.toInt()),color)
+            }
+            tile.addView(label("✦ $title",10f,color,true))
+            tile.addView(label(raw ?: "—",29f,Color.WHITE,true).apply {
+                setPadding(0,dp(7),0,dp(2))
+            })
+            tile.addView(label(if(raw==null) "Nicht verfügbar" else "Garmin Tageswert",10f,0xFFB4C4E4.toInt()))
+            val params=GridLayout.LayoutParams().apply {
+                width=0
+                columnSpec=GridLayout.spec(index%2,1f)
+                setMargins(dp(3),dp(3),dp(3),dp(3))
+            }
+            grid.addView(tile,params)
+        }
+        root.addView(grid)
+        root.addView(label("✦ GERÄTEINFORMATIONEN",11f,violet,true).apply {
+            setPadding(0,dp(18),0,dp(8))
+        })
+        root.addView(label(deviceDetails,12f,0xFFD3DDF4.toInt()).apply {
+            setPadding(dp(10),dp(10),dp(10),dp(10))
+            background=surface(intArrayOf(0xFF121D35.toInt(),0xFF17132A.toInt()),0xFF574C91.toInt())
+        })
+        root.addView(label("Nur tatsächlich gelieferte Werte · Keine Schätzungen",10f,0xFF91A2C7.toInt()).apply {
+            setPadding(0,dp(14),0,0)
+        })
+        val scroll=ScrollView(this).apply {
+            isFillViewport=false
+            addView(root)
+        }
+        val dialog=AlertDialog.Builder(this).setView(scroll)
+            .setPositiveButton("SCHLIESSEN",null).create()
+        dialog.setOnShowListener {
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            dialog.window?.setLayout((resources.displayMetrics.widthPixels*0.93f).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(cyan)
+        }
         dialog.show()
     }
 
