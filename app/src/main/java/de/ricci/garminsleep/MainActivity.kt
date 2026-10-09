@@ -1698,11 +1698,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             })
         })
         sleepCard.addView(MaterialButton(this).apply{
-            text="▣   JETZT EINTRAGEN   ›";isAllCaps=false;textSize=15f;setTypeface(typeface,Typeface.BOLD)
+            text="▣   JETZT EINTRAGEN   ❯";isAllCaps=false;textSize=16f;setTypeface(typeface,Typeface.BOLD)
             setTextColor(Color.WHITE)
-            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(designGlassAlpha(),46,62,150) else Color.rgb(41,46,117))
+            backgroundTintList=ColorStateList.valueOf(if(light) Color.argb(designGlassAlpha(),46,62,150) else Color.rgb(81,44,170))
             strokeWidth=dp(2)
-            strokeColor=ColorStateList.valueOf(if(light) Color.rgb(95,125,255) else Color.rgb(126,115,255))
+            strokeColor=ColorStateList.valueOf(if(light) Color.rgb(95,125,255) else Color.rgb(117,209,255))
             cornerRadius=dp(18);elevation=dp(4).toFloat();layoutParams=LinearLayout.LayoutParams(-1,dp(66)).apply{setMargins(0,0,0,dp(12))}
             setOnClickListener{
                 animate().scaleX(.975f).scaleY(.975f).setDuration(90).withEndAction {
