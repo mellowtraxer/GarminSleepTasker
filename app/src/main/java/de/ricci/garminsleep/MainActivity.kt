@@ -197,6 +197,7 @@ private class BottomNavIconView(context: android.content.Context, private val ki
 
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private var settingsBlurTarget: eightbitlab.com.blurview.BlurTarget? = null
+    private var highlightOverviewTab: (() -> Unit)? = null
     private lateinit var status: TextView
     private lateinit var sleepCard: LinearLayout
     private lateinit var pageTitle: TextView
@@ -567,6 +568,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 pageSubtitle.animate().alpha(1f).setDuration(220).start()
             }
             val home=tab(0,"Übersicht"){}; addView(home)
+            highlightOverviewTab={ activate(home) }
             addView(tab(1,"Verlauf"){})
             addView(tab(2,"Kalender"){})
             addView(tab(3,"Einstellungen"){})
@@ -1123,6 +1125,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showOverview() {
+        highlightOverviewTab?.invoke()
         styleHomeConnections()
         pageTitle.text = "SleepSync"
         pageSubtitle.text = nextTimeAwareGreeting()
@@ -2270,6 +2273,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showAllStageTimelines(s:SleepSummary) {
+        highlightOverviewTab?.invoke()
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val theme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")?:"dark"
         val sysDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
