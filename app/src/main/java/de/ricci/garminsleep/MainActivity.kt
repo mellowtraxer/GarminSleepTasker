@@ -2484,7 +2484,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun showDesignStudio() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
-        pageTitle.text="Design Studio";pageSubtitle.text="Dein SleepSync. Dein Look."
+        pageTitle.text="Design Studio";pageSubtitle.text="Gestalte deinen persönlichen Schlafkosmos"
         actionsTitle.visibility=View.GONE;actionsBox.visibility=View.GONE;sleepCard.removeAllViews()
         val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
         val keys=arrayOf("accent","accent2","stage_light","stage_deep","stage_rem","stage_awake","heart","spo2","resp","hrv")
@@ -2519,6 +2519,66 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             });setOnClickListener{click()}
         })
         sleepCard.addView(TextView(this).apply{text="‹   Darstellung";textSize=12f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(115,210,255));setPadding(dp(4),dp(8),0,dp(12));setOnClickListener{showAppearanceSettings()}})
+        // Design Studio hero: a distinct visual experience, not another settings list.
+        sleepCard.addView(LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(21),dp(24),dp(21),dp(22))
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                Color.rgb(31,14,67),Color.rgb(9,34,73),Color.rgb(38,14,60)
+            )).apply {cornerRadius=dp(27).toFloat();setStroke(dp(2),Color.rgb(85,207,255))}
+            addView(TextView(this@MainActivity).apply {
+                text="✦  SLEEPSYNC CREATIVE LAB";textSize=10f;letterSpacing=.17f
+                setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(117,231,255))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="Dein Universum.\\nDeine Regeln.";textSize=27f
+                setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
+                setPadding(0,dp(13),0,dp(10))
+                setShadowLayer(dp(12).toFloat(),0f,0f,Color.rgb(168,86,255))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="Farben, Glas und Licht – erschaffe einen Look, der sich wie deiner anfühlt."
+                textSize=13f;setTextColor(Color.rgb(210,223,249))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="✦  LIVE DESIGN  ·  OLED FIRST";textSize=10f
+                setTextColor(Color.rgb(116,235,205));setPadding(0,dp(19),0,0)
+            })
+        },LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(3),0,dp(16))})
+        sleepCard.addView(TextView(this).apply {
+            text="DEINE FARBWELT";textSize=11f;letterSpacing=.15f
+            setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(160,177,255))
+            setPadding(dp(5),dp(9),0,dp(10))
+        })
+        val paletteRow=LinearLayout(this).apply {orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER}
+        listOf(
+            Triple("Cosmic",Color.rgb(139,92,246),Color.rgb(34,211,238)),
+            Triple("Aurora",Color.rgb(45,220,173),Color.rgb(92,190,255)),
+            Triple("Neon",Color.rgb(255,75,177),Color.rgb(159,91,255)),
+            Triple("Solar",Color.rgb(255,175,69),Color.rgb(255,102,137))
+        ).forEach { (name,main,secondary) ->
+            paletteRow.addView(LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
+                setPadding(dp(4),dp(11),dp(4),dp(10))
+                background=GradientDrawable().apply {
+                    cornerRadius=dp(16).toFloat();setColor(Color.rgb(20,25,52));setStroke(dp(2),main)
+                }
+                addView(View(this@MainActivity).apply {
+                    background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(main,secondary)).apply {
+                        shape=GradientDrawable.OVAL;setStroke(dp(2),Color.WHITE)
+                    }
+                },LinearLayout.LayoutParams(dp(34),dp(34)))
+                addView(TextView(this@MainActivity).apply {
+                    text=name;textSize=10f;setTextColor(Color.WHITE)
+                    setPadding(0,dp(8),0,0)
+                })
+                setOnClickListener {
+                    p.edit().putInt("accent",main).putInt("accent2",secondary).putBoolean("custom_enabled",true).apply()
+                    showDesignStudio()
+                }
+            },LinearLayout.LayoutParams(0,-2,1f).apply{setMargins(dp(3),0,dp(3),0)})
+        }
+        sleepCard.addView(paletteRow,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(16)})
         // Live preview
         sleepCard.addView(eightbitlab.com.blurview.BlurView(this).apply{val tone=designColor("accent2",defs[1]);background=opticsGlassBackground(tone);outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))};layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,Color.red(defs[i]),Color.green(defs[i]),Color.blue(defs[i])));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
