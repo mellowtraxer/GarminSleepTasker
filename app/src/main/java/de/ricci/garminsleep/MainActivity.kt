@@ -1218,43 +1218,93 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val nights=(if(sleepHistory.isNotEmpty()) sleepHistory else listOfNotNull(lastSummary)).sortedByDescending { it.endMs }
         if(nights.isEmpty()){ sleepCard.addView(historyLoadingView()); return }
         val grouped=nights.groupBy { s -> val z=Instant.ofEpochMilli(s.endMs).atZone(ZoneId.systemDefault()).toLocalDate(); (z.get(weekFields.weekBasedYear())*100)+z.get(weekFields.weekOfWeekBasedYear()) }
+        val weeklyAverages=grouped.mapValues { (_,list)->list.map{it.totalMin}.average().toLong() }
         grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
-            val year=key/100; val kw=key%100; val avg=items.map{it.totalMin}.average().toLong()
+            val year=key/100; val kw=key%100; val avg=weeklyAverages[key]?:0L
             val tone=if(kw%2==0) accent2 else stageRem
+            val prevAvg=weeklyAverages.entries.filter{it.key<key}.maxByOrNull{it.key}?.value
+            val delta=prevAvg?.let{avg-it}
             val shell:android.widget.FrameLayout=(if(light) eightbitlab.com.blurview.BlurView(this).apply{
                 background=LayerDrawable(arrayOf(
-                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.argb(designGlassAlpha(),72,88,112));setStroke(dp(4),Color.argb(designNeonAlpha(42),Color.red(tone),Color.green(tone),Color.blue(tone)))},
-                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone)))}
+                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.argb(designGlassAlpha(),72,88,112));setStroke(dp(4),Color.argb(designNeonAlpha(42),Color.red(tone),Color.green(tone),Color.blue(tone)))},
+                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone)))}
                 ))
                 outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
                 settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
             } else android.widget.FrameLayout(this).apply{
-                background=GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.argb(225,12,18,40));setStroke(dp(2),tone)}
-            }).apply{
-                layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
-            }
-            val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2) }
-            val rows=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; visibility=View.GONE }
-            val head=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
-                val title=TextView(this@MainActivity).apply { text="KW "+kw+" · "+year; textSize=16f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) }
+                background=LayerDrawable(arrayOf(
+                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.argb(210,12,18,40));setStroke(dp(4),Color.argb(48,Color.red(tone),Color.green(tone),Color.blue(tone)))},
+                    GradientDrawable().apply{cornerRadius=dp(24).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)},
+                    GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(48,Color.red(tone),Color.green(tone),Color.blue(tone)),Color.TRANSPARENT,Color.argb(24,28,110,160))).apply{cornerRadius=dp(24).toFloat()}
+                ))
+            }).apply{layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}}
+            val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)}
+            val rows=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;visibility=View.GONE;setPadding(dp(9),0,dp(9),dp(12))}
+            val head=LinearLayout(this).apply{
+                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL;setPadding(dp(16),dp(15),dp(15),dp(15))
+                val title=TextView(this@MainActivity).apply{text="KW $kw · $year";textSize=17f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setShadowLayer(dp(4).toFloat(),0f,0f,tone)}
                 addView(title,LinearLayout.LayoutParams(0,-2,1f))
-                addView(TextView(this@MainActivity).apply { text="Ø "+(avg/60)+" h "+(avg%60)+" min  ·  "+items.size+" Nächte"; textSize=11f; setTextColor(secondary) })
-                addView(TextView(this@MainActivity).apply { text="  ▾"; textSize=18f; setTextColor(accent2) })
-                setOnClickListener { rows.visibility=if(rows.visibility==View.VISIBLE) View.GONE else View.VISIBLE }
-            }
-            items.sortedByDescending{it.endMs}.forEach { s ->
-                rows.addView(LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(9),dp(15),dp(11)); background=GradientDrawable().apply{setColor(if(light) Color.argb((designGlassAlpha()*0.38f).toInt(),72,88,112) else Color.argb(70,25,32,58));setStroke(dp(1),if(light) Color.argb(designNeonAlpha(36),Color.red(tone),Color.green(tone),Color.blue(tone)) else Color.TRANSPARENT)}; isClickable=true; isFocusable=true; setOnClickListener { showHistoryNight(s) }
-                    addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                        addView(TextView(this@MainActivity).apply { text=dateFmt.format(Instant.ofEpochMilli(s.endMs)); textSize=13f; setTextColor(if(light) Color.rgb(242,246,255) else Color.rgb(220,225,245)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                        addView(TextView(this@MainActivity).apply { text=(s.totalMin/60).toString()+" h "+(s.totalMin%60).toString()+" min"; textSize=14f; setTextColor(primary); setTypeface(typeface,Typeface.BOLD) })
-                    })
-                    addView(TextView(this@MainActivity).apply { text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs)); textSize=10f; setTextColor(muted); setPadding(0,dp(2),0,dp(7)) })
-                    addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL
-                        listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).filter{it.first>0}.forEach { pair -> val bar=View(this@MainActivity).apply { background=GradientDrawable().apply{cornerRadius=dp(4).toFloat();setColor(pair.second)} }; addView(bar,LinearLayout.LayoutParams(0,dp(8),pair.first.toFloat()).apply{setMargins(0,0,dp(2),0)}) }
-                    })
+                val summary=LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.END}
+                summary.addView(TextView(this@MainActivity).apply{text="Ø ${avg/60} h ${avg%60} min  ·  ${items.size} Nächte";textSize=11f;setTextColor(primary);gravity=android.view.Gravity.END})
+                if(delta!=null)summary.addView(TextView(this@MainActivity).apply{
+                    val abs=kotlin.math.abs(delta)
+                    text=(if(delta>=0)"▲ +" else "▼ −")+"${abs/60} h ${abs%60} min zur Vorwoche"
+                    textSize=10f;setTextColor(if(delta>=0)Color.rgb(87,244,185) else Color.rgb(255,174,131));gravity=android.view.Gravity.END
                 })
+                addView(summary)
+                val arrow=TextView(this@MainActivity).apply{text="  ▾";textSize=20f;setTextColor(tone)}
+                addView(arrow)
+                setOnClickListener{
+                    val expanding=rows.visibility!=View.VISIBLE
+                    rows.visibility=if(expanding)View.VISIBLE else View.GONE
+                    arrow.text=if(expanding)"  ▴" else "  ▾"
+                    if(expanding){rows.alpha=0f;rows.animate().alpha(1f).setDuration(350L).start()}
+                }
             }
-            box.addView(head); box.addView(rows); shell.addView(box); sleepCard.addView(shell)
+            items.sortedByDescending{it.endMs}.forEach { night ->
+                val nightCard=LinearLayout(this).apply{
+                    orientation=LinearLayout.VERTICAL;setPadding(dp(13),dp(12),dp(13),dp(12))
+                    background=LayerDrawable(arrayOf(
+                        GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(155,24,33,65),Color.argb(170,12,26,48))).apply{cornerRadius=dp(17).toFloat()},
+                        GradientDrawable().apply{cornerRadius=dp(17).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(1),Color.argb(95,Color.red(tone),Color.green(tone),Color.blue(tone)))}
+                    ))
+                    isClickable=true;isFocusable=true;setOnClickListener{showHistoryNight(night)}
+                    layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(4))}
+                }
+                nightCard.addView(LinearLayout(this).apply{
+                    orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
+                    addView(TextView(this@MainActivity).apply{text="☾";textSize=25f;setTextColor(tone);setShadowLayer(dp(7).toFloat(),0f,0f,tone)},LinearLayout.LayoutParams(dp(36),-2))
+                    addView(LinearLayout(this@MainActivity).apply{
+                        orientation=LinearLayout.VERTICAL
+                        addView(TextView(this@MainActivity).apply{text=dateFmt.format(Instant.ofEpochMilli(night.endMs));textSize=13f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)})
+                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(night.startMs))+" – "+tf.format(Instant.ofEpochMilli(night.endMs));textSize=10f;setTextColor(muted)})
+                    },LinearLayout.LayoutParams(0,-2,1f))
+                    addView(TextView(this@MainActivity).apply{text="${night.totalMin/60} h ${night.totalMin%60} min";textSize=14f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD)})
+                    addView(TextView(this@MainActivity).apply{text="  ›";textSize=24f;setTextColor(tone)})
+                })
+                val barRow=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;setPadding(dp(36),dp(8),dp(12),0)}
+                listOf(night.lightMin to stageLight,night.deepMin to stageDeep,night.remMin to stageRem,night.awakeMin to stageAwake)
+                    .filter{it.first>0}.forEach{(mins,color)->
+                        val bar=View(this).apply{
+                            background=LayerDrawable(arrayOf(
+                                GradientDrawable().apply{cornerRadius=dp(6).toFloat();setColor(Color.argb(65,Color.red(color),Color.green(color),Color.blue(color)))},
+                                GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(color,Color.argb(175,Color.red(color),Color.green(color),Color.blue(color)))).apply{cornerRadius=dp(6).toFloat()}
+                            ))
+                        }
+                        barRow.addView(bar,LinearLayout.LayoutParams(0,dp(9),mins.toFloat()).apply{setMargins(0,0,dp(3),0)})
+                    }
+                nightCard.addView(barRow)
+                rows.addView(nightCard)
+            }
+            rows.addView(LinearLayout(this).apply{
+                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER;setPadding(dp(3),dp(13),dp(3),dp(3))
+                listOf("LEICHT" to stageLight,"TIEF" to stageDeep,"REM" to stageRem,"WACH" to stageAwake).forEach{(label,color)->
+                    addView(TextView(this@MainActivity).apply{
+                        text="● $label";textSize=10f;setTextColor(color);gravity=android.view.Gravity.CENTER
+                    },LinearLayout.LayoutParams(0,-2,1f))
+                }
+            })
+            box.addView(head);box.addView(rows);shell.addView(box);sleepCard.addView(shell)
         }
     }
     private fun showHistoryNight(s: SleepSummary) {
