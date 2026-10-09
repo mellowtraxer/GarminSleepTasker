@@ -1461,8 +1461,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun styleHomeConnections() {
         val density=resources.displayMetrics.density
         fun dp(value:Int)=(value*density).toInt()
-        actionsTitle.visibility=View.VISIBLE
-        actionsBox.visibility=View.VISIBLE
+        // Connections and automation are configured exclusively in Settings.
+        actionsTitle.visibility=View.GONE
+        actionsBox.visibility=View.GONE
         val light=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark")=="light"
         val red=Color.rgb(255,70,82)
         val preferences=getSharedPreferences("sleepsync_dashboard",MODE_PRIVATE)
