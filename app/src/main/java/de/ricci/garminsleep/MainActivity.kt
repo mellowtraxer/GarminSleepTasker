@@ -2025,8 +2025,66 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 })
             }
         }
+        fun cosmicArtwork(moon:Boolean):View = object:View(this@MainActivity) {
+            private val p=Paint(Paint.ANTI_ALIAS_FLAG)
+            private val random=java.util.Random(if(moon) 713L else 2084L)
+            private val stars=List(100) { Triple(random.nextFloat(),random.nextFloat(),random.nextFloat()) }
+            override fun onDraw(canvas:Canvas) {
+                val w=width.toFloat();val h=height.toFloat()
+                if(w<=0f||h<=0f)return
+                val cx=w*(if(moon) .78f else .82f)
+                val cy=h*(if(moon) .53f else .55f)
+                val radius=minOf(w,h)*(if(moon) .33f else .39f)
+                p.shader=android.graphics.RadialGradient(cx,cy,radius*2.05f,
+                    intArrayOf(Color.argb(160,96,42,198),Color.argb(100,28,100,181),Color.TRANSPARENT),
+                    floatArrayOf(0f,.49f,1f),Shader.TileMode.CLAMP)
+                canvas.drawCircle(cx,cy,radius*2.05f,p);p.shader=null
+                stars.forEach { (x,y,size) ->
+                    p.color=Color.argb((80+size*170).toInt(),175,215,255)
+                    canvas.drawCircle(w*x,h*y,dp(1).toFloat()*(.3f+size),p)
+                }
+                p.shader=android.graphics.RadialGradient(cx,cy,radius*1.28f,
+                    intArrayOf(Color.argb(110,112,214,255),Color.argb(60,196,73,246),Color.TRANSPARENT),
+                    null,Shader.TileMode.CLAMP)
+                canvas.drawCircle(cx,cy,radius*1.28f,p);p.shader=null
+                p.shader=android.graphics.LinearGradient(cx-radius,cy-radius,cx+radius,cy+radius,
+                    if(moon) 0xFFE7D6FF.toInt() else 0xFFB7EDFF.toInt(),
+                    if(moon) 0xFF9B53F5.toInt() else 0xFF7B4AE9.toInt(),Shader.TileMode.CLAMP)
+                canvas.drawCircle(cx,cy,radius,p);p.shader=null
+                p.color=Color.argb(100,26,32,93)
+                for(i in 0 until 22) {
+                    val a=i*2.39996
+                    val x=cx+Math.cos(a).toFloat()*radius*(.2f+(i%5)*.13f)
+                    val y=cy+Math.sin(a).toFloat()*radius*(.2f+(i%4)*.17f)
+                    canvas.drawCircle(x,y,radius*(.018f+(i%4)*.016f),p)
+                }
+                if(moon) {
+                    p.color=0xFF19123F.toInt()
+                    canvas.drawCircle(cx+radius*.43f,cy-radius*.16f,radius*.92f,p)
+                } else {
+                    p.shader=android.graphics.RadialGradient(cx-radius*.3f,cy-radius*.36f,radius*1.65f,
+                        intArrayOf(Color.TRANSPARENT,Color.argb(120,5,10,41),Color.argb(245,5,10,34)),
+                        floatArrayOf(0f,.55f,1f),Shader.TileMode.CLAMP)
+                    canvas.drawCircle(cx,cy,radius,p);p.shader=null
+                }
+                p.style=Paint.Style.STROKE;p.strokeWidth=dp(1).toFloat()
+                p.color=Color.argb(110,162,182,255)
+                canvas.drawOval(cx-radius*1.22f,cy-radius*.93f,cx+radius*1.22f,cy+radius*.93f,p)
+                p.style=Paint.Style.FILL
+                p.shader=android.graphics.LinearGradient(0f,0f,w*.78f,0f,
+                    intArrayOf(0xFF111433.toInt(),0xF0141536.toInt(),Color.TRANSPARENT),
+                    floatArrayOf(0f,.45f,1f),Shader.TileMode.CLAMP)
+                canvas.drawRect(0f,0f,w,h,p);p.shader=null
+            }
+        }
         // Editorial masthead: the whole screen is a navigation dashboard, not a list of settings.
-        sleepCard.addView(LinearLayout(this).apply{
+        sleepCard.addView(android.widget.FrameLayout(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                0xFF101735.toInt(),0xFF241347.toInt(),0xFF081B3E.toInt()
+            )).apply { cornerRadius=dp(29).toFloat();setStroke(dp(2),cyan) }
+            clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+            addView(cosmicArtwork(false),android.widget.FrameLayout.LayoutParams(-1,-1))
+            addView(LinearLayout(this@MainActivity).apply{
             orientation=LinearLayout.VERTICAL
             setPadding(dp(23),dp(25),dp(23),dp(23))
             background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
@@ -2051,6 +2109,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 textSize=10f;setTextColor(Color.rgb(119,237,215))
                 setPadding(0,dp(19),0,0)
             })
+            },android.widget.FrameLayout.LayoutParams(-1,-2))
         },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),dp(5),dp(3),dp(10))})
         sleepCard.addView(label("✦  DEIN KOSMOS"))
         val studio=android.widget.FrameLayout(this).apply {
@@ -2059,22 +2118,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             )).apply {cornerRadius=dp(27).toFloat();setStroke(dp(2),cyan)}
             clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             setOnClickListener{showDesignStudio()}
-            addView(object:View(this@MainActivity){
-                private val brush=Paint(Paint.ANTI_ALIAS_FLAG)
-                override fun onDraw(canvas:Canvas){
-                    super.onDraw(canvas)
-                    val cx=width*.77f;val cy=height*.45f;val radius=dp(83).toFloat()
-                    brush.shader=android.graphics.RadialGradient(cx,cy,radius*1.65f,
-                        intArrayOf(Color.argb(160,232,90,244),Color.argb(35,105,66,238),Color.TRANSPARENT),
-                        null,android.graphics.Shader.TileMode.CLAMP)
-                    canvas.drawCircle(cx,cy,radius*1.65f,brush)
-                    brush.shader=android.graphics.LinearGradient(cx-radius,cy-radius,cx+radius,cy+radius,
-                        Color.rgb(255,190,230),Color.rgb(148,58,235),android.graphics.Shader.TileMode.CLAMP)
-                    canvas.drawCircle(cx,cy,radius,brush)
-                    brush.shader=null;brush.color=Color.rgb(30,15,76)
-                    canvas.drawCircle(cx+radius*.38f,cy-radius*.16f,radius*.94f,brush)
-                }
-            },android.widget.FrameLayout.LayoutParams(-1,-1))
+            addView(cosmicArtwork(true),android.widget.FrameLayout.LayoutParams(-1,-1))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.VERTICAL;setPadding(dp(20),dp(22),dp(17),dp(20))
                 addView(TextView(this@MainActivity).apply {
