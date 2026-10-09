@@ -26,6 +26,22 @@ class SleepMetricChartView(
     private var selectedAtMs: Long? = null
     private val pointPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     private val fillPaint=Paint(Paint.ANTI_ALIAS_FLAG)
+    // A decorative light pulse follows the real measured polyline, never changing its values.
+    private var pulseProgress=0f
+    private val pulseAnimator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
+        duration=9000L
+        repeatCount=android.animation.ValueAnimator.INFINITE
+        interpolator=android.view.animation.LinearInterpolator()
+        addUpdateListener { pulseProgress=it.animatedValue as Float; if(!dragging) invalidate() }
+    }
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if(points.size>=2 && android.animation.ValueAnimator.areAnimatorsEnabled()) pulseAnimator.start()
+    }
+    override fun onDetachedFromWindow() {
+        pulseAnimator.cancel()
+        super.onDetachedFromWindow()
+    }
     init { minimumHeight=(230*resources.displayMetrics.density).toInt() }
     override fun onMeasure(w:Int,h:Int){ setMeasuredDimension(MeasureSpec.getSize(w),(230*resources.displayMetrics.density).toInt()) }
     private fun formatValue(v: Double): String =
@@ -105,6 +121,41 @@ class SleepMetricChartView(
         p.style=Paint.Style.STROKE; p.strokeCap=Paint.Cap.ROUND; p.strokeJoin=Paint.Join.ROUND
         p.strokeWidth=5.2f*d; p.color=Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)); c.drawPath(path,p)
         p.strokeWidth=2.15f*d; p.color=tone; p.setShadowLayer(5*d,0f,0f,tone); c.drawPath(path,p); p.clearShadowLayer()
+        if(points.size>=2 && !dragging && android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            val measure=PathMeasure(path,false)
+            val length=measure.length
+            if(length>0f) {
+                // Fade in/out at both ends so the repeat has no visible jump.
+                val fade=(kotlin.math.sin(Math.PI*pulseProgress.toDouble()).toFloat()).coerceAtLeast(0f)
+                val pos=length*pulseProgress
+                val trail=length*.085f
+                val glowPath=Path()
+                measure.getSegment((pos-trail).coerceAtLeast(0f),pos,glowPath,true)
+                val glow=Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style=Paint.Style.STROKE
+                    strokeCap=Paint.Cap.ROUND
+                    strokeJoin=Paint.Join.ROUND
+                    strokeWidth=5.5f*d
+                    color=Color.argb((105*fade).toInt(),Color.red(tone),Color.green(tone),Color.blue(tone))
+                    setShadowLayer(10f*d,0f,0f,tone)
+                }
+                c.drawPath(glowPath,glow)
+                glow.clearShadowLayer()
+                glow.strokeWidth=2.8f*d
+                glow.color=Color.argb((225*fade).toInt(),255,255,255)
+                c.drawPath(glowPath,glow)
+                val xy=FloatArray(2)
+                if(measure.getPosTan(pos.coerceIn(0f,length),xy,null)) {
+                    glow.style=Paint.Style.FILL
+                    glow.color=Color.argb((175*fade).toInt(),Color.red(tone),Color.green(tone),Color.blue(tone))
+                    glow.setShadowLayer(9f*d,0f,0f,tone)
+                    c.drawCircle(xy[0],xy[1],3.3f*d,glow)
+                    glow.clearShadowLayer()
+                    glow.color=Color.argb((245*fade).toInt(),255,255,255)
+                    c.drawCircle(xy[0],xy[1],1.5f*d,glow)
+                }
+            }
+        }
         p.style=Paint.Style.FILL; p.textSize=11*d; p.color=Color.rgb(130,140,169)
         c.drawText(tf.format(Instant.ofEpochMilli(startMs)),l,height-10*d,p)
         val end=tf.format(Instant.ofEpochMilli(endMs)); c.drawText(end,r-p.measureText(end),height-10*d,p)
