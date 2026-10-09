@@ -232,8 +232,9 @@ private class StageNeonView(context:android.content.Context, private val stages:
         }
         p.style=Paint.Style.STROKE;p.strokeWidth=resources.displayMetrics.density*2.6f;p.strokeCap=Paint.Cap.ROUND;p.color=tone
         val glowWave=(.5f+.5f*kotlin.math.sin((breath*2f*Math.PI).toFloat()))
-        p.setShadowLayer(resources.displayMetrics.density*(7f+4f*glowWave),0f,0f,tone)
-        p.alpha=(195+60*glowWave).toInt();c.drawPath(path,p);p.clearShadowLayer();p.alpha=255
+        p.setShadowLayer(resources.displayMetrics.density*(5f+10f*glowWave),0f,0f,tone)
+        p.strokeWidth=resources.displayMetrics.density*(2.3f+1.7f*glowWave)
+        p.alpha=(145+110*glowWave).toInt();c.drawPath(path,p);p.clearShadowLayer();p.alpha=255
         p.style=Paint.Style.FILL;p.color=Color.argb(35,Color.red(tone),Color.green(tone),Color.blue(tone))
         stages.filter{it.stageLabel.equals(target,true)}.forEach{s->c.drawRoundRect(x(s.startMs),y+5f,x(s.endMs),h,5f,5f,p)}
     }
@@ -2421,8 +2422,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                                     interpolator=android.view.animation.LinearInterpolator()
                                     addUpdateListener{v->
                                         val wave=(.5f+.5f*kotlin.math.sin(((v.animatedValue as Float)*2f*Math.PI).toFloat()))
-                                        segmentView.alpha=.80f+.20f*wave
-                                        segmentView.elevation=dp(2).toFloat()+dp(5)*wave
+                                        segmentView.alpha=.58f+.42f*wave
+                                        segmentView.elevation=dp(2).toFloat()+dp(12)*wave
+                                        segmentView.scaleY=.94f+.06f*wave
                                     }
                                 }
                                 addOnAttachStateChangeListener(object:android.view.View.OnAttachStateChangeListener{
