@@ -207,6 +207,39 @@ private class MetricSparklineView(context:android.content.Context, private val p
 }
 
 
+private class HistoryCardGlowView(context:android.content.Context, private val tone:Int):View(context){
+    var expanded=false
+        set(value){field=value;invalidate()}
+    private val paint=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE}
+    private var phase=0f
+    private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
+        duration=5700L;repeatCount=android.animation.ValueAnimator.INFINITE
+        interpolator=android.view.animation.LinearInterpolator()
+        addUpdateListener{phase=it.animatedValue as Float;invalidate()}
+    }
+    init{setLayerType(LAYER_TYPE_SOFTWARE,null);isClickable=false;isFocusable=false}
+    override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
+    override fun onDetachedFromWindow(){animator.cancel();super.onDetachedFromWindow()}
+    override fun onDraw(canvas:Canvas){
+        super.onDraw(canvas)
+        if(width<=0||height<=0)return
+        val d=resources.displayMetrics.density
+        val wave=.5f+.5f*kotlin.math.sin((phase*2f*Math.PI).toFloat())
+        val inset=7f*d
+        val rect=android.graphics.RectF(inset,inset,width-inset,height-inset)
+        val radius=20f*d
+        paint.style=Paint.Style.STROKE
+        paint.strokeWidth=(if(expanded)2.8f else 2.2f)*d
+        paint.color=Color.argb((135+110*wave).toInt(),Color.red(tone),Color.green(tone),Color.blue(tone))
+        paint.setShadowLayer((if(expanded)10f+12f*wave else 6f+9f*wave)*d,0f,0f,tone)
+        canvas.drawRoundRect(rect,radius,radius,paint)
+        paint.clearShadowLayer()
+        paint.strokeWidth=1f*d
+        paint.color=Color.argb((80+90*wave).toInt(),225,220,255)
+        canvas.drawRoundRect(rect,radius,radius,paint)
+    }
+}
+
 private class HistoryMoonView(context:android.content.Context, private val sleepMinutes:Long, private val tint:Int):View(context){
     private var breath=0f
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
@@ -1355,6 +1388,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(48,Color.red(tone),Color.green(tone),Color.blue(tone)),Color.TRANSPARENT,Color.argb(24,28,110,160))).apply{cornerRadius=dp(24).toFloat()}
                 ))
             }).apply{layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}}
+            val glowView=HistoryCardGlowView(this,tone)
+            shell.addView(glowView,android.widget.FrameLayout.LayoutParams(-1,-1))
             val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)}
             val rows=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;visibility=View.GONE;setPadding(dp(9),0,dp(9),dp(12))}
             val head=LinearLayout(this).apply{
@@ -1378,9 +1413,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     val expanding=rows.visibility!=View.VISIBLE
                     rows.visibility=if(expanding)View.VISIBLE else View.GONE
                     arrow.text=if(expanding)"  ▴" else "  ▾"
+                    glowView.expanded=expanding
                     if(expanding){rows.alpha=0f;rows.animate().alpha(1f).setDuration(350L).start()}
                 }
             }
+            val startDate=items.minOf{it.endMs}
+            val endDate=items.maxOf{it.endMs}
+            rows.addView(TextView(this).apply{
+                text="${items.size} Nächte · "+dateFmt.format(Instant.ofEpochMilli(startDate))+" – "+dateFmt.format(Instant.ofEpochMilli(endDate))
+                textSize=12f;setTextColor(secondary);setPadding(dp(9),dp(2),0,dp(7))
+            })
             items.sortedByDescending{it.endMs}.forEach { night ->
                 val nightCard=LinearLayout(this).apply{
                     orientation=LinearLayout.VERTICAL;setPadding(dp(13),dp(12),dp(13),dp(12))
@@ -1415,6 +1457,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     },LinearLayout.LayoutParams(0,-2,1f))
                 }
             })
+            val details=TextView(this).apply{
+                text="▥  Wochen-Details";textSize=13f;setTextColor(Color.WHITE)
+                setTypeface(typeface,Typeface.BOLD);gravity=android.view.Gravity.CENTER
+                setPadding(dp(16),dp(11),dp(16),dp(11))
+                background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(18,104,181),Color.rgb(89,29,167))).apply{
+                    cornerRadius=dp(23).toFloat();setStroke(dp(2),tone)
+                }
+                setOnClickListener{
+                    val best=items.maxByOrNull{it.totalMin}
+                    val sum=items.sumOf{it.totalMin}
+                    android.app.AlertDialog.Builder(this@MainActivity)
+                        .setTitle("KW $kw · $year")
+                        .setMessage("Nächte: ${items.size}\\nDurchschnitt: ${avg/60} h ${avg%60} min\\nGesamtschlaf: ${sum/60} h ${sum%60} min"+
+                            (best?.let{"\\nLängste Nacht: ${it.totalMin/60} h ${it.totalMin%60} min"}?:""))
+                        .setPositiveButton("Schließen",null).show()
+                }
+            }
+            rows.addView(details,LinearLayout.LayoutParams(-2,-2).apply{gravity=android.view.Gravity.END;setMargins(0,dp(8),dp(8),0)})
             box.addView(head);box.addView(rows);shell.addView(box);sleepCard.addView(shell)
         }
     }
