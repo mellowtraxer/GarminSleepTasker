@@ -207,6 +207,10 @@ private class MetricSparklineView(context:android.content.Context, private val p
 }
 
 
+private object HistoryScrollGate {
+    @Volatile var scrolling=false
+}
+
 private class HistoryCardGlowView(context:android.content.Context, private val tone:Int):View(context){
     var expanded=false
         set(value){field=value;invalidate()}
@@ -215,7 +219,7 @@ private class HistoryCardGlowView(context:android.content.Context, private val t
     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=5700L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{phase=it.animatedValue as Float;invalidate()}
+        addUpdateListener{phase=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
     }
     init{setLayerType(LAYER_TYPE_SOFTWARE,null);isClickable=false;isFocusable=false}
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
@@ -245,7 +249,7 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=5400L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{breath=it.animatedValue as Float;invalidate()}
+        addUpdateListener{breath=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
     }
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
     override fun onDetachedFromWindow(){pulse.cancel();super.onDetachedFromWindow()}
@@ -298,7 +302,7 @@ private class HistoryStageBarView(context:android.content.Context,private val va
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{phase=it.animatedValue as Float;invalidate()}
+        addUpdateListener{phase=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
     }
     init{setLayerType(LAYER_TYPE_HARDWARE,null)}
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
@@ -344,7 +348,7 @@ private class HistoryWaveView(context:android.content.Context, private val tone:
     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{phase=it.animatedValue as Float;invalidate()}
+        addUpdateListener{phase=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
     }
     init{setLayerType(LAYER_TYPE_SOFTWARE,null)}
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
@@ -971,6 +975,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(scene)
             layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
         }
+        val historyScrollResume=Runnable {
+            HistoryScrollGate.scrolling=false
+            if(pageTitle.text.toString()=="Verlauf")sleepCard.invalidate()
+        }
+        scroll.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            if(pageTitle.text.toString()=="Verlauf" && scrollY!=oldScrollY){
+                HistoryScrollGate.scrolling=true
+                scroll.removeCallbacks(historyScrollResume)
+                scroll.postDelayed(historyScrollResume,180L)
+            }
+        }
         var swipeDownX=0f
         var swipeDownY=0f
         var swipeLastX=0f
@@ -1382,6 +1397,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val muted=if(light) Color.rgb(215,225,245) else Color.rgb(135,150,180)
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         viewingHistoryNight=false
+        HistoryScrollGate.scrolling=false
         pageTitle.text="Verlauf"; pageSubtitle.text="Deine Nächte · nach Kalenderwochen"
         sleepCard.removeAllViews(); sleepCard.background=null
         val tf=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault())
