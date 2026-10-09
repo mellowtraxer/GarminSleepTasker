@@ -81,4 +81,4 @@ jobs:
           git add SleepSync-preview.apk latest.json
           git diff --cached --quiet && exit 0
           git commit -m "Publish SleepSync preview build ${RUN_NUMBER}"
-          git push origin main
+          # Concurrent builds can publish out of order; retry with a fresh remote head.\n          for attempt in 1 2 3 4 5; do\n            if git push origin main; then exit 0; fi\n            echo "Update channel advanced; rebasing and retrying ($attempt/5)"\n            git fetch origin main\n            git rebase -X ours origin/main || { git rebase --abort; exit 1; }\n            sleep 3\n          done\n          echo "Update publication failed after retries" >&2\n          exit 1
