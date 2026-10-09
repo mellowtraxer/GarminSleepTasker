@@ -3353,6 +3353,50 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setMargins(dp(4),dp(9),dp(4),dp(9))
         })
 
+        // SleepDNA trend: compare actual measured nights, without a synthetic score.
+        val recentDnaNights=(sleepHistory+listOf(s))
+            .distinctBy { it.endMs }
+            .filter { it.totalMin>0L && it.endMs<=s.endMs }
+            .sortedByDescending { it.endMs }
+            .take(7)
+        if(recentDnaNights.size>=2) {
+            val previous=recentDnaNights.drop(1)
+            val baseline=previous.map { it.totalMin.toDouble() }.average()
+            val delta=s.totalMin-baseline.toLong()
+            val trendText=when {
+                kotlin.math.abs(delta)<5L -> "Deine Schlafdauer liegt ungefähr auf dem Niveau der vorherigen Nächte."
+                delta>0L -> "Du hast ${delta} Minuten länger geschlafen als im Durchschnitt der ${previous.size} vorherigen Nächte."
+                else -> "Du hast ${-delta} Minuten kürzer geschlafen als im Durchschnitt der ${previous.size} vorherigen Nächte."
+            }
+            sleepCard.addView(LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                setPadding(dp(17),dp(14),dp(17),dp(15))
+                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(Color.argb(225,21,35,62),Color.argb(215,24,21,55))).apply {
+                    cornerRadius=dp(20).toFloat()
+                    setStroke(dp(1),Color.argb(135,94,193,239))
+                }
+                addView(TextView(this@MainActivity).apply {
+                    text="SLEEPDNA  ·  7-NÄCHTE-TREND"
+                    textSize=12f;letterSpacing=.10f
+                    setTypeface(typeface,Typeface.BOLD)
+                    setTextColor(Color.rgb(137,216,255))
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text=trendText
+                    textSize=13f;setTextColor(Color.WHITE)
+                    setPadding(0,dp(10),0,dp(6))
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text="Vergleich mit ${previous.size} früheren erfassten Nächten · Schlafdauer, keine medizinische Bewertung"
+                    textSize=10f;setTextColor(Color.rgb(164,187,214))
+                })
+            },LinearLayout.LayoutParams(-1,-2).apply {
+                setMargins(dp(4),dp(7),dp(4),dp(10))
+            })
+        }
+
+
         makeOverviewTextWhite(sleepCard)
     }
 
