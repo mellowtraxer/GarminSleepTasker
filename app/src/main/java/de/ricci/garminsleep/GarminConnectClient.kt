@@ -275,6 +275,33 @@ class GarminConnectClient(private val context: Context) {
         return emptyList()
     }
 
+    data class DailyInsight(val label:String,val value:String)
+    fun dailyInsights(date:LocalDate):List<DailyInsight> {
+        if(!isLinked()) return emptyList()
+        runCatching { refresh() }
+        val token=prefs.getString("access_token",null) ?: return emptyList()
+        val d=date.toString()
+        val result=mutableListOf<DailyInsight>()
+        fun collect(path:String,params:Map<String,String>,keys:List<Pair<String,String>>) {
+            val data=runCatching { apiGet(path,params,token) }.getOrNull() ?: return
+            keys.forEach { (label,key) ->
+                val v=data.opt(key)
+                if(v is Number) result.add(DailyInsight(label,v.toString()))
+            }
+        }
+        collect("/usersummary-service/usersummary/daily",mapOf("calendarDate" to d),listOf(
+            "Stress" to "averageStressLevel",
+            "Ruhepuls" to "restingHeartRate",
+            "Schritte" to "totalSteps",
+            "Body Battery" to "bodyBatteryMostRecentValue"
+        ))
+        collect("/wellness-service/wellness/dailyStress/$d",emptyMap(),listOf(
+            "Stress Ø" to "avgStressLevel",
+            "Stress Maximum" to "maxStressLevel"
+        ))
+        return result.distinctBy { it.label }
+    }
+
     fun nightMetrics(date: LocalDate): GarminNightMetrics? {
         if (!isLinked()) return null
         // Refresh first. If Garmin rejects refresh but the current access token
