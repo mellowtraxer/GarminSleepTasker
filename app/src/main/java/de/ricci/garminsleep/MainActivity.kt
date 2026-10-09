@@ -452,11 +452,41 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
         return if(p.getBoolean("custom_enabled",false)) p.getInt(key,fallback).coerceIn(0,100) else fallback
     }
+    // Sample a tiny decoded bitmap once on import; never analyze images during scrolling.
+    private fun analyzeWallpaperContrast(file:File) {
+        runCatching {
+            val opts=android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds=true }
+            android.graphics.BitmapFactory.decodeFile(file.absolutePath,opts)
+            val sample=(maxOf(opts.outWidth,opts.outHeight)/96).coerceAtLeast(1)
+            val bitmap=android.graphics.BitmapFactory.decodeFile(file.absolutePath,
+                android.graphics.BitmapFactory.Options().apply { inSampleSize=sample }) ?: return@runCatching
+            var bright=0; var count=0
+            try {
+                for(y in 0 until bitmap.height step 3) for(x in 0 until bitmap.width step 3) {
+                    val pixel=bitmap.getPixel(x,y)
+                    val luma=(Color.red(pixel)*299+Color.green(pixel)*587+Color.blue(pixel)*114)/1000
+                    if(luma>155) bright++
+                    count++
+                }
+            } finally { bitmap.recycle() }
+            val ratio=if(count>0) bright.toFloat()/count else 0f
+            getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit()
+                .putInt("wallpaper_bright_percent",(ratio*100).toInt().coerceIn(0,100)).apply()
+        }.onFailure {
+            getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit()
+                .remove("wallpaper_bright_percent").apply()
+        }
+    }
     private fun designGlassAlpha(defaultAlpha:Int=168):Int {
-        // UI value is TRANSPARENCY: 0% = fully opaque, 100% = fully transparent.
-        // Keep one global source of truth so every glass surface behaves identically.
+        // Preserve the manual transparency value; apply only a modest, temporary
+        // contrast boost for imported images with substantial bright regions.
         val transparency=designPercent("glass_strength",34)
-        return (255f*(1f-transparency/100f)).toInt().coerceIn(0,255)
+        val base=(255f*(1f-transparency/100f)).toInt().coerceIn(0,255)
+        val prefs=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
+        if(prefs.getString("wallpaper_source","builtin")!="custom") return base
+        val bright=prefs.getInt("wallpaper_bright_percent",0)
+        val boost=((bright-12).coerceAtLeast(0)*0.55f).toInt().coerceAtMost(38)
+        return (base+boost).coerceAtMost(255)
     }
     private fun designGlassOverlayAlpha(maxAlpha:Int=110):Int =
         (maxAlpha*(designGlassAlpha()/255f)).toInt().coerceIn(0,maxAlpha)
@@ -654,6 +684,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val out=File(filesDir,"sleepsync_custom_wallpaper")
             val input=contentResolver.openInputStream(uri) ?: error("Kein Bildinhalt verfügbar")
             input.use { source -> out.outputStream().use { source.copyTo(it) } }
+            analyzeWallpaperContrast(out)
             getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit().putBoolean("custom_enabled",true).putBoolean("wallpaper_enabled",true).putString("wallpaper_source","custom").apply()
             recreate()
         }.onFailure { android.widget.Toast.makeText(this,"Wallpaper konnte nicht geladen werden.",android.widget.Toast.LENGTH_SHORT).show() }
