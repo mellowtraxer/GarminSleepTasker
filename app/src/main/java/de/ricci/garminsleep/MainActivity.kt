@@ -298,6 +298,7 @@ private class HistoryStageBarView(context:android.content.Context,private val va
     private val valid=values.filter{it.first>0L}
     private val total=valid.sumOf{it.first}.coerceAtLeast(1L).toFloat()
     private val bodyPaint=Paint(Paint.ANTI_ALIAS_FLAG)
+    private val glowPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
@@ -317,28 +318,24 @@ private class HistoryStageBarView(context:android.content.Context,private val va
         valid.forEach{(minutes,color)->
             val segmentWidth=usable*minutes/total
             val rect=android.graphics.RectF(x,2f*d,x+segmentWidth,(height-2f*d))
-            // Volumetric neon: ambient bloom, rounded glass body and a moving specular highlight.
+            // Flat luminous neon: no expensive blurred 3D shadow layers.
             paint.style=Paint.Style.FILL;paint.shader=null;paint.alpha=255
-            paint.color=color
-            paint.setShadowLayer((3f+4f*wave)*d,0f,1.5f*d,color)
-            c.drawRoundRect(rect,5f*d,5f*d,paint)
-            paint.clearShadowLayer()
-            bodyPaint.shader=LinearGradient(rect.left,rect.top,rect.left,rect.bottom,
-                intArrayOf(Color.argb(210,255,255,255),color,
-                    Color.rgb((Color.red(color)*.52f).toInt(),(Color.green(color)*.52f).toInt(),(Color.blue(color)*.70f).toInt())),
-                floatArrayOf(0f,.36f,1f),Shader.TileMode.CLAMP)
-            c.drawRoundRect(rect,5f*d,5f*d,bodyPaint);bodyPaint.shader=null
-            paint.style=Paint.Style.STROKE;paint.strokeWidth=.85f*d
-            paint.color=Color.argb((135+65*wave).toInt(),240,248,255)
+            // Wide translucent underlay gives the bright neon bloom without shadow blur.
+            glowPaint.shader=null
+            glowPaint.color=Color.argb((45+30*wave).toInt(),Color.red(color),Color.green(color),Color.blue(color))
+            c.drawRoundRect(android.graphics.RectF(rect.left,rect.top-2f*d,rect.right,rect.bottom+2f*d),7f*d,7f*d,glowPaint)
+            bodyPaint.shader=null
+            bodyPaint.color=color
+            c.drawRoundRect(rect,5f*d,5f*d,bodyPaint)
+            paint.style=Paint.Style.STROKE;paint.strokeWidth=.8f*d
+            paint.color=Color.argb((100+55*wave).toInt(),235,246,255)
             c.drawRoundRect(rect,5f*d,5f*d,paint)
             paint.style=Paint.Style.FILL
             val highlightX=width*phase
             if(highlightX>=x && highlightX<=x+segmentWidth){
                 val fade=kotlin.math.sin(Math.PI*phase).toFloat().coerceIn(0f,1f)
                 paint.color=Color.argb((200*fade).toInt(),255,255,255)
-                paint.setShadowLayer(7f*d*fade,0f,0f,color)
                 c.drawCircle(highlightX,height*.5f,2.2f*d,paint)
-                paint.clearShadowLayer()
             }
             x+=segmentWidth+gap
         }
