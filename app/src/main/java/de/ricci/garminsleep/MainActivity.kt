@@ -2682,7 +2682,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 val orb=android.widget.FrameLayout(this@MainActivity).apply{
                     background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
                         Color.WHITE,primary,secondary,Color.rgb(21,15,62)
-                    )).apply{shape=GradientDrawable.OVAL;setStroke(dp(if(selected) 3 else 2),if(selected Color.rgb(128,248,255) else Color.argb(205,255,255,255))}
+                    )).apply{shape=GradientDrawable.OVAL;setStroke(dp(if(selected) 3 else 2),if(selected) Color.rgb(128,248,255) else Color.argb(205,255,255,255))}
                     elevation=dp(if(selected) 16 else 7).toFloat()
                 }
                 addView(orb,LinearLayout.LayoutParams(dp(68),dp(68)))
