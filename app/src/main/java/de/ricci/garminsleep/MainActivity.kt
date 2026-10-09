@@ -2242,7 +2242,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         cornerRadius=dp(22).toFloat()
                         setColor(Color.TRANSPARENT)
                         setStroke(dp(2),Color.argb(255,Color.red(tone),Color.green(tone),Color.blue(tone)))
-                    }
+                    },
+                    GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
+                        Color.argb(if(sleep!=null) 36 else 0,255,255,255),
+                        Color.TRANSPARENT,
+                        Color.argb(if(sleep!=null) 30 else 0,6,8,25)
+                    )).apply { cornerRadius=dp(22).toFloat() }
                 ))
                 outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
                 clipToOutline=true
