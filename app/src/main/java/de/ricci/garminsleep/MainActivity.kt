@@ -2417,7 +2417,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                             val segmentView=this
                             if(active && android.animation.ValueAnimator.areAnimatorsEnabled()){
                                 val anim=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
-                                    duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
+                                    this.duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
                                     interpolator=android.view.animation.LinearInterpolator()
                                     addUpdateListener{v->
                                         val wave=(.5f+.5f*kotlin.math.sin(((v.animatedValue as Float)*2f*Math.PI).toFloat()))
