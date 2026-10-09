@@ -143,7 +143,7 @@ private class MetricSparklineView(context:android.content.Context, private val p
         duration=9000L
         repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener { pulseProgress=it.animatedValue as Float; if(touchX<0f && !HistoryScrollGate.scrolling) invalidate() }
+        addUpdateListener { pulseProgress=it.animatedValue as Float; if(touchX<0f && HistoryScrollGate.shouldRender()) invalidate() }
     }
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -209,6 +209,8 @@ private class MetricSparklineView(context:android.content.Context, private val p
 
 private object HistoryScrollGate {
     @Volatile var scrolling=false
+    @Volatile var appVisible=true
+    fun shouldRender():Boolean=appVisible && !scrolling
 }
 
 private class HistoryCardGlowView(context:android.content.Context, private val tone:Int):View(context){
@@ -219,7 +221,7 @@ private class HistoryCardGlowView(context:android.content.Context, private val t
     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=5700L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{phase=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
+        addUpdateListener{phase=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate()}
     }
     init{setLayerType(LAYER_TYPE_SOFTWARE,null);isClickable=false;isFocusable=false}
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
@@ -249,7 +251,7 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=5400L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{breath=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
+        addUpdateListener{breath=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate()}
     }
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
     override fun onDetachedFromWindow(){pulse.cancel();super.onDetachedFromWindow()}
@@ -302,7 +304,7 @@ private class HistoryStageBarView(context:android.content.Context,private val va
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{phase=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
+        addUpdateListener{phase=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate()}
     }
     init{setLayerType(LAYER_TYPE_HARDWARE,null)}
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
@@ -348,7 +350,7 @@ private class HistoryWaveView(context:android.content.Context, private val tone:
     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{phase=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
+        addUpdateListener{phase=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate()}
     }
     init{setLayerType(LAYER_TYPE_SOFTWARE,null)}
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
@@ -389,7 +391,7 @@ private class StageNeonView(context:android.content.Context, private val stages:
     private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
-        addUpdateListener{breath=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate()}
+        addUpdateListener{breath=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate()}
     }
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(stages.isNotEmpty() && android.animation.ValueAnimator.areAnimatorsEnabled())animator.start()}
     override fun onDetachedFromWindow(){animator.cancel();super.onDetachedFromWindow()}
@@ -877,7 +879,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         repeatCount=android.animation.ValueAnimator.INFINITE
                         repeatMode=android.animation.ValueAnimator.RESTART
                         interpolator=android.view.animation.LinearInterpolator()
-                        addUpdateListener { progress=it.animatedValue as Float;if(!HistoryScrollGate.scrolling)invalidate() }
+                        addUpdateListener { progress=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate() }
                     }
                     override fun onAttachedToWindow() {
                         super.onAttachedToWindow()
@@ -1201,7 +1203,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addUpdateListener { a ->
                 val phase=a.animatedValue as Float
                 brandGlow.setTag(phase)
-                if(!HistoryScrollGate.scrolling)brandGlow.invalidate()
+                if(HistoryScrollGate.shouldRender())brandGlow.invalidate()
             }
             start()
         }
@@ -3193,7 +3195,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     duration=5200L
                     repeatCount=android.animation.ValueAnimator.INFINITE
                     interpolator=android.view.animation.LinearInterpolator()
-                    addUpdateListener { dnaBreath=it.animatedValue as Float;invalidate() }
+                    addUpdateListener { dnaBreath=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate() }
                 }
                 override fun onAttachedToWindow() {
                     super.onAttachedToWindow()
@@ -3612,7 +3614,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         makeOverviewTextWhite(sleepCard)
     }
 
-    override fun onDestroy() { super.onDestroy(); cancel() }
+    override fun onResume() {
+        super.onResume()
+        HistoryScrollGate.appVisible=true
+        if(::sleepCard.isInitialized) sleepCard.invalidate()
+        if(::brandGlow.isInitialized) brandGlow.invalidate()
+    }
+
+    override fun onPause() {
+        HistoryScrollGate.appVisible=false
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        brandGlowAnimator?.cancel()
+        brandGlowAnimator=null
+        super.onDestroy()
+        cancel()
+    }
 }
 
 class HealthPermissionRationaleActivity : ComponentActivity() {
