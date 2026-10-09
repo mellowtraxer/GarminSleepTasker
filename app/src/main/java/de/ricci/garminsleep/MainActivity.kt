@@ -3556,7 +3556,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             val typicalDeep=dna14Baseline.filter { it.lightMin+it.deepMin+it.remMin>0L }
             val typicalRem=typicalDeep
             val stageAvailable=s.lightMin+s.deepMin+s.remMin>0L && typicalDeep.size>=3
-            fun fmtDNA(minutes:Long)="$"+"{minutes/60} h $"+"{(minutes%60).toString().padStart(2,'0')} min"
+            fun fmtDNA(minutes:Long)="${minutes/60} h ${(minutes%60).toString().padStart(2,'0')} min"
             val dnaSignature=LinearLayout(this).apply {
                 orientation=LinearLayout.VERTICAL
                 setPadding(dp(17),dp(15),dp(17),dp(15))
@@ -3572,15 +3572,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setTextColor(Color.rgb(212,164,255))
                 })
                 addView(TextView(this@MainActivity).apply {
-                    text="Typische Schlafdauer: $"+"{fmtDNA(typicalMinutes)}"
+                    text="Typische Schlafdauer: ${fmtDNA(typicalMinutes)}"
                     textSize=13f;setTypeface(typeface,Typeface.BOLD)
                     setTextColor(Color.WHITE)
                     setPadding(0,dp(10),0,dp(5))
                 })
                 val deviationLabel=when {
                     kotlin.math.abs(deviation)<10L -> "Diese Nacht liegt nahe an deinem bisherigen Durchschnitt."
-                    deviation>0L -> "Diese Nacht: $"+ "{deviation} min länger als dein bisheriger Durchschnitt."
-                    else -> "Diese Nacht: $"+ "{-deviation} min kürzer als dein bisheriger Durchschnitt."
+                    deviation>0L -> "Diese Nacht: ${deviation} min länger als dein bisheriger Durchschnitt."
+                    else -> "Diese Nacht: ${-deviation} min kürzer als dein bisheriger Durchschnitt."
                 }
                 addView(TextView(this@MainActivity).apply {
                     text=deviationLabel;textSize=12f
@@ -3590,13 +3590,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     val avgDeep=typicalDeep.map { it.deepMin.toDouble() }.average().toLong()
                     val avgRem=typicalRem.map { it.remMin.toDouble() }.average().toLong()
                     addView(TextView(this@MainActivity).apply {
-                        text="Typischer Tiefschlaf: $"+"{fmtDNA(avgDeep)}  ·  REM: $"+"{fmtDNA(avgRem)}"
+                        text="Typischer Tiefschlaf: ${fmtDNA(avgDeep)}  ·  REM: ${fmtDNA(avgRem)}"
                         textSize=11f;setTextColor(Color.rgb(210,191,252))
                         setPadding(0,dp(9),0,0)
                     })
                 }
                 addView(TextView(this@MainActivity).apply {
-                    text="Dein persönlicher Vergleich mit $"+"{dna14Baseline.size} früheren Nächten · kein medizinischer Referenzwert"
+                    text="Dein persönlicher Vergleich mit ${dna14Baseline.size} früheren Nächten · kein medizinischer Referenzwert"
                     textSize=10f;setTextColor(Color.rgb(166,183,209))
                     setPadding(0,dp(11),0,0)
                 })
