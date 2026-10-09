@@ -2297,13 +2297,37 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
-                addView(TextView(this@MainActivity).apply{text="NACHT-ZUSAMMENFASSUNG";textSize=10f;letterSpacing=.12f;setTextColor(accent2);setTypeface(typeface,Typeface.BOLD)})
+                addView(TextView(this@MainActivity).apply{text="NACHT-ZUSAMMENFASSUNG";textSize=10f;letterSpacing=.12f;setTextColor(if(light) Color.rgb(159,214,255) else Color.rgb(146,191,255));setTypeface(typeface,Typeface.BOLD)})
                 addView(TextView(this@MainActivity).apply{text=fmtMin(s.totalMin);textSize=30f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(5),0,dp(2))})
                 addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs))+"  ·  Schlafdauer";textSize=11f;setTextColor(secondary)})
                 addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(13),0,dp(8))
                     listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).forEach{q->if(q.first>0)addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(q.second)}},LinearLayout.LayoutParams(0,dp(10),q.first.toFloat()).apply{setMargins(0,0,dp(2),0)})}
                 })
-                addView(TextView(this@MainActivity).apply{text="Leicht "+fmtMin(s.lightMin)+"  ·  Tief "+fmtMin(s.deepMin)+"  ·  REM "+fmtMin(s.remMin)+"  ·  Wach "+fmtMin(s.awakeMin);textSize=10f;setTextColor(secondary)})
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.HORIZONTAL
+                    gravity=android.view.Gravity.CENTER_VERTICAL
+                    val phases=listOf(
+                        Triple("Leicht",s.lightMin,stageLight),
+                        Triple("Tief",s.deepMin,stageDeep),
+                        Triple("REM",s.remMin,stageRem),
+                        Triple("Wach",s.awakeMin,stageAwake)
+                    )
+                    phases.forEach { (name,minutes,color) ->
+                        addView(LinearLayout(this@MainActivity).apply {
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=android.view.Gravity.CENTER_VERTICAL
+                            addView(View(this@MainActivity).apply {
+                                background=GradientDrawable().apply { shape=GradientDrawable.OVAL;setColor(color) }
+                            },LinearLayout.LayoutParams(dp(6),dp(6)).apply { rightMargin=dp(4) })
+                            addView(TextView(this@MainActivity).apply {
+                                text=name+" "+fmtMin(minutes)
+                                textSize=9f
+                                setTextColor(secondary)
+                                setSingleLine(true)
+                            })
+                        },LinearLayout.LayoutParams(0,-2,1f))
+                    }
+                })
             })
         })
 
