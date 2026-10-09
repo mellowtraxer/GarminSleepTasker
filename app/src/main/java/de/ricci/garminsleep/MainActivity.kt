@@ -3405,6 +3405,53 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setPadding(0,dp(9),0,0)
             })
         }
+        // Fingerprint metrics use the recorded, chronologically ordered stage intervals.
+        val fingerprintStages=dnaSegments.filter { it.endMs>it.startMs }
+        val transitions=fingerprintStages.zipWithNext().count { (a,b) ->
+            a.stageLabel.trim().lowercase()!=b.stageLabel.trim().lowercase()
+        }
+        val awakeIntervals=fingerprintStages.filter {
+            it.stageLabel.trim().lowercase().contains("wach")
+        }
+        val awakeEvents=awakeIntervals.size
+        val fingerprintMinutes=((s.endMs-s.startMs)/60000L).coerceAtLeast(1L)
+        val changesPerHour=transitions*60f/fingerprintMinutes
+        val dnaFingerprint=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(17),dp(15),dp(17),dp(15))
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                intArrayOf(Color.argb(230,23,27,59),Color.argb(219,15,34,50))).apply {
+                cornerRadius=dp(20).toFloat()
+                setStroke(dp(1),Color.argb(160,97,200,245))
+            }
+            addView(TextView(this@MainActivity).apply {
+                text="SLEEPDNA  ·  DEIN FINGERPRINT"
+                textSize=12f;letterSpacing=.10f
+                setTypeface(typeface,Typeface.BOLD)
+                setTextColor(Color.rgb(137,216,255))
+            })
+            val stats=if(fingerprintStages.size<2)
+                "Für die Schlafarchitektur fehlen ausreichend Phasenintervalle."
+            else "Phasenwechsel: $transitions  ·  ${String.format(java.util.Locale.GERMANY,"%.1f",changesPerHour)} pro Stunde"
+            addView(TextView(this@MainActivity).apply {
+                text=stats
+                textSize=13f;setTextColor(Color.WHITE)
+                setPadding(0,dp(10),0,dp(7))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text=if(fingerprintStages.isEmpty()) "Keine aufgezeichneten Phasenintervalle."
+                    else "Erfasste Wachintervalle: $awakeEvents  ·  Wachzeit: ${s.awakeMin} min"
+                textSize=12f;setTextColor(Color.rgb(205,185,250))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="Phasenwechsel und Wachintervalle laut Aufzeichnung · keine medizinische Bewertung"
+                textSize=10f;setTextColor(Color.rgb(163,177,208))
+                setPadding(0,dp(11),0,0)
+            })
+        }
+        sleepCard.addView(dnaFingerprint,LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(dp(4),dp(8),dp(4),dp(8))
+        })
         sleepCard.addView(dnaInsights,LinearLayout.LayoutParams(-1,-2).apply{
             setMargins(dp(4),dp(9),dp(4),dp(9))
         })
