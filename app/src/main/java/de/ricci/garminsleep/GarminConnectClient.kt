@@ -203,18 +203,24 @@ class GarminConnectClient(private val context: Context) {
         }
     }
 
-    data class GarminDeviceInfo(val name:String,val model:String?,val firmware:String?,val lastSync:String?)
+    data class GarminDeviceInfo(
+        val name:String, val model:String?, val firmware:String?, val lastSync:String?,
+        val details:List<Pair<String,String>> = emptyList()
+    )
 
-    /** Device metadata is optional; Garmin may change these unofficial endpoints. */
+    /** Only whitelisted non-sensitive fields; never expose serials, identifiers or tokens. */
     fun devices(): List<GarminDeviceInfo> {
         if (!isLinked()) return emptyList()
         runCatching { refresh() }
         val token=prefs.getString("access_token",null) ?: return emptyList()
-        val paths=listOf("/device-service/deviceregistration/devices","/device-service/deviceregistration/devices/")
+        val paths=listOf(
+            "/device-service/deviceregistration/devices",
+            "/device-service/deviceregistration/devices/"
+        )
         for(path in paths) {
-            val url="$API$path".toHttpUrl()
-            val request=Request.Builder().url(url).headers(nativeHeaders())
-                .header("Authorization","Bearer $token").header("Accept","application/json").get().build()
+            val request=Request.Builder().url("$API$path".toHttpUrl())
+                .headers(nativeHeaders()).header("Authorization","Bearer $token")
+                .header("Accept","application/json").get().build()
             val raw=runCatching {
                 http.newCall(request).execute().use { response ->
                     if(response.isSuccessful) response.body?.string() else null
@@ -224,8 +230,7 @@ class GarminConnectClient(private val context: Context) {
                 ?: runCatching {
                     val root=JSONObject(raw)
                     root.optJSONArray("devices") ?: root.optJSONArray("deviceList")
-                }.getOrNull()
-                ?: continue
+                }.getOrNull() ?: continue
             val found=(0 until arr.length()).mapNotNull { i ->
                 val item=arr.optJSONObject(i) ?: return@mapNotNull null
                 fun field(vararg keys:String):String?=keys.firstNotNullOfOrNull { k ->
@@ -233,9 +238,25 @@ class GarminConnectClient(private val context: Context) {
                 }
                 val name=field("displayName","deviceName","productDisplayName","productName")
                     ?: return@mapNotNull null
-                GarminDeviceInfo(name,field("modelName","model","productName","productDisplayName"),
+                val allowed=listOf(
+                    "Gerätetyp" to listOf("deviceType","deviceTypeName"),
+                    "Produkt" to listOf("productName","productDisplayName"),
+                    "Produktnummer" to listOf("productId"),
+                    "Software" to listOf("softwareVersion","firmwareVersion","firmware"),
+                    "Bluetooth" to listOf("bluetoothVersion"),
+                    "Connect IQ" to listOf("connectIQVersion"),
+                    "Letzte Synchronisierung" to listOf("lastSyncTime","lastSyncTimestamp","lastSync"),
+                    "Registrierung" to listOf("registrationDate"),
+                    "Status" to listOf("deviceStatus"),
+                    "Primärgerät" to listOf("primaryDevice")
+                )
+                val details=allowed.mapNotNull { (label,keys) ->
+                    field(*keys.toTypedArray())?.let { label to it.take(100) }
+                }
+                GarminDeviceInfo(name,
+                    field("modelName","model","productName","productDisplayName"),
                     field("softwareVersion","firmwareVersion","firmware"),
-                    field("lastSyncTime","lastSyncTimestamp","lastSync"))
+                    field("lastSyncTime","lastSyncTimestamp","lastSync"),details)
             }.distinctBy { it.name }
             if(found.isNotEmpty()) return found
         }
