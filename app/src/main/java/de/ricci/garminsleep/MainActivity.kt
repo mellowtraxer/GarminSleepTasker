@@ -3296,6 +3296,63 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(dnaLegend)
         sleepCard.addView(dnaDetail)
 
+        // SleepDNA insights: measured proportions, without inventing a medical sleep score.
+        val dnaMeasured=(s.lightMin+s.deepMin+s.remMin).coerceAtLeast(0)
+        val dnaTotal=(dnaMeasured+s.awakeMin.coerceAtLeast(0)).coerceAtLeast(1)
+        fun dnaPercent(minutes:Int)=((minutes.coerceAtLeast(0)*100f)/dnaTotal).toInt()
+        val dnaInsights=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(17),dp(15),dp(17),dp(15))
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                intArrayOf(Color.argb(225,25,29,62),Color.argb(215,13,30,48))).apply {
+                cornerRadius=dp(20).toFloat()
+                setStroke(dp(1),Color.argb(145,143,108,238))
+            }
+            addView(TextView(this@MainActivity).apply {
+                text="DEINE SLEEPDNA-ANALYSE"
+                textSize=12f;letterSpacing=.12f
+                setTypeface(typeface,Typeface.BOLD)
+                setTextColor(Color.rgb(200,169,255))
+            })
+            val dominant=listOf("Leichtschlaf" to s.lightMin,"Tiefschlaf" to s.deepMin,"REM-Schlaf" to s.remMin)
+                .maxByOrNull { it.second }
+            val analysis=if(dnaMeasured<=0) "Für diese Nacht liegen keine auswertbaren Schlafphasen vor."
+                else "Größter Schlafanteil: ${dominant?.first ?: "Unbekannt"}. Die Anteile basieren auf den aufgezeichneten Minuten."
+            addView(TextView(this@MainActivity).apply {
+                text=analysis
+                textSize=12f;setTextColor(Color.rgb(222,231,250))
+                setPadding(0,dp(8),0,dp(12))
+            })
+            val items=listOf(Triple("LEICHT",s.lightMin,stageLight),
+                Triple("TIEF",s.deepMin,stageDeep),Triple("REM",s.remMin,stageRem),
+                Triple("WACH",s.awakeMin,stageAwake))
+            items.forEach { (label,minutes,tone) ->
+                addView(LinearLayout(this@MainActivity).apply {
+                    orientation=LinearLayout.VERTICAL
+                    setPadding(0,dp(5),0,dp(5))
+                    addView(TextView(this@MainActivity).apply {
+                        text="$label  ·  ${dnaPercent(minutes)} %"
+                        textSize=11f;setTextColor(Color.WHITE)
+                    })
+                    addView(android.widget.ProgressBar(this@MainActivity,null,
+                        android.R.attr.progressBarStyleHorizontal).apply {
+                        max=1000;progress=(minutes.coerceAtLeast(0)*1000L/dnaTotal).toInt()
+                        progressTintList=android.content.res.ColorStateList.valueOf(tone)
+                        progressBackgroundTintList=android.content.res.ColorStateList.valueOf(Color.argb(65,170,185,220))
+                        layoutParams=LinearLayout.LayoutParams(-1,dp(5)).apply{topMargin=dp(4)}
+                    })
+                })
+            }
+            addView(TextView(this@MainActivity).apply {
+                text="Anteile der erfassten Schlaf- und Wachphasen · keine medizinische Bewertung"
+                textSize=10f;setTextColor(Color.rgb(163,177,208))
+                setPadding(0,dp(9),0,0)
+            })
+        }
+        sleepCard.addView(dnaInsights,LinearLayout.LayoutParams(-1,-2).apply{
+            setMargins(dp(4),dp(9),dp(4),dp(9))
+        })
+
         makeOverviewTextWhite(sleepCard)
     }
 
