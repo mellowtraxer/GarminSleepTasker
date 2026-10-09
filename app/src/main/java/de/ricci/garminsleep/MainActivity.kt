@@ -295,21 +295,23 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
 private class HistoryStageBarView(context:android.content.Context,private val values:List<Pair<Long,Int>>):View(context){
     private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
     private var phase=0f
+    private val valid=values.filter{it.first>0L}
+    private val total=valid.sumOf{it.first}.coerceAtLeast(1L).toFloat()
+    private val bodyPaint=Paint(Paint.ANTI_ALIAS_FLAG)
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=6200L;repeatCount=android.animation.ValueAnimator.INFINITE
         interpolator=android.view.animation.LinearInterpolator()
         addUpdateListener{phase=it.animatedValue as Float;invalidate()}
     }
-    init{setLayerType(LAYER_TYPE_SOFTWARE,null)}
+    init{setLayerType(LAYER_TYPE_HARDWARE,null)}
     override fun onAttachedToWindow(){super.onAttachedToWindow();if(android.animation.ValueAnimator.areAnimatorsEnabled())pulse.start()}
     override fun onDetachedFromWindow(){pulse.cancel();super.onDetachedFromWindow()}
     override fun onDraw(c:Canvas){
         super.onDraw(c)
-        val valid=values.filter{it.first>0L};if(valid.isEmpty()||width<=0||height<=0)return
+        if(valid.isEmpty()||width<=0||height<=0)return
         val d=resources.displayMetrics.density
         val gap=3f*d
         val usable=(width-gap*(valid.size-1)).coerceAtLeast(1f)
-        val total=valid.sumOf{it.first}.coerceAtLeast(1L).toFloat()
         val wave=.5f+.5f*kotlin.math.sin((phase*2f*Math.PI).toFloat())
         var x=0f
         valid.forEach{(minutes,color)->
@@ -318,14 +320,14 @@ private class HistoryStageBarView(context:android.content.Context,private val va
             // Volumetric neon: ambient bloom, rounded glass body and a moving specular highlight.
             paint.style=Paint.Style.FILL;paint.shader=null;paint.alpha=255
             paint.color=color
-            paint.setShadowLayer((5f+9f*wave)*d,0f,1.5f*d,color)
+            paint.setShadowLayer((3f+4f*wave)*d,0f,1.5f*d,color)
             c.drawRoundRect(rect,5f*d,5f*d,paint)
             paint.clearShadowLayer()
-            paint.shader=LinearGradient(rect.left,rect.top,rect.left,rect.bottom,
+            bodyPaint.shader=LinearGradient(rect.left,rect.top,rect.left,rect.bottom,
                 intArrayOf(Color.argb(210,255,255,255),color,
                     Color.rgb((Color.red(color)*.52f).toInt(),(Color.green(color)*.52f).toInt(),(Color.blue(color)*.70f).toInt())),
                 floatArrayOf(0f,.36f,1f),Shader.TileMode.CLAMP)
-            c.drawRoundRect(rect,5f*d,5f*d,paint);paint.shader=null
+            c.drawRoundRect(rect,5f*d,5f*d,bodyPaint);bodyPaint.shader=null
             paint.style=Paint.Style.STROKE;paint.strokeWidth=.85f*d
             paint.color=Color.argb((135+65*wave).toInt(),240,248,255)
             c.drawRoundRect(rect,5f*d,5f*d,paint)
