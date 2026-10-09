@@ -2389,6 +2389,26 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(root)
         }
         val dialog=AlertDialog.Builder(this).setView(scroll)
+            .setNeutralButton("30 TAGE TESTEN") { _,_ ->
+                val loading=AlertDialog.Builder(this)
+                    .setTitle("Garmin · Historische Daten")
+                    .setMessage("Prüfe sieben Stichproben aus 30 Tagen …")
+                    .setCancelable(false).create()
+                loading.show()
+                Thread {
+                    val result=runCatching { garminClient.historicalAvailability(30) }
+                        .getOrElse { "Abruf fehlgeschlagen: ${it.javaClass.simpleName}" }
+                    runOnUiThread {
+                        if(!isFinishing && !isDestroyed) {
+                            loading.dismiss()
+                            AlertDialog.Builder(this)
+                                .setTitle("Garmin · 30-Tage-Datencheck")
+                                .setMessage(result)
+                                .setPositiveButton("FERTIG",null).show()
+                        }
+                    }
+                }.start()
+            }
             .setPositiveButton("SCHLIESSEN",null).create()
         dialog.setOnShowListener {
             dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
