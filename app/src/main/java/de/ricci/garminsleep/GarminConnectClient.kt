@@ -302,6 +302,54 @@ class GarminConnectClient(private val context: Context) {
         return result.distinctBy { it.label }
     }
 
+    /** Diagnostic only: samples past dates, reporting actual returned fields.
+     * No fabricated measurements and no raw health data in logs.
+     */
+    fun historicalAvailability(days:Int=30):String {
+        if(!isLinked()) return "Garmin Connect ist nicht verbunden."
+        runCatching { refresh() }
+        val token=prefs.getString("access_token",null) ?: return "Kein Zugriffstoken verfügbar."
+        val today=LocalDate.now()
+        val sampleDays=listOf(0,1,2,3,6,13,29).filter { it<days }
+        val lines=mutableListOf<String>()
+        var summaryDays=0
+        var stressDays=0
+        var timelineDays=0
+        for(offset in sampleDays) {
+            val date=today.minusDays(offset.toLong()).toString()
+            val summary=runCatching { apiGet("/usersummary-service/usersummary/daily",
+                mapOf("calendarDate" to date),token) }.getOrNull()
+            val stress=runCatching { apiGet("/wellness-service/wellness/dailyStress/$date",
+                emptyMap(),token) }.getOrNull()
+            val values=listOf("totalSteps","restingHeartRate","averageStressLevel","bodyBatteryMostRecentValue")
+                .filter { summary?.opt(it) is Number }
+            if(values.isNotEmpty()) summaryDays++
+            val avg=stress?.opt("avgStressLevel")
+            if(avg is Number) stressDays++
+            val arrays=mutableListOf<String>()
+            fun scan(node:JSONObject?,prefix:String) {
+                if(node==null) return
+                val keys=node.keys()
+                while(keys.hasNext()) {
+                    val key=keys.next()
+                    val value=node.opt(key)
+                    if(value is org.json.JSONArray && value.length()>0) arrays.add("$prefix$key (${value.length()})")
+                }
+            }
+            scan(stress,"Stress: ")
+            val battery=runCatching { apiGet("/wellness-service/wellness/bodyBattery/reports/daily",
+                mapOf("calendarDate" to date),token) }.getOrNull()
+            scan(battery,"Battery: ")
+            if(arrays.isNotEmpty()) timelineDays++
+            lines.add("$date: Tageswerte ${values.size}/4 · Stress ${if(avg is Number) "ja" else "nein"} · Reihen ${if(arrays.isEmpty()) "keine" else arrays.joinToString(", ")}")
+        }
+        return "HISTORISCHER GARMIN-TEST (Stichprobe)\\n" +
+            "Geprüft: ${sampleDays.size} Tage aus den letzten $days Tagen\\n" +
+            "Tageswerte: $summaryDays · Stress: $stressDays · Zeitreihen: $timelineDays\\n\\n" +
+            lines.joinToString("\\n") +
+            "\\n\\nNur Stichprobe; fehlende Reihen können andere Endpunkte erfordern."
+    }
+
     fun nightMetrics(date: LocalDate): GarminNightMetrics? {
         if (!isLinked()) return null
         // Refresh first. If Garmin rejects refresh but the current access token
