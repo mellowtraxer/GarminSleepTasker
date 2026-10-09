@@ -3387,6 +3387,51 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     textSize=13f;setTextColor(Color.WHITE)
                     setPadding(0,dp(10),0,dp(6))
                 })
+                // Compare sleep-stage composition only for nights with measured stage minutes.
+                val stageBaseline=previous.filter { it.lightMin+it.deepMin+it.remMin>0L }
+                if(s.lightMin+s.deepMin+s.remMin>0L && stageBaseline.isNotEmpty()) {
+                    fun stageTrend(label:String,current:Long,average:Long,tone:Int):LinearLayout {
+                        val difference=current-average
+                        val arrow=when {
+                            kotlin.math.abs(difference)<5L -> "≈"
+                            difference>0L -> "▲"
+                            else -> "▼"
+                        }
+                        val value=if(kotlin.math.abs(difference)<5L) "ähnlich"
+                            else "${if(difference>0L) "+" else "−"}${kotlin.math.abs(difference)} min"
+                        return LinearLayout(this@MainActivity).apply {
+                            orientation=LinearLayout.HORIZONTAL
+                            gravity=android.view.Gravity.CENTER_VERTICAL
+                            setPadding(0,dp(7),0,dp(5))
+                            addView(TextView(this@MainActivity).apply {
+                                text="$label  ·  ${current} min"
+                                textSize=12f;setTextColor(Color.WHITE)
+                                layoutParams=LinearLayout.LayoutParams(0,-2,1f)
+                            })
+                            addView(TextView(this@MainActivity).apply {
+                                text="$arrow $value"
+                                textSize=12f;setTypeface(typeface,Typeface.BOLD)
+                                setTextColor(tone)
+                            })
+                        }
+                    }
+                    addView(TextView(this@MainActivity).apply {
+                        text="SCHLAFPHASEN IM VERGLEICH"
+                        textSize=10f;letterSpacing=.10f
+                        setTypeface(typeface,Typeface.BOLD)
+                        setTextColor(Color.rgb(187,196,226))
+                        setPadding(0,dp(12),0,dp(3))
+                    })
+                    addView(stageTrend("Tiefschlaf",s.deepMin,
+                        stageBaseline.map { it.deepMin }.average().toLong(),stageDeep))
+                    addView(stageTrend("REM-Schlaf",s.remMin,
+                        stageBaseline.map { it.remMin }.average().toLong(),stageRem))
+                    addView(TextView(this@MainActivity).apply {
+                        text="Schlafphasenvergleich mit ${stageBaseline.size} früheren Nächten mit Phasendaten"
+                        textSize=10f;setTextColor(Color.rgb(164,187,214))
+                        setPadding(0,dp(4),0,dp(5))
+                    })
+                }
                 addView(TextView(this@MainActivity).apply {
                     text="Vergleich mit ${previous.size} früheren erfassten Nächten · Schlafdauer, keine medizinische Bewertung"
                     textSize=10f;setTextColor(Color.rgb(164,187,214))
