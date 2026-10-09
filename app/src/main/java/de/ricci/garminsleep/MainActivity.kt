@@ -1717,7 +1717,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         layoutParams=LinearLayout.LayoutParams(0,-2,1f)
                     })
                     addView(TextView(this@MainActivity).apply {
-                        text=(s0.totalMin/60)+" h "+(s0.totalMin%60)+" min  ✓"
+                        text="${s0.totalMin/60} h ${s0.totalMin%60} min  ✓"
                         textSize=13f;setTextColor(Color.rgb(170,242,221))
                     })
                 }
