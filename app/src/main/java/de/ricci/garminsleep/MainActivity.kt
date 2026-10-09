@@ -246,7 +246,7 @@ private class HistoryCardGlowView(context:android.content.Context, private val t
     }
 }
 
-private class HistoryMoonView(context:android.content.Context, private val sleepMinutes:Long, private val tint:Int):View(context){
+private class HistoryMoonView(context:android.content.Context, private val sleepMinutes:Long, private val tint:Int, private val premiumOrbit:Boolean=false):View(context){
     private var breath=0f
     private val pulse=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
         duration=5400L;repeatCount=android.animation.ValueAnimator.INFINITE
@@ -284,6 +284,20 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
             paint.color=Color.rgb(16,22,43)
             val cut=when(quality){2->.60f;1->.35f;else->.12f}
             c.drawCircle(x+r*cut,y-r*.16f,r*.91f,paint)
+        }
+        if(premiumOrbit) {
+            // Three subtle drifting light motes, only for the large calendar preview.
+            for(i in 0..2) {
+                val angle=(breath*2f*Math.PI+i*2f*Math.PI/3f).toFloat()
+                val orbit=r*(1.34f+i*.09f)
+                val px=x+kotlin.math.cos(angle)*orbit
+                val py=y+kotlin.math.sin(angle)*orbit*.72f
+                val moteRadius=d*(1.2f+i*.25f)
+                paint.color=Color.argb((125+95*wave).toInt(),Color.red(glow),Color.green(glow),Color.blue(glow))
+                paint.setShadowLayer(5f*d,0f,0f,glow)
+                c.drawCircle(px,py,moteRadius,paint)
+                paint.clearShadowLayer()
+            }
         }
         // No arc highlight: it appeared as a white scratch across crescent moons.
         paint.style=Paint.Style.FILL
@@ -1782,7 +1796,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(LinearLayout(this@MainActivity).apply {
                     orientation=LinearLayout.HORIZONTAL
                     gravity=android.view.Gravity.CENTER_VERTICAL
-                    addView(HistoryMoonView(this@MainActivity,s.totalMin,stageRem).apply {
+                    addView(HistoryMoonView(this@MainActivity,s.totalMin,stageRem,true).apply {
                         contentDescription="SleepMoon · Vorschau der letzten Nacht"
                     },LinearLayout.LayoutParams(dp(104),dp(104)).apply { rightMargin=dp(16) })
                     addView(TextView(this@MainActivity).apply {
