@@ -2305,6 +2305,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun stageCard(label:String, minutes:Long, stageTone:Int) {
             val intervals=s.stageSeries.filter{it.stageLabel==label}.sortedBy{it.startMs}
             val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
+            val readableTone=if(light) Color.rgb((Color.red(stageTone)+255)/2,(Color.green(stageTone)+255)/2,(Color.blue(stageTone)+255)/2) else stageTone
             sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
                 background=LayerDrawable(arrayOf(
                     GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(42,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
@@ -2319,8 +2320,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
                 addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(15))
                     addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                        addView(TextView(this@MainActivity).apply{text=label.uppercase();textSize=11f;letterSpacing=.08f;setTextColor(stageTone);setTypeface(typeface,Typeface.BOLD)},LinearLayout.LayoutParams(0,-2,1f))
-                        addView(TextView(this@MainActivity).apply{text=pct.toString()+" %";textSize=18f;setTextColor(stageTone);setTypeface(typeface,Typeface.BOLD)})
+                        addView(TextView(this@MainActivity).apply{text=label.uppercase();textSize=11f;letterSpacing=.08f;setTextColor(readableTone);setTypeface(typeface,Typeface.BOLD);setShadowLayer(dp(3).toFloat(),0f,0f,stageTone)},LinearLayout.LayoutParams(0,-2,1f))
+                        addView(TextView(this@MainActivity).apply{text=pct.toString()+" %";textSize=18f;setTextColor(readableTone);setTypeface(typeface,Typeface.BOLD);setShadowLayer(dp(3).toFloat(),0f,0f,stageTone)})
                     })
                     addView(TextView(this@MainActivity).apply{text=fmtMin(minutes);textSize=27f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(3),0,dp(2))})
                     addView(TextView(this@MainActivity).apply{text=intervals.size.toString()+" "+if(intervals.size==1)"Abschnitt" else "Abschnitte";textSize=10f;setTextColor(secondary);setPadding(0,0,0,dp(9))})
@@ -2332,7 +2333,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                                 Color.argb(235,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)),
                                 Color.argb(110,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)),
                                 Color.argb(42,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone))
-                            )).apply{cornerRadius=dp(4).toFloat()}
+                            )).apply{cornerRadius=dp(4).toFloat()},
+                            GradientDrawable().apply{cornerRadius=dp(4).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(1),Color.argb(125,255,255,255))}
                         ));layoutParams=LinearLayout.LayoutParams(0,dp(if(active)44 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply{gravity=android.view.Gravity.CENTER_VERTICAL;setMargins(if(active)dp(1) else 0,0,if(active)dp(1) else 0,0)}}
                         intervals.forEach{st->if(st.startMs>cursor)addView(seg(st.startMs-cursor,false));addView(seg(st.endMs-st.startMs,true));cursor=st.endMs};if(cursor<s.endMs)addView(seg(s.endMs-cursor,false))
                     })
