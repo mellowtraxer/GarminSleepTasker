@@ -203,6 +203,45 @@ class GarminConnectClient(private val context: Context) {
         }
     }
 
+    data class GarminDeviceInfo(val name:String,val model:String?,val firmware:String?,val lastSync:String?)
+
+    /** Device metadata is optional; Garmin may change these unofficial endpoints. */
+    fun devices(): List<GarminDeviceInfo> {
+        if (!isLinked()) return emptyList()
+        runCatching { refresh() }
+        val token=prefs.getString("access_token",null) ?: return emptyList()
+        val paths=listOf("/device-service/deviceregistration/devices","/device-service/deviceregistration/devices/")
+        for(path in paths) {
+            val url="$API$path".toHttpUrl()
+            val request=Request.Builder().url(url).headers(nativeHeaders())
+                .header("Authorization","Bearer $token").header("Accept","application/json").get().build()
+            val raw=runCatching {
+                http.newCall(request).execute().use { response ->
+                    if(response.isSuccessful) response.body?.string() else null
+                }
+            }.getOrNull() ?: continue
+            val arr=runCatching { org.json.JSONArray(raw) }.getOrNull()
+                ?: runCatching {
+                    val root=JSONObject(raw)
+                    root.optJSONArray("devices") ?: root.optJSONArray("deviceList")
+                }.getOrNull()
+                ?: continue
+            val found=(0 until arr.length()).mapNotNull { i ->
+                val item=arr.optJSONObject(i) ?: return@mapNotNull null
+                fun field(vararg keys:String):String?=keys.firstNotNullOfOrNull { k ->
+                    item.optString(k).takeIf { it.isNotBlank() && it!="null" }
+                }
+                val name=field("displayName","deviceName","productDisplayName","productName")
+                    ?: return@mapNotNull null
+                GarminDeviceInfo(name,field("modelName","model","productName","productDisplayName"),
+                    field("softwareVersion","firmwareVersion","firmware"),
+                    field("lastSyncTime","lastSyncTimestamp","lastSync"))
+            }.distinctBy { it.name }
+            if(found.isNotEmpty()) return found
+        }
+        return emptyList()
+    }
+
     fun nightMetrics(date: LocalDate): GarminNightMetrics? {
         if (!isLinked()) return null
         // Refresh first. If Garmin rejects refresh but the current access token
