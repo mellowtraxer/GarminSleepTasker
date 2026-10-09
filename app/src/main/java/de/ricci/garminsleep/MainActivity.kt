@@ -2687,31 +2687,31 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(eightbitlab.com.blurview.BlurView(this).apply{val tone=designColor("accent2",defs[1]);background=opticsGlassBackground(tone);outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))};layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
             addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,Color.red(defs[i]),Color.green(defs[i]),Color.blue(defs[i])));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
         })
-        section("✦  FARBEN IM DETAIL")
+        section("✦  COLOR ATELIER")
         val colorDetails=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL;visibility=View.GONE}
         val colorToggle=TextView(this).apply {
-            text="✦  10 INDIVIDUELLE FARBEN ANPASSEN     ﹀"
+            text="◈  DEINE FARB-DNA    ·    10 AKZENTE   ⌄"
             textSize=13f;setTypeface(typeface,Typeface.BOLD)
             setTextColor(Color.rgb(164,222,255));gravity=android.view.Gravity.CENTER_VERTICAL
             setPadding(dp(17),dp(17),dp(12),dp(17))
-            background=opticsGlassBackground(Color.rgb(139,92,246))
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(11,19,47),Color.rgb(27,15,57))).apply{cornerRadius=dp(22).toFloat();setStroke(dp(1),Color.rgb(128,114,233))}
             setOnClickListener {
                 colorDetails.visibility=if(colorDetails.visibility==View.VISIBLE) View.GONE else View.VISIBLE
                 text=if(colorDetails.visibility==View.VISIBLE)
-                    "✦  FARBMIX SCHLIESSEN     ﹀"
-                else "✦  10 INDIVIDUELLE FARBEN ANPASSEN     ﹀"
+                    "◈  COLOR ATELIER SCHLIESSEN    ⌃"
+                else "◈  DEINE FARB-DNA    ·    10 AKZENTE   ⌄"
             }
         }
         sleepCard.addView(colorToggle,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(8))})
-        names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);val item=eightbitlab.com.blurview.BlurView(this).apply {
-            background=opticsGlassBackground(tone)
+        names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);val item=LinearLayout(this).apply {
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(9,17,41),Color.rgb(24,17,51))).apply{cornerRadius=dp(18).toFloat();setStroke(dp(1),Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)))}
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(3),0,dp(3))}
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                setPadding(dp(14),dp(10),dp(14),dp(10))
+                setPadding(dp(15),dp(14),dp(15),dp(14))
                 addView(View(this@MainActivity).apply {
                     background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(tone);setStroke(dp(2),Color.WHITE)}
-                },LinearLayout.LayoutParams(dp(27),dp(27)).apply{marginEnd=dp(13)})
+                },LinearLayout.LayoutParams(dp(37),dp(37)).apply{marginEnd=dp(13)})
                 addView(TextView(this@MainActivity).apply{
                     text=names[i];textSize=14f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)
                 },LinearLayout.LayoutParams(0,-2,1f))
