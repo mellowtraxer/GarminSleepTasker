@@ -261,17 +261,34 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
         val glow=when(quality){3->Color.rgb(126,210,255);2->Color.rgb(135,125,255);1->Color.rgb(188,100,255);else->Color.rgb(126,110,177)}
         paint.style=Paint.Style.FILL;paint.shader=null
         val wave=.5f+.5f*kotlin.math.sin((breath*2f*Math.PI).toFloat())
-        paint.color=glow;paint.setShadowLayer((5f+11f*wave)*d,0f,0f,glow)
+        // Layered volumetric halo: soft atmospheric bloom behind the illuminated sphere.
+        val halo=android.graphics.RadialGradient(x,y,r*1.58f,
+            intArrayOf(Color.argb((105+75*wave).toInt(),Color.red(glow),Color.green(glow),Color.blue(glow)),
+                Color.argb((45+40*wave).toInt(),Color.red(glow),Color.green(glow),Color.blue(glow)),Color.TRANSPARENT),
+            floatArrayOf(0f,.56f,1f),android.graphics.Shader.TileMode.CLAMP)
+        paint.shader=halo;c.drawCircle(x,y,r*1.58f,paint);paint.shader=null
+        paint.color=glow;paint.setShadowLayer((5f+10f*wave)*d,0f,0f,glow)
         c.drawCircle(x,y,r,paint);paint.clearShadowLayer()
-        paint.shader=android.graphics.RadialGradient(x-r*.35f,y-r*.4f,r*2f,
-            intArrayOf(Color.WHITE,glow,Color.argb(210,40,38,93)),
-            floatArrayOf(0f,.55f,1f),android.graphics.Shader.TileMode.CLAMP)
+        // Off-axis specular illumination and darker lower rim create the 3D curvature.
+        paint.shader=android.graphics.RadialGradient(x-r*.42f,y-r*.48f,r*1.95f,
+            intArrayOf(Color.WHITE,glow,Color.rgb(57,51,117),Color.rgb(13,17,42)),
+            floatArrayOf(0f,.38f,.76f,1f),android.graphics.Shader.TileMode.CLAMP)
         c.drawCircle(x,y,r,paint);paint.shader=null
         if(quality<3){
             paint.color=Color.rgb(16,22,43)
             val cut=when(quality){2->.60f;1->.35f;else->.12f}
             c.drawCircle(x+r*cut,y-r*.16f,r*.91f,paint)
         }
+        // Glassy crescent highlight, subtly breathing with the ambient light.
+        paint.style=Paint.Style.STROKE
+        paint.strokeWidth=(.9f+.45f*wave)*d
+        paint.color=Color.argb((120+75*wave).toInt(),235,246,255)
+        c.drawArc(x-r*.86f,y-r*.86f,x+r*.86f,y+r*.86f,197f,115f,false,paint)
+        paint.style=Paint.Style.FILL
+        paint.shader=android.graphics.RadialGradient(x-r*.28f,y-r*.38f,r*.56f,
+            intArrayOf(Color.argb((95+55*wave).toInt(),255,255,255),Color.TRANSPARENT),
+            null,android.graphics.Shader.TileMode.CLAMP)
+        c.drawCircle(x-r*.28f,y-r*.38f,r*.56f,paint);paint.shader=null
     }
 }
 
