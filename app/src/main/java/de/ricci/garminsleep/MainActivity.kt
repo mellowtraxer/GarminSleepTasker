@@ -1990,9 +1990,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         pageTitle.text = "Einstellungen"
         pageSubtitle.text = "Verbindungen, Automatik & Darstellung"
         sleepCard.removeAllViews()
-        sleepCard.addView(TextView(this).apply {
-            text = "SYSTEM"; textSize = 12f; setTextColor(accent2); setTypeface(typeface, Typeface.BOLD); letterSpacing = .16f
-        })
         val settingsGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(8),0,0); clipChildren=false; clipToPadding=false }
         sleepCard.clipChildren=false
         sleepCard.clipToPadding=false
@@ -2081,11 +2078,53 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             host.addView(card)
             settingsGrid.addView(host)
         }
+        // Distinct visual hierarchy: premium hero, featured controls and quiet utility footer.
+        val hero=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(23),dp(24),dp(23),dp(23))
+            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+                Color.rgb(28,27,69),Color.rgb(12,27,54),Color.rgb(37,17,65)
+            )).apply { cornerRadius=dp(27).toFloat();setStroke(dp(2),accent2) }
+            addView(TextView(this@MainActivity).apply {
+                text="✦  DEIN SLEEPSYNC";textSize=11f;letterSpacing=.17f;setTextColor(stageRem)
+                setTypeface(typeface,Typeface.BOLD)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="Alles im Einklang.";textSize=25f;setTextColor(Color.WHITE)
+                setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(12),0,dp(8))
+                setShadowLayer(dp(10).toFloat(),0f,0f,accent2)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="Verbinde deine Daten, automatisiere deine Nächte und gestalte deinen persönlichen Schlafkosmos."
+                textSize=13f;setTextColor(Color.rgb(202,219,244));setLineSpacing(dp(3).toFloat(),1f)
+            })
+            addView(TextView(this@MainActivity).apply {
+                text="●  ${if(garminClient.isLinked()) "GARMIN VERBUNDEN" else "GARMIN NICHT VERBUNDEN"}    ✦  $selectedThemeLabel"
+                textSize=10f;letterSpacing=.05f;setTextColor(Color.rgb(124,235,219))
+                setPadding(0,dp(19),0,0)
+            })
+        }
+        sleepCard.addView(hero,LinearLayout.LayoutParams(-1,-2).apply {setMargins(dp(4),dp(5),dp(4),dp(18))})
+        fun sectionTitle(title:String,sub:String) {
+            settingsGrid.addView(LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL;setPadding(dp(9),dp(15),dp(9),dp(5))
+                addView(TextView(this@MainActivity).apply {
+                    text=title;textSize=12f;letterSpacing=.15f;setTextColor(stageRem)
+                    setTypeface(typeface,Typeface.BOLD)
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text=sub;textSize=12f;setTextColor(Color.rgb(172,190,220));setPadding(0,dp(4),0,0)
+                })
+            })
+        }
+        sectionTitle("VERBINDUNGEN","Deine Datenquellen auf einen Blick")
         val garminLabel=if(garminClient.isLinked()) "Verbunden · Schlafdaten synchronisieren" else "Nicht verbunden · Jetzt verbinden"
         setting("⌚","Garmin Connect",garminLabel,accent2) { showGarminSettings() }
         setting("♥","Health Connect","Berechtigungen & Gesundheitsdaten",stageRem) { showHealthSettings() }
+        sectionTitle("DEIN SCHLAFKOSMOS","Automatik und Design im Mittelpunkt")
         setting("⚡","Automatik","Hintergrund-Sync & Kalender",stageAwake) { showAutomationSettings() }
-        setting("✦","Darstellung","$selectedThemeLabel · SleepSync",accent) { showAppearanceSettings() }
+        setting("✦","Darstellung","$selectedThemeLabel · Wallpaper, Glow & Glas",accent) { showAppearanceSettings() }
+        sectionTitle("SLEEPSYNC SYSTEM","Privatsphäre, Wartung und Informationen")
         setting("◈","Datenschutz","Lokale Daten & Diagnose",stageLight) { showPrivacySettings() }
         setting("↻","Updates","Nach neuer SleepSync-Version suchen",Color.rgb(70,205,225)) { checkForPreviewUpdate() }
         setting("ⓘ","Über SleepSync","Version, Build & Entwickler",Color.rgb(120,170,255)) { showAboutSettings() }
