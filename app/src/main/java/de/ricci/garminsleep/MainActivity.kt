@@ -2867,12 +2867,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         sleepCard.addView(dnaLegend)
         sleepCard.addView(dnaDetail)
-        sleepCard.addView(TextView(this).apply {
-            text="SCHLAFVERLAUF  ·  ${java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.startMs))} — ${java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))}"
-            textSize=10f;letterSpacing=.08f;setTextColor(Color.rgb(196,204,239))
-            setPadding(dp(8),dp(10),dp(8),dp(7))
-        })
-        sleepCard.addView(sleepStageStrip(s))
 
         makeOverviewTextWhite(sleepCard)
     }
