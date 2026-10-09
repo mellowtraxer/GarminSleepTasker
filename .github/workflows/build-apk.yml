@@ -81,4 +81,27 @@ jobs:
           git add SleepSync-preview.apk latest.json
           git diff --cached --quiet && exit 0
           git commit -m "Publish SleepSync preview build ${RUN_NUMBER}"
-          # Concurrent builds can publish out of order; retry with a fresh remote head.\n          for attempt in 1 2 3 4 5; do\n            if git push origin main; then exit 0; fi\n            echo "Update channel advanced; rebasing and retrying ($attempt/5)"\n            git fetch origin main\n            git rebase -X ours origin/main || { git rebase --abort; exit 1; }\n            sleep 3\n          done\n          echo "Update publication failed after retries" >&2\n          exit 1
+          # Serialize publication and never let an older run replace a newer APK.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            CURRENT=$(python3 -c 'import json; print(json.load(open("latest.json")).get("versionCode",0))' 2>/dev/null || echo 0)
+            if [ "$CURRENT" -ge "$RUN_NUMBER" ]; then
+              echo "Build $CURRENT already published; skipping older $RUN_NUMBER"
+              exit 0
+            fi
+            cp "$GITHUB_WORKSPACE/app/build/outputs/apk/debug/app-debug.apk" SleepSync-preview.apk
+            cat > latest.json <<EOF
+          {
+            "versionCode": ${RUN_NUMBER},
+            "versionName": "0.1.0-v2-dev.${RUN_NUMBER}",
+            "commit": "${COMMIT_SHA}",
+            "apk": "https://github.com/mellowtraxer/SleepSync-Updates/raw/main/SleepSync-preview.apk"
+          }
+          EOF
+            git add SleepSync-preview.apk latest.json
+            git commit -m "Publish SleepSync preview build ${RUN_NUMBER}"
+            if git push origin main; then exit 0; fi
+            sleep 3
+          done
+          exit 1
