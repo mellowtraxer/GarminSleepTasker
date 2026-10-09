@@ -622,12 +622,38 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             android.widget.Toast.makeText(this,"DreamScape konnte nicht erstellt werden.",android.widget.Toast.LENGTH_LONG).show()
         }
     }
+    private fun handleSharedWallpaper(incoming:android.content.Intent?) {
+        if(incoming?.action!=android.content.Intent.ACTION_SEND || incoming.type?.startsWith("image/")!=true) return
+        val imageUri=if(android.os.Build.VERSION.SDK_INT>=33)
+            incoming.getParcelableExtra(android.content.Intent.EXTRA_STREAM,Uri::class.java)
+        else @Suppress("DEPRECATION") (incoming.getParcelableExtra<Uri>(android.content.Intent.EXTRA_STREAM))
+        if(imageUri==null) {
+            android.widget.Toast.makeText(this,"Die Wallpaper-App hat kein Bild geteilt.",android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
+        // Post until the normal UI is ready; copying the image makes the import independent
+        // of temporary permissions granted by the sharing app.
+        window.decorView.post {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Wallpaper übernehmen?")
+                .setMessage("Das geteilte Bild als SleepSync-Hintergrund verwenden?")
+                .setNegativeButton("Abbrechen",null)
+                .setPositiveButton("Übernehmen") { _,_ -> saveCustomWallpaper(imageUri) }
+                .show()
+        }
+    }
+    override fun onNewIntent(intent:android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleSharedWallpaper(intent)
+    }
     private fun saveCustomWallpaper(uri:Uri?) {
         uri ?: return
         runCatching {
             runCatching { contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
             val out=File(filesDir,"sleepsync_custom_wallpaper")
-            contentResolver.openInputStream(uri)?.use { input -> out.outputStream().use { input.copyTo(it) } }
+            val input=contentResolver.openInputStream(uri) ?: error("Kein Bildinhalt verfügbar")
+            input.use { source -> out.outputStream().use { source.copyTo(it) } }
             getSharedPreferences("sleepsync_design",MODE_PRIVATE).edit().putBoolean("custom_enabled",true).putBoolean("wallpaper_enabled",true).putString("wallpaper_source","custom").apply()
             recreate()
         }.onFailure { android.widget.Toast.makeText(this,"Wallpaper konnte nicht geladen werden.",android.widget.Toast.LENGTH_SHORT).show() }
@@ -795,6 +821,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(savedInstanceState==null) handleSharedWallpaper(intent)
         scheduleBackgroundSleepSync()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val d = resources.displayMetrics.density
