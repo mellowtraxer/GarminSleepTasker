@@ -15,6 +15,11 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter android:label="SleepSync Wallpaper">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
         </activity>
         <activity android:name=".TaskerSleepActivity" android:exported="true" android:label="@string/tasker_action">
             <intent-filter><action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" /></intent-filter>
