@@ -1406,7 +1406,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 ))
             }).apply{layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}}
             val glowView=HistoryCardGlowView(this,tone)
-            shell.addView(glowView,android.widget.FrameLayout.LayoutParams(-1,-1))
+            shell.addView(glowView,android.widget.FrameLayout.LayoutParams(-1,dp(76)))
             val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)}
             val rows=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;visibility=View.GONE;setPadding(dp(9),0,dp(9),dp(12))}
             val head=LinearLayout(this).apply{
