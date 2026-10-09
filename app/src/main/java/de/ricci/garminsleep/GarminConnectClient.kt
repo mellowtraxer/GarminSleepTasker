@@ -233,8 +233,20 @@ class GarminConnectClient(private val context: Context) {
                 }.getOrNull() ?: continue
             val found=(0 until arr.length()).mapNotNull { i ->
                 val item=arr.optJSONObject(i) ?: return@mapNotNull null
-                fun field(vararg keys:String):String?=keys.firstNotNullOfOrNull { k ->
-                    item.optString(k).takeIf { it.isNotBlank() && it!="null" }
+                val nested=listOf("deviceInfo","device","product","deviceSettings","registration")
+                    .mapNotNull { item.optJSONObject(it) }
+                fun field(vararg keys:String):String? {
+                    for(key in keys) {
+                        for(source in listOf(item)+nested) {
+                            val value=source.opt(key)
+                            if(value!=null && value!=JSONObject.NULL &&
+                                value !is JSONObject && value !is org.json.JSONArray) {
+                                val str=value.toString()
+                                if(str.isNotBlank() && str!="null") return str
+                            }
+                        }
+                    }
+                    return null
                 }
                 val name=field("displayName","deviceName","productDisplayName","productName")
                     ?: return@mapNotNull null
@@ -255,8 +267,8 @@ class GarminConnectClient(private val context: Context) {
                 }
                 GarminDeviceInfo(name,
                     field("modelName","model","productName","productDisplayName"),
-                    field("softwareVersion","firmwareVersion","firmware"),
-                    field("lastSyncTime","lastSyncTimestamp","lastSync"),details)
+                    field("softwareVersion","firmwareVersion","firmware","softwareVersionString","currentSoftwareVersion"),
+                    field("lastSyncTime","lastSyncTimestamp","lastSync","lastSyncDate","lastSyncTimeStamp"),details)
             }.distinctBy { it.name }
             if(found.isNotEmpty()) return found
         }
