@@ -2724,7 +2724,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             cardElevation=if(light) dp(10).toFloat() else dp(2).toFloat()
             strokeWidth=dp(1)
             strokeColor=Color.argb(180,147,105,235)
-            setCardBackgroundColor(Color.argb(if(light) designGlassAlpha() else 220,22,25,56))
+            setCardBackgroundColor(Color.TRANSPARENT)
+            if(light) {
+                background=GradientDrawable().apply {
+                    cornerRadius=dp(24).toFloat()
+                    setColor(Color.argb(designGlassAlpha(),72,88,112))
+                    setStroke(dp(1),Color.argb(180,147,105,235))
+                }
+                addBlurLayer(this,24,::dp)
+            } else setCardBackgroundColor(Color.argb(220,22,25,56))
             addView(object:View(this@MainActivity) {
                 private val ink=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
                 private var focusedTime:Long?=null
