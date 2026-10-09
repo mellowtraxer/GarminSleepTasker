@@ -1548,6 +1548,44 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val weekFields=java.time.temporal.WeekFields.ISO
         val nights=(if(sleepHistory.isNotEmpty()) sleepHistory else listOfNotNull(lastSummary)).sortedByDescending { it.endMs }
         if(nights.isEmpty()){ sleepCard.addView(historyLoadingView()); return }
+        // Aggregate trend metrics only; individual nights remain in the weekly cards below.
+        val trendRow=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL }
+        val today=java.time.LocalDate.now()
+        val trendWindows=listOf(7,30,90)
+        trendWindows.forEach { window ->
+            val cutoff=today.minusDays(window.toLong()-1)
+            val subset=nights.filter {
+                !Instant.ofEpochMilli(it.endMs).atZone(ZoneId.systemDefault()).toLocalDate().isBefore(cutoff)
+            }
+            val avg=if(subset.isEmpty()) 0L else subset.map { it.totalMin }.average().toLong()
+            val tile=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
+                setPadding(dp(6),dp(12),dp(6),dp(12))
+                background=GradientDrawable().apply {
+                    cornerRadius=dp(15).toFloat()
+                    setColor(Color.argb(designGlassAlpha(195),16,29,53))
+                    setStroke(dp(1),if(window==7)stageRem else if(window==30)accent2 else stageLight)
+                }
+                addView(TextView(this@MainActivity).apply {
+                    text="$window TAGE";textSize=10f;setTypeface(typeface,Typeface.BOLD);setTextColor(muted)
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text=if(subset.isEmpty()) "–" else "${avg/60} h ${avg%60} min"
+                    textSize=15f;setTypeface(typeface,Typeface.BOLD);setTextColor(primary)
+                    setPadding(0,dp(6),0,dp(4))
+                })
+                addView(TextView(this@MainActivity).apply {
+                    text="${subset.size} Nächte";textSize=10f;setTextColor(secondary)
+                })
+            }
+            trendRow.addView(tile,LinearLayout.LayoutParams(0,-2,1f).apply {setMargins(dp(3),0,dp(3),0)})
+        }
+        sleepCard.addView(TextView(this).apply {
+            text="LANGZEIT-TREND  ·  Ø SCHLAFDAUER";textSize=11f;letterSpacing=.09f
+            setTypeface(typeface,Typeface.BOLD);setTextColor(stageRem)
+            setPadding(dp(8),dp(10),0,dp(10))
+        })
+        sleepCard.addView(trendRow,LinearLayout.LayoutParams(-1,-2).apply {setMargins(dp(3),0,dp(3),dp(18))})
         val grouped=nights.groupBy { s -> val z=Instant.ofEpochMilli(s.endMs).atZone(ZoneId.systemDefault()).toLocalDate(); (z.get(weekFields.weekBasedYear())*100)+z.get(weekFields.weekOfWeekBasedYear()) }
         val weeklyAverages=grouped.mapValues { (_,list)->list.map{it.totalMin}.average().toLong() }
         grouped.toSortedMap(compareByDescending<Int>{it}).forEach { (key,items) ->
