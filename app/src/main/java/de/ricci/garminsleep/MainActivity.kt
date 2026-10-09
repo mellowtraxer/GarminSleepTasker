@@ -1492,7 +1492,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 }
             }
             rows.addView(details,LinearLayout.LayoutParams(-2,-2).apply{gravity=android.view.Gravity.END;setMargins(0,dp(8),dp(8),0)})
-            box.addView(head);box.addView(rows);shell.addView(box);sleepCard.addView(shell)
+            box.addView(head);box.addView(rows)
+            // Match the decoration to actual content height, not the viewport.
+            // In particular the expanded dates must sit INSIDE the glowing outline.
+            box.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, _ ->
+                val desired=bottom.coerceAtLeast(dp(76))
+                if(glowView.layoutParams.height!=desired){
+                    glowView.layoutParams=glowView.layoutParams.apply { height=desired }
+                }
+            }
+            shell.addView(box);sleepCard.addView(shell)
         }
     }
     private fun showHistoryNight(s: SleepSummary) {
