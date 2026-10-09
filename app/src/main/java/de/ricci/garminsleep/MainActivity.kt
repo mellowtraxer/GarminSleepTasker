@@ -315,11 +315,21 @@ private class HistoryStageBarView(context:android.content.Context,private val va
         valid.forEach{(minutes,color)->
             val segmentWidth=usable*minutes/total
             val rect=android.graphics.RectF(x,2f*d,x+segmentWidth,(height-2f*d))
-            paint.style=Paint.Style.FILL;paint.shader=null
-            paint.color=color;paint.alpha=(205+50*wave).toInt()
-            paint.setShadowLayer((2f+5f*wave)*d,0f,0f,color)
+            // Volumetric neon: ambient bloom, rounded glass body and a moving specular highlight.
+            paint.style=Paint.Style.FILL;paint.shader=null;paint.alpha=255
+            paint.color=color
+            paint.setShadowLayer((5f+9f*wave)*d,0f,1.5f*d,color)
             c.drawRoundRect(rect,5f*d,5f*d,paint)
-            paint.clearShadowLayer();paint.alpha=255
+            paint.clearShadowLayer()
+            paint.shader=LinearGradient(rect.left,rect.top,rect.left,rect.bottom,
+                intArrayOf(Color.argb(210,255,255,255),color,
+                    Color.rgb((Color.red(color)*.52f).toInt(),(Color.green(color)*.52f).toInt(),(Color.blue(color)*.70f).toInt())),
+                floatArrayOf(0f,.36f,1f),Shader.TileMode.CLAMP)
+            c.drawRoundRect(rect,5f*d,5f*d,paint);paint.shader=null
+            paint.style=Paint.Style.STROKE;paint.strokeWidth=.85f*d
+            paint.color=Color.argb((135+65*wave).toInt(),240,248,255)
+            c.drawRoundRect(rect,5f*d,5f*d,paint)
+            paint.style=Paint.Style.FILL
             val highlightX=width*phase
             if(highlightX>=x && highlightX<=x+segmentWidth){
                 val fade=kotlin.math.sin(Math.PI*phase).toFloat().coerceIn(0f,1f)
