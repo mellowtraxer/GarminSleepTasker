@@ -279,11 +279,7 @@ private class HistoryMoonView(context:android.content.Context, private val sleep
             val cut=when(quality){2->.60f;1->.35f;else->.12f}
             c.drawCircle(x+r*cut,y-r*.16f,r*.91f,paint)
         }
-        // Glassy crescent highlight, subtly breathing with the ambient light.
-        paint.style=Paint.Style.STROKE
-        paint.strokeWidth=(.9f+.45f*wave)*d
-        paint.color=Color.argb((120+75*wave).toInt(),235,246,255)
-        c.drawArc(x-r*.86f,y-r*.86f,x+r*.86f,y+r*.86f,197f,115f,false,paint)
+        // No arc highlight: it appeared as a white scratch across crescent moons.
         paint.style=Paint.Style.FILL
         paint.shader=android.graphics.RadialGradient(x-r*.28f,y-r*.38f,r*.56f,
             intArrayOf(Color.argb((95+55*wave).toInt(),255,255,255),Color.TRANSPARENT),
