@@ -138,6 +138,21 @@ private class NightLandscapeView(context: android.content.Context) : View(contex
 
 private class MetricSparklineView(context:android.content.Context, private val points:List<MetricPoint>, private val tone:Int, private val label:String, private val valueText:TextView):View(context){
     private val p=Paint(Paint.ANTI_ALIAS_FLAG); private var touchX=-1f; private val originalText=valueText.text
+    private var pulseProgress=0f
+    private val pulseAnimator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
+        duration=9000L
+        repeatCount=android.animation.ValueAnimator.INFINITE
+        interpolator=android.view.animation.LinearInterpolator()
+        addUpdateListener { pulseProgress=it.animatedValue as Float; if(touchX<0f) invalidate() }
+    }
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if(points.size>=2 && android.animation.ValueAnimator.areAnimatorsEnabled()) pulseAnimator.start()
+    }
+    override fun onDetachedFromWindow() {
+        pulseAnimator.cancel()
+        super.onDetachedFromWindow()
+    }
     init{setLayerType(LAYER_TYPE_SOFTWARE,null);isClickable=true
         setOnTouchListener{v,e->when(e.actionMasked){
             android.view.MotionEvent.ACTION_DOWN->{parent?.requestDisallowInterceptTouchEvent(true);touchX=e.x.coerceIn(0f,width.toFloat());updateReadout();invalidate();true}
@@ -155,6 +170,38 @@ private class MetricSparklineView(context:android.content.Context, private val p
         val lastX=x(points.lastIndex);val firstX=x(0)
         p.style=Paint.Style.FILL;p.color=Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone));val area=Path(path);area.lineTo(lastX,h);area.lineTo(firstX,h);area.close();c.drawPath(area,p)
         p.style=Paint.Style.STROKE;p.strokeWidth=resources.displayMetrics.density*2.2f;p.strokeCap=Paint.Cap.ROUND;p.strokeJoin=Paint.Join.ROUND;p.color=tone;p.setShadowLayer(resources.displayMetrics.density*7f,0f,0f,tone);c.drawPath(path,p);p.clearShadowLayer()
+        if(touchX<0f && android.animation.ValueAnimator.areAnimatorsEnabled()){
+            val measure=android.graphics.PathMeasure(path,false)
+            val length=measure.length
+            if(length>0f){
+                val d=resources.displayMetrics.density
+                val fade=kotlin.math.sin(Math.PI*pulseProgress.toDouble()).toFloat().coerceAtLeast(0f)
+                val pos=length*pulseProgress
+                val trail=android.graphics.Path()
+                measure.getSegment((pos-length*.085f).coerceAtLeast(0f),pos,trail,true)
+                val glow=Paint(Paint.ANTI_ALIAS_FLAG).apply{
+                    style=Paint.Style.STROKE;strokeCap=Paint.Cap.ROUND;strokeJoin=Paint.Join.ROUND
+                    strokeWidth=4.5f*d
+                    color=Color.argb((100*fade).toInt(),Color.red(tone),Color.green(tone),Color.blue(tone))
+                    setShadowLayer(8f*d,0f,0f,tone)
+                }
+                c.drawPath(trail,glow)
+                glow.clearShadowLayer()
+                glow.strokeWidth=2.2f*d
+                glow.color=Color.argb((225*fade).toInt(),255,255,255)
+                c.drawPath(trail,glow)
+                val xy=FloatArray(2)
+                if(measure.getPosTan(pos.coerceIn(0f,length),xy,null)){
+                    glow.style=Paint.Style.FILL
+                    glow.color=Color.argb((190*fade).toInt(),Color.red(tone),Color.green(tone),Color.blue(tone))
+                    glow.setShadowLayer(6f*d,0f,0f,tone)
+                    c.drawCircle(xy[0],xy[1],2.8f*d,glow)
+                    glow.clearShadowLayer()
+                    glow.color=Color.argb((245*fade).toInt(),255,255,255)
+                    c.drawCircle(xy[0],xy[1],1.3f*d,glow)
+                }
+            }
+        }
         if(touchX>=0){val idx=selectedIndex();val xx=x(idx);val yy=y(points[idx].value);p.color=Color.argb(150,255,255,255);p.strokeWidth=resources.displayMetrics.density;p.style=Paint.Style.STROKE;c.drawLine(xx,0f,xx,h,p);p.style=Paint.Style.FILL;p.color=Color.WHITE;c.drawCircle(xx,yy,resources.displayMetrics.density*5f,p);p.color=tone;c.drawCircle(xx,yy,resources.displayMetrics.density*2.6f,p)}
     }
 }
