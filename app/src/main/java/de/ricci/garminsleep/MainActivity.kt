@@ -756,8 +756,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             dialog.window?.setLayout((resources.displayMetrics.widthPixels*0.91f).toInt(),maxHeight)
         }
+        // Size the content with the parent-specific LayoutParams before showing the dialog.
+        // Generic ViewGroup.LayoutParams after show() can crash during FrameLayout layout.
+        shellContent.layoutParams=android.widget.FrameLayout.LayoutParams(-1,maxHeight)
         dialog.show()
-        shell.layoutParams=android.view.ViewGroup.LayoutParams(-1,maxHeight)
 
     }
     private fun calendarPrefs()=getSharedPreferences("sleepsync_calendar",MODE_PRIVATE)
