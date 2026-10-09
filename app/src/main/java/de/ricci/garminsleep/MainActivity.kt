@@ -2289,9 +2289,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         progress.dismiss()
                         val message=if(devices.isEmpty())
                             "Garmin hat keine auswertbaren Geräteinformationen geliefert. Deine Schlafdatenverbindung bleibt unverändert."
-                        else devices.joinToString("\\n\\n") { d ->
-                            "⌚ ${d.name}\\nModell: ${d.model ?: "Nicht verfügbar"}\\nFirmware: ${d.firmware ?: "Nicht verfügbar"}\\nLetzter Sync: ${d.lastSync ?: "Nicht verfügbar"}"
-                        }.replace("\\n","\n")
+                        else devices.joinToString("\n\n") { d ->
+                            val extra=if(d.details.isEmpty()) "Keine weiteren Metadaten geliefert."
+                                else d.details.joinToString("\n") { (label,value) -> "$label: $value" }
+                            "⌚ ${d.name}\nModell: ${d.model ?: "Nicht verfügbar"}\nFirmware: ${d.firmware ?: "Nicht verfügbar"}\nLetzter Sync: ${d.lastSync ?: "Nicht verfügbar"}\n\nWEITERE GERÄTEDATEN\n$extra"
+                        }
                         AlertDialog.Builder(this@MainActivity).setTitle("Meine Garmin-Geräte")
                             .setMessage(message).setPositiveButton("Fertig",null).show()
                     }
