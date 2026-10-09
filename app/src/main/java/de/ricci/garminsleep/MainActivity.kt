@@ -3299,7 +3299,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         // SleepDNA insights: measured proportions, without inventing a medical sleep score.
         val dnaMeasured=(s.lightMin+s.deepMin+s.remMin).coerceAtLeast(0)
         val dnaTotal=(dnaMeasured+s.awakeMin.coerceAtLeast(0)).coerceAtLeast(1)
-        fun dnaPercent(minutes:Int)=((minutes.coerceAtLeast(0)*100f)/dnaTotal).toInt()
+        fun dnaPercent(minutes:Long)=((minutes.coerceAtLeast(0L)*100f)/dnaTotal).toInt()
         val dnaInsights=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             setPadding(dp(17),dp(15),dp(17),dp(15))
