@@ -65,6 +65,39 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
+      - name: Publish isolated Compose preview and updater manifest
+        if: github.ref == 'refs/heads/sleepsync-compose-v2' && github.event_name == 'push'
+        env:
+          UPDATE_CHANNEL_TOKEN: ${{ secrets.SLEEPSYNC_UPDATE_CHANNEL_TOKEN }}
+          RUN_NUMBER: ${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          test -n "$UPDATE_CHANNEL_TOKEN"
+          git clone "https://x-access-token:${UPDATE_CHANNEL_TOKEN}@github.com/mellowtraxer/SleepSync-Updates.git" /tmp/sleepsync-compose-updates
+          cd /tmp/sleepsync-compose-updates
+          git config user.name "SleepSync Compose Update Bot"
+          git config user.email "actions@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            CURRENT=$(python3 -c 'import json; print(json.load(open("compose-latest.json")).get("versionCode",0))' 2>/dev/null || echo 0)
+            if [ "$CURRENT" -ge "$RUN_NUMBER" ]; then exit 0; fi
+            cp "$GITHUB_WORKSPACE/app/build/outputs/apk/debug/app-debug.apk" SleepSync-Compose-preview.apk
+            cat > compose-latest.json <<EOF
+          {
+            "versionCode": ${RUN_NUMBER},
+            "versionName": "0.1.0-compose.${RUN_NUMBER}",
+            "commit": "${COMMIT_SHA}",
+            "apk": "https://github.com/mellowtraxer/SleepSync-Updates/raw/main/SleepSync-Compose-preview.apk"
+          }
+          EOF
+            git add SleepSync-Compose-preview.apk compose-latest.json
+            git commit -m "Publish Compose preview build ${RUN_NUMBER}"
+            if git push origin main; then exit 0; fi
+            sleep 3
+          done
+          exit 1
+
       # Private-repo bridge: CI publishes only the signed preview APK + tiny version manifest
       # to the public updater branch. No GitHub credential is ever embedded in SleepSync.
       - name: Publish SleepSync preview update channel
