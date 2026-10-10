@@ -2798,152 +2798,139 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             Triple("Gold",Color.rgb(255,197,65),Color.rgb(255,120,54)),
             Triple("Dynamisch",Color.rgb(140,82,250),Color.rgb(27,217,243))
         )
-        val currentAccent=p.getInt("accent",defs[0])
-        val colorGrid=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        palettes.forEachIndexed{index,(name,primary,secondary)->
-            val selected=currentAccent==primary
-            val tile=LinearLayout(this).apply{
-                orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
-                setPadding(dp(3),dp(11),dp(3),dp(9))
-                background=null
-                val orb=android.widget.FrameLayout(this@MainActivity).apply{
-                    background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                        Color.WHITE,primary,secondary,Color.rgb(21,15,62)
-                    )).apply{shape=GradientDrawable.OVAL;setStroke(dp(if(selected) 3 else 2),if(selected) Color.rgb(128,248,255) else Color.argb(205,255,255,255))}
-                    elevation=dp(if(selected) 16 else 7).toFloat()
-                }
-                addView(orb,LinearLayout.LayoutParams(dp(68),dp(68)))
-                addView(TextView(this@MainActivity).apply{
-                    text=name;textSize=10f;gravity=android.view.Gravity.CENTER
-                    setTextColor(if(selected) Color.rgb(130,236,255) else Color.WHITE)
-                    setTypeface(typeface,if(selected) Typeface.BOLD else Typeface.NORMAL)
-                    setPadding(0,dp(9),0,0)
-                })
+
+        fun glassPanel(tone:Int)=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xF0081232.toInt(),0xEC151038.toInt(),0xF0091B38.toInt())).apply{
+            cornerRadius=dp(21).toFloat();setStroke(dp(1).coerceAtLeast(1),tone)
+        }
+        fun studioLabel(title:String)=TextView(this).apply{text=title;textSize=14f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)}
+        fun studioSmall(title:String)=TextView(this).apply{text=title;textSize=10f;setTextColor(0xFFCBD8F8.toInt())}
+        val neonCyan=0xFF38DFFF.toInt()
+        val neonViolet=0xFFC45BFF.toInt()
+        fun sectionHeading(name:String)=sleepCard.addView(studioLabel(name),LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(21),0,dp(10))})
+        sectionHeading("Wallpaper auswählen")
+        val gallery=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        val images=intArrayOf(R.drawable.cosmic_crescent,R.drawable.cosmic_planet,R.drawable.cosmic_crescent,R.drawable.cosmic_planet,R.drawable.cosmic_crescent,R.drawable.cosmic_planet)
+        for(i in 0..5){
+            val tile=android.widget.FrameLayout(this).apply{
+                background=glassPanel(if(i==0)neonCyan else 0xFF556DAD.toInt())
+                clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+                addView(android.widget.ImageView(this@MainActivity).apply{
+                    scaleType=android.widget.ImageView.ScaleType.CENTER_CROP;setImageResource(images[i])
+                    alpha=if(i==0)1f else .82f
+                },android.widget.FrameLayout.LayoutParams(-1,-1))
+                if(i==0)addView(TextView(this@MainActivity).apply{
+                    text="✓";textSize=18f;gravity=android.view.Gravity.CENTER
+                    setTextColor(Color.WHITE);background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(neonViolet)}
+                },android.widget.FrameLayout.LayoutParams(dp(27),dp(27),android.view.Gravity.TOP or android.view.Gravity.RIGHT).apply{setMargins(0,dp(5),dp(5),0)})
                 setOnClickListener{
-                    p.edit().putInt("accent",primary).putInt("accent2",secondary).putBoolean("custom_enabled",true).apply()
-                    showDesignStudio()
+                    when(i){
+                        0->if(File(filesDir,"sleepsync_dreamscape.png").exists()){p.edit().putString("wallpaper_source","dreamscape").putBoolean("wallpaper_enabled",true).apply();showDesignStudio()}else generateDreamScape()
+                        1,3,5->{p.edit().putString("wallpaper_source","builtin").putBoolean("wallpaper_enabled",true).apply();showDesignStudio()}
+                        2,4->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    }
                 }
             }
-            colorGrid.addView(tile,LinearLayout.LayoutParams(dp(94),dp(112)).apply{setMargins(dp(3),dp(3),dp(3),dp(3))})
+            gallery.addView(tile,LinearLayout.LayoutParams(dp(105),dp(92)).apply{setMargins(dp(2),0,dp(9),0)})
         }
-        sleepCard.addView(LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL;setPadding(dp(9),dp(11),dp(9),dp(11))
-            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                Color.argb(248,8,14,38),Color.argb(246,24,13,55)
-            )).apply {cornerRadius=dp(23).toFloat();setStroke(dp(1),Color.rgb(112,116,229))}
-            addView(android.widget.HorizontalScrollView(this@MainActivity).apply {
-                isHorizontalScrollBarEnabled=false;addView(colorGrid)
-            })
-        },LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=dp(16)})
-        // Live preview
-        sleepCard.addView(eightbitlab.com.blurview.BlurView(this).apply{val tone=designColor("accent2",defs[1]);background=opticsGlassBackground(tone);outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))};layoutParams=LinearLayout.LayoutParams(-1,dp(142)).apply{setMargins(0,0,0,dp(8))}
-            addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(12));addView(TextView(this@MainActivity).apply{text="LIVE-VORSCHAU";textSize=10f;letterSpacing=.14f;setTextColor(designColor("accent2",defs[1]));setTypeface(typeface,Typeface.BOLD)});addView(TextView(this@MainActivity).apply{text="7 h 42 min";textSize=29f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)});addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;listOf("Leicht" to 2,"Tief" to 3,"REM" to 4,"Wach" to 5).forEach{(n,i)->addView(TextView(this@MainActivity).apply{text=n;textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(defs[i]);background=GradientDrawable().apply{cornerRadius=dp(8).toFloat();setColor(Color.argb(42,Color.red(defs[i]),Color.green(defs[i]),Color.blue(defs[i])));setStroke(dp(1),defs[i])}},LinearLayout.LayoutParams(0,dp(30),1f).apply{setMargins(dp(2),0,dp(2),0)})}})})
-        })
-        section("✦  COLOR ATELIER")
-        val colorDetails=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL;visibility=View.GONE}
-        val colorToggle=TextView(this).apply {
-            text="◈  DEINE FARB-DNA    ·    10 AKZENTE   ⌄"
-            textSize=13f;setTypeface(typeface,Typeface.BOLD)
-            setTextColor(Color.rgb(164,222,255));gravity=android.view.Gravity.CENTER_VERTICAL
-            setPadding(dp(17),dp(17),dp(12),dp(17))
-            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(11,19,47),Color.rgb(27,15,57))).apply{cornerRadius=dp(22).toFloat();setStroke(dp(1),Color.rgb(128,114,233))}
-            setOnClickListener {
-                colorDetails.visibility=if(colorDetails.visibility==View.VISIBLE) View.GONE else View.VISIBLE
-                text=if(colorDetails.visibility==View.VISIBLE)
-                    "◈  COLOR ATELIER SCHLIESSEN    ⌃"
-                else "◈  DEINE FARB-DNA    ·    10 AKZENTE   ⌄"
+        sleepCard.addView(android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(gallery)})
+        fun effectCard(title:String,key:String,initial:Int,tone:Int,sub:String):LinearLayout{
+            val panel=LinearLayout(this).apply{
+                orientation=LinearLayout.VERTICAL;setPadding(dp(10),dp(12),dp(10),dp(10))
+                background=glassPanel(tone)
             }
-        }
-        sleepCard.addView(colorToggle,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(4),0,dp(8))})
-        names.indices.forEach{i->val tone=p.getInt(keys[i],defs[i]);val item=LinearLayout(this).apply {
-            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(9,17,41),Color.rgb(24,17,51))).apply{cornerRadius=dp(18).toFloat();setStroke(dp(1),Color.argb(150,Color.red(tone),Color.green(tone),Color.blue(tone)))}
-            layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(3),0,dp(3))}
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                setPadding(dp(15),dp(14),dp(15),dp(14))
-                addView(View(this@MainActivity).apply {
-                    background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(tone);setStroke(dp(2),Color.WHITE)}
-                },LinearLayout.LayoutParams(dp(37),dp(37)).apply{marginEnd=dp(13)})
-                addView(TextView(this@MainActivity).apply{
-                    text=names[i];textSize=14f;setTextColor(Color.WHITE);setTypeface(typeface,Typeface.BOLD)
-                },LinearLayout.LayoutParams(0,-2,1f))
-                addView(TextView(this@MainActivity).apply{
-                    text=String.format("#%06X",0xFFFFFF and tone);textSize=11f;setTextColor(Color.rgb(183,205,229))
-                })
-            })
-            setOnClickListener{pickFullColor(i)}
-        };colorDetails.addView(item)}
-        sleepCard.addView(colorDetails)
-        section("✦  WALLPAPER & QUELLEN")
-        val wallpaperSource=p.getString("wallpaper_source","builtin")?:"builtin"
-        row("Wallpaper",if(!p.getBoolean("wallpaper_enabled",true)) "Aus · einfarbiger Hintergrund" else if(wallpaperSource=="dreamscape") "Aktiv · DreamScape OLED" else if(wallpaperSource=="custom") "Aktiv · Eigenes Wallpaper" else "Aktiv · SleepSync Wallpaper",Color.rgb(70,205,225)){
-            val choices=arrayOf("SleepSync Wallpaper","Eigenes Wallpaper · Google Fotos / Galerie","Eigenes Wallpaper · Dateien","Installierte Wallpaper-Apps · Bild auswählen","✨ DreamScape · Aus Schlafdaten generieren","Kein Wallpaper","✨ KI OLED Studio · demnächst")
-            val dlg=AlertDialog.Builder(this).setTitle("Wallpaper").setItems(choices){_,which->
-                when(which){
-                    0->{p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();recreate()}
-                    1->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    2->customWallpaperLauncher.launch(arrayOf("image/*"))
-                    3->openInstalledWallpaperApps()
-                    4->generateDreamScape()
-                    5->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();recreate()}
-                    6->android.widget.Toast.makeText(this,"KI OLED Studio ist vorbereitet – echte OLED-KI-Generierung folgt als eigener Schritt.",android.widget.Toast.LENGTH_LONG).show()
-                }
-            }.create()
-            dlg.setOnShowListener{styleSleepSyncDialog(dlg)};dlg.show()
-        }
-        section("✦  LICHTLABOR")
-        fun slider(title:String,key:String,value:Int,max:Int,tone:Int) {
-            val panel=LinearLayout(this).apply {
-                orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(13))
-                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                    Color.argb(248,7,15,38),Color.argb(244,24,15,54)
-                )).apply {
-                    cornerRadius=dp(22).toFloat()
-                    setStroke(dp(1),Color.argb(175,Color.red(tone),Color.green(tone),Color.blue(tone)))
-                }
+            panel.addView(studioLabel(title).apply{textSize=12f;maxLines=1})
+            val demo=View(this).apply{
+                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(tone,0xFF24205A.toInt(),0xFF081A38.toInt())).apply{cornerRadius=dp(12).toFloat()}
+                alpha=.30f+initial*.006f
             }
-            val valueLabel=TextView(this).apply {
-                text="$value%";textSize=15f;setTypeface(typeface,Typeface.BOLD);setTextColor(tone)
-            }
-            panel.addView(LinearLayout(this).apply {
-                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                addView(TextView(this@MainActivity).apply {
-                    text=title;textSize=16f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
-                },LinearLayout.LayoutParams(0,-2,1f))
-                addView(valueLabel)
-            })
-            val demo=View(this).apply {
-                background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(
-                    Color.argb(170,Color.red(tone),Color.green(tone),Color.blue(tone)),
-                    Color.argb(70,58,45,119),Color.rgb(9,19,47)
-                )).apply{cornerRadius=dp(13).toFloat();setStroke(dp(1),tone)}
-                alpha=.4f+value*.006f
-            }
-            panel.addView(demo,LinearLayout.LayoutParams(-1,dp(54)).apply {
-                topMargin=dp(13);bottomMargin=dp(8)
-            })
-            panel.addView(android.widget.SeekBar(this).apply {
-                this.max=max;progress=value
-                progressTintList=ColorStateList.valueOf(tone);thumbTintList=ColorStateList.valueOf(tone)
-                setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,u:Boolean) {
-                        valueLabel.text="$v%";demo.alpha=.4f+v*.006f
-                        if(u)p.edit().putInt(key,v).putBoolean("custom_enabled",true).apply()
+            panel.addView(demo,LinearLayout.LayoutParams(-1,dp(54)).apply{topMargin=dp(12)})
+            panel.addView(android.widget.SeekBar(this).apply{
+                max=100;progress=initial
+                progressTintList=ColorStateList.valueOf(tone);thumbTintList=ColorStateList.valueOf(0xFFEAD5FF.toInt())
+                setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{
+                    override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,fromUser:Boolean){
+                        demo.alpha=.3f+v*.006f
+                        if(fromUser)p.edit().putInt(key,v).putBoolean("custom_enabled",true).apply()
                     }
                     override fun onStartTrackingTouch(s:android.widget.SeekBar?){}
-                    override fun onStopTrackingTouch(s:android.widget.SeekBar?){showDesignStudio()}
+                    override fun onStopTrackingTouch(s:android.widget.SeekBar?){}
                 })
-            })
-            sleepCard.addView(panel,LinearLayout.LayoutParams(-1,-2).apply {
-                setMargins(0,dp(5),0,dp(7))
-            })
+            },LinearLayout.LayoutParams(-1,dp(43)))
+            panel.addView(studioSmall(sub).apply{gravity=android.view.Gravity.CENTER;maxLines=1})
+            return panel
         }
-        slider("Glas-Transparenz","glass_strength",p.getInt("glass_strength",34),100,Color.rgb(90,190,255))
-        slider("Blur","blur_strength",p.getInt("blur_strength",20),100,Color.rgb(183,99,255))
-        slider("Neon","neon_strength",p.getInt("neon_strength",100),100,Color.rgb(255,82,190))
-        slider("Glow","glow_strength",p.getInt("glow_strength",100),100,Color.rgb(80,225,184))
-        sleepCard.addView(MaterialButton(this).apply{text="✓  Übernehmen";isAllCaps=false;textSize=16f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(designColor("accent2",Color.rgb(34,211,238)));layoutParams=LinearLayout.LayoutParams(-1,dp(54)).apply{setMargins(0,dp(18),0,dp(6))};setOnClickListener{p.edit().putBoolean("custom_enabled",true).apply();recreate()}})
-        sleepCard.addView(MaterialButton(this).apply{text="↺  SleepSync Standard wiederherstellen";isAllCaps=false;setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(Color.argb(190,55,48,82));layoutParams=LinearLayout.LayoutParams(-1,dp(52)).apply{setMargins(0,dp(16),0,dp(10))};setOnClickListener{applySleepSyncStandard();recreate()}})
+        val effects=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        listOf(
+            effectCard("✦ Blur","blur_strength",p.getInt("blur_strength",20),neonCyan,"Kein  ·  Mittel  ·  Stark"),
+            effectCard("◉ Glas","glass_strength",p.getInt("glass_strength",34),neonViolet,"Wenig  ·  Mittel  ·  Stark"),
+            effectCard("✧ Neon","neon_strength",p.getInt("neon_strength",100),0xFFE14DFF.toInt(),"Kein  ·  Mittel  ·  Stark")
+        ).forEachIndexed{idx,panel->effects.addView(panel,LinearLayout.LayoutParams(0,dp(184),1f).apply{setMargins(if(idx==0)0 else dp(3),dp(17),if(idx==2)0 else dp(3),0)})}
+        sleepCard.addView(effects)
+        val colors=LinearLayout(this).apply{
+            orientation=LinearLayout.VERTICAL;setPadding(dp(11),dp(13),dp(11),dp(12));background=glassPanel(neonViolet)
+        }
+        colors.addView(studioLabel("◉  Farbschema"))
+        val paletteStrip=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        val currentAccent=p.getInt("accent",defs[0])
+        palettes.forEachIndexed{index,(name,primary,secondary)->
+            val selected=currentAccent==primary
+            val cell=LinearLayout(this).apply{
+                orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
+                addView(View(this@MainActivity).apply{
+                    background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(primary,secondary)).apply{
+                        shape=GradientDrawable.OVAL;setStroke(dp(if(selected)3 else 1),if(selected)Color.WHITE else 0xFF9A7BFF.toInt())
+                    }
+                    elevation=dp(if(selected)9 else 3).toFloat()
+                },LinearLayout.LayoutParams(dp(40),dp(40)))
+                addView(studioSmall(name).apply{gravity=android.view.Gravity.CENTER;setPadding(0,dp(7),0,0)})
+                setOnClickListener{p.edit().putInt("accent",primary).putInt("accent2",secondary).putBoolean("custom_enabled",true).apply();showDesignStudio()}
+            }
+            paletteStrip.addView(cell,LinearLayout.LayoutParams(dp(67),dp(73)))
+        }
+        colors.addView(android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(paletteStrip)},LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
+        sleepCard.addView(colors,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(15)})
+        val bottom=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+        fun optionPanel(title:String,items:List<Triple<String,String,String>>,current:String,onChoose:(String)->Unit):LinearLayout{
+            val panel=LinearLayout(this).apply{
+                orientation=LinearLayout.VERTICAL;setPadding(dp(9),dp(12),dp(9),dp(11));background=glassPanel(neonCyan)
+            }
+            panel.addView(studioLabel(title).apply{textSize=13f})
+            val strip=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
+            items.forEach{(key,label,icon)->
+                val active=current==key
+                strip.addView(LinearLayout(this).apply{
+                    orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
+                    setPadding(dp(2),dp(8),dp(2),dp(8))
+                    background=GradientDrawable().apply{cornerRadius=dp(12).toFloat();setColor(if(active)0xFF252059.toInt() else 0xFF101B39.toInt());setStroke(dp(if(active)2 else 1),if(active)neonViolet else 0xFF384C77.toInt())}
+                    addView(TextView(this@MainActivity).apply{text=icon;textSize=22f;gravity=android.view.Gravity.CENTER;setTextColor(if(active)neonViolet else Color.WHITE)})
+                    addView(studioSmall(label).apply{gravity=android.view.Gravity.CENTER;textSize=9f;maxLines=1})
+                    setOnClickListener{onChoose(key)}
+                },LinearLayout.LayoutParams(0,dp(86),1f).apply{setMargins(dp(2),dp(10),dp(2),0)})
+            }
+            panel.addView(strip)
+            return panel
+        }
+        val uiPrefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
+        val theme=uiPrefs.getString("theme","dark")?:"dark"
+        bottom.addView(optionPanel("☾  Theme",listOf(Triple("dark","OLED Dark","☾"),Triple("light","Light","☼"),Triple("auto","Auto","◐")),theme){key->
+            uiPrefs.edit().putString("theme",key).apply();showDesignStudio()
+        },LinearLayout.LayoutParams(0,-2,1f).apply{marginEnd=dp(5)})
+        val animation=p.getString("animation_intensity","soft")?:"soft"
+        bottom.addView(optionPanel("≋  Animationen",listOf(Triple("soft","Sanft","∿"),Triple("normal","Normal","〰"),Triple("intense","Intensiv","≋")),animation){key->
+            p.edit().putString("animation_intensity",key).putBoolean("custom_enabled",true).apply();showDesignStudio()
+        },LinearLayout.LayoutParams(0,-2,1f).apply{marginStart=dp(5)})
+        sleepCard.addView(bottom,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(14)})
+        sleepCard.addView(MaterialButton(this).apply{
+            text="✓  Übernehmen";isAllCaps=false;textSize=17f;setTypeface(typeface,Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            backgroundTintList=ColorStateList.valueOf(0xFFD33CEB.toInt())
+            setOnClickListener{p.edit().putBoolean("custom_enabled",true).apply();recreate()}
+        },LinearLayout.LayoutParams(-1,dp(56)).apply{setMargins(0,dp(22),0,dp(7))})
+        sleepCard.addView(MaterialButton(this).apply{
+            text="↺  SleepSync Standard wiederherstellen";isAllCaps=false;textSize=12f
+            setTextColor(Color.WHITE);backgroundTintList=ColorStateList.valueOf(0xFF202A50.toInt())
+            setOnClickListener{applySleepSyncStandard();recreate()}
+        },LinearLayout.LayoutParams(-1,dp(48)).apply{setMargins(0,0,0,dp(15))})
     }
 
     private fun showAppearanceSettings() {
