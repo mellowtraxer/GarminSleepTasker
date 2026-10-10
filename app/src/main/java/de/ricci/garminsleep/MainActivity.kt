@@ -2524,39 +2524,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             gallery.addView(tile,LinearLayout.LayoutParams(dp(105),dp(92)).apply{setMargins(dp(2),0,dp(9),0)})
         }
         sleepCard.addView(android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(gallery)})
-        fun effectCard(title:String,key:String,initial:Int,tone:Int,sub:String):LinearLayout{
-            val panel=LinearLayout(this).apply{
-                orientation=LinearLayout.VERTICAL;setPadding(dp(10),dp(12),dp(10),dp(10))
-                background=glassPanel(tone)
-            }
-            panel.addView(studioLabel(title).apply{textSize=12f;maxLines=1})
-            val demo=View(this).apply{
-                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(tone,0xFF24205A.toInt(),0xFF081A38.toInt())).apply{cornerRadius=dp(12).toFloat()}
-                alpha=.30f+initial*.006f
-            }
-            panel.addView(demo,LinearLayout.LayoutParams(-1,dp(54)).apply{topMargin=dp(12)})
-            panel.addView(android.widget.SeekBar(this).apply{
-                max=100;progress=initial
-                progressTintList=ColorStateList.valueOf(tone);thumbTintList=ColorStateList.valueOf(0xFFEAD5FF.toInt())
-                setOnSeekBarChangeListener(object:android.widget.SeekBar.OnSeekBarChangeListener{
-                    override fun onProgressChanged(s:android.widget.SeekBar?,v:Int,fromUser:Boolean){
-                        demo.alpha=.3f+v*.006f
-                        if(fromUser)p.edit().putInt(key,v).putBoolean("custom_enabled",true).apply()
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.DesignStudioEffects(
+                    blur = p.getInt("blur_strength",20),
+                    glass = p.getInt("glass_strength",34),
+                    neon = p.getInt("neon_strength",100),
+                    onValueChanged = { key, value ->
+                        p.edit().putInt(key,value).putBoolean("custom_enabled",true).apply()
                     }
-                    override fun onStartTrackingTouch(s:android.widget.SeekBar?){}
-                    override fun onStopTrackingTouch(s:android.widget.SeekBar?){}
-                })
-            },LinearLayout.LayoutParams(-1,dp(43)))
-            panel.addView(studioSmall(sub).apply{gravity=android.view.Gravity.CENTER;maxLines=1})
-            return panel
-        }
-        val effects=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        listOf(
-            effectCard("✦ Blur","blur_strength",p.getInt("blur_strength",20),neonCyan,"Kein  ·  Mittel  ·  Stark"),
-            effectCard("◉ Glas","glass_strength",p.getInt("glass_strength",34),neonViolet,"Wenig  ·  Mittel  ·  Stark"),
-            effectCard("✧ Neon","neon_strength",p.getInt("neon_strength",100),0xFFE14DFF.toInt(),"Kein  ·  Mittel  ·  Stark")
-        ).forEachIndexed{idx,panel->effects.addView(panel,LinearLayout.LayoutParams(0,dp(184),1f).apply{setMargins(if(idx==0)0 else dp(3),dp(17),if(idx==2)0 else dp(3),0)})}
-        sleepCard.addView(effects)
+                )
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(17),0,0) })
         val colors=LinearLayout(this).apply{
             orientation=LinearLayout.VERTICAL;setPadding(dp(11),dp(13),dp(11),dp(12));background=glassPanel(neonViolet)
         }
