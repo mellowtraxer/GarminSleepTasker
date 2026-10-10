@@ -3343,6 +3343,30 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val awakeEvents=awakeIntervals.size
         val fingerprintMinutes=((s.endMs-s.startMs)/60000L).coerceAtLeast(1L)
         val changesPerHour=transitions*60f/fingerprintMinutes
+        // Host legacy analytical content inside the same Compose neon-tube surface
+        // as the dashboard cards; keep the underlying sleep calculations intact.
+        fun addSleepDnaNeonCard(legacy: LinearLayout, top: Int = 8, bottom: Int = 8) {
+            legacy.background = null
+            legacy.setPadding(dp(2), dp(1), dp(2), dp(1))
+            val host = androidx.compose.ui.platform.ComposeView(this).apply {
+                setViewCompositionStrategy(
+                    androidx.compose.ui.platform.ViewCompositionStrategy.DisposeOnDetachedFromWindow
+                )
+                setContent {
+                    de.ricci.garminsleep.ui.components.FrostedGlassCard(
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                    ) {
+                        androidx.compose.ui.viewinterop.AndroidView(
+                            factory = { legacy },
+                            modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+            sleepCard.addView(host, LinearLayout.LayoutParams(-1, -2).apply {
+                setMargins(dp(4), dp(top), dp(4), dp(bottom))
+            })
+        }
         val dnaFingerprint=LinearLayout(this).apply {
             orientation=LinearLayout.VERTICAL
             setPadding(dp(17),dp(15),dp(17),dp(15))
@@ -3376,12 +3400,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 setPadding(0,dp(11),0,0)
             })
         }
-        sleepCard.addView(dnaFingerprint,LinearLayout.LayoutParams(-1,-2).apply {
-            setMargins(dp(4),dp(8),dp(4),dp(8))
-        })
-        sleepCard.addView(dnaInsights,LinearLayout.LayoutParams(-1,-2).apply{
-            setMargins(dp(4),dp(9),dp(4),dp(9))
-        })
+        addSleepDnaNeonCard(dnaFingerprint)
+        addSleepDnaNeonCard(dnaInsights)
 
         // SleepDNA trend: compare actual measured nights, without a synthetic score.
         val recentDnaNights=(sleepHistory+listOf(s))
@@ -3528,9 +3548,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     setPadding(0,dp(11),0,0)
                 })
             }
-            sleepCard.addView(dnaSignature,LinearLayout.LayoutParams(-1,-2).apply {
-                setMargins(dp(4),dp(8),dp(4),dp(9))
-            })
+            addSleepDnaNeonCard(dnaSignature)
         }
 
         collapseDashboardSection(dnaSectionStart,"SLEEPDNA  ·  DEINE NACHTSIGNATUR",
