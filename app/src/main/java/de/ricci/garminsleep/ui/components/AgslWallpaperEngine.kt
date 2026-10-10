@@ -25,6 +25,8 @@ uniform float lightShare;
 uniform float deepShare;
 uniform float remShare;
 uniform float scene;
+uniform float particleDensity;
+uniform float rayStrength;
 
 float hash21(float2 p) {
     return fract(sin(dot(p,float2(127.1,311.7))) * 43758.5453);
@@ -34,6 +36,23 @@ float noise2(float2 p) {
     f=f*f*(3.0-2.0*f);
     return mix(mix(hash21(i),hash21(i+float2(1.0,0.0)),f.x),
                mix(hash21(i+float2(0.0,1.0)),hash21(i+float2(1.0,1.0)),f.x),f.y);
+}
+float fbm(float2 p) {
+    float f=0.0;
+    float amp=.52;
+    for(int i=0;i<4;i++) {
+        f+=amp*noise2(p);
+        p=float2(p.x*1.74-p.y*1.11,p.x*1.11+p.y*1.74)+float2(8.3,3.1);
+        amp*=.48;
+    }
+    return f;
+}
+float starField(float2 uv,float t,float density) {
+    float2 grid=floor(uv*float2(110.0,95.0));
+    float seed=hash21(grid);
+    float star=step(1.0-density*.045,seed);
+    float2 cell=fract(uv*float2(110.0,95.0))-.5;
+    return star*exp(-dot(cell,cell)*48.0)*(.65+.35*sin(t*.8+seed*19.0));
 }
 half4 main(float2 xy) {
     float2 uv=(xy-resolution*.5)/max(resolution.y,1.0);
@@ -45,25 +64,44 @@ half4 main(float2 xy) {
     float3 col=float3(.002,.003,.014);
     float wave=sin(p.x*4.0+t*.8+noise2(p*2.1+t*.07)*2.0)*.17;
     wave+=sin(p.x*8.0-t*.47)*.055;
-    float fog=noise2(p*3.0+float2(t*.12,-t*.08));
-    fog=pow(fog,2.0);
+    float2 warp=float2(fbm(p*2.0+float2(t*.055,0.0)),
+                       fbm(p*2.0+float2(4.2,-t*.047)));
+    float2 flowed=p+(warp-.5)*(.22+.38*z);
+    float fog=pow(fbm(flowed*3.2+float2(t*.055,-t*.045)),2.2);
+    float nearFog=pow(fbm(flowed*7.5-float2(t*.11,t*.07)),3.0);
+    float beam=pow(max(0.0,1.0-abs(sin(a*6.0+t*.12))),9.0)
+        *exp(-r*1.3)*rayStrength;
+    float specular=pow(max(0.0,sin(flowed.x*12.0+t*.31)
+        *cos(flowed.y*7.0-t*.22)),12.0);
     float light=0.0;
     if(scene<.5) {
-        float d=abs(p.y-wave);
-        light=.008/(d+.016)+.20*exp(-d*8.0);
+        float ribbon=wave+(warp.x-.5)*.28;
+        float d=abs(p.y-ribbon);
+        float d2=abs(p.y-ribbon-.13*sin(p.x*2.0-t*.27));
+        light=.010/(d+.016)+.33*exp(-d*9.0)+.005/(d2+.016)+nearFog*.27;
     } else if(scene<1.5) {
         float2 q=float2(r, a+1.7*r-t*.25);
-        light=pow(max(0.0,noise2(q*float2(5.0,2.7))),3.0)*1.7
-             + .016/(abs(sin(q.y*2.4+q.x*5.0))+.065);
+        float spiral=sin(q.y*3.0+q.x*6.5+warp.x*3.0);
+        light=pow(fbm(q*float2(5.0,2.7)+warp*.7),2.5)*1.8
+             +.018/(abs(spiral)+.07)+nearFog*.45;
     } else if(scene<2.5) {
         float2 center=p-float2(.04*sin(t*.25),.03*cos(t*.3));
         float moon=1.0-smoothstep(.20,.215,length(center));
-        float crater=noise2(center*32.0);
-        light=moon*(.55+.38*crater)+.018/(abs(length(center)-.22)+.018);
+        float crater=fbm(center*29.0);
+        float terminator=smoothstep(-.13,.20,center.x+center.y*.26);
+        light=moon*(.18+.72*terminator)*(.60+.38*crater)
+             +.018/(abs(length(center)-.22)+.018);
+        float waterLine=-.24;
+        if(p.y>waterLine) {
+            float2 reflected=float2(p.x+sin(p.y*44.0+t*1.5)*.012,
+                2.0*waterLine-p.y);
+            float reflectedMoon=1.0-smoothstep(.16,.29,length(reflected-center));
+            light+=reflectedMoon*.25*(.5+.5*sin(p.y*91.0+t*1.8))
+                *exp(-(p.y-waterLine)*1.8);
+        }
     } else if(scene<3.5) {
         float d=abs(p.y-wave*.5);
-        light=.012/(d+.02)+.35*exp(-d*6.0);
-        light+=.10*noise2(p*6.0+float2(0.0,t*.1));
+        light=.012/(d+.02)+.35*exp(-d*6.0)+.32*fbm(flowed*5.0);
     } else if(scene<4.5) {
         float d=abs(p.y-sin(p.x*6.0+t*.65)*.20);
         light=.012/(d+.02)+.17*exp(-d*6.0);
@@ -74,7 +112,7 @@ half4 main(float2 xy) {
     } else if(scene<6.5) {
         float spiral=a+5.0*r-t*.22;
         light=.014/(abs(sin(spiral*3.0))+.035)*(1.0-smoothstep(.15,.8,r));
-        light+=fog*.48;
+        light+=fog*.48+nearFog*.35;
     } else if(scene<7.5) {
         float2 grid=floor(p*float2(42.0,14.0));
         float streak=step(.91,hash21(float2(grid.x, floor(grid.y-t*5.0))));
@@ -95,8 +133,12 @@ half4 main(float2 xy) {
     }
     float hue=.5+.5*sin(p.x*3.5+p.y*2.0+t*.16);
     float3 tint=mix(colorA,colorB,hue);
-    float scattering=fog*(.12+.30*z)*exp(-r*1.4);
-    col+=tint*(light*energy+scattering);
+    float scattering=(fog*.28+nearFog*.16)*(.22+.52*z)*exp(-r*.95);
+    float stars=starField(p+float2(t*.002,-t*.004),t,particleDensity);
+    float3 highlights=mix(colorB,float3(1.0,1.0,1.0),.48);
+    col+=tint*(light*energy+scattering+beam*.15*energy);
+    col+=highlights*(stars*.65+specular*.055)*energy;
+    col+=colorA*beam*.035;
     col+=colorB*.035*exp(-r*r*4.0)*z;
     col*=1.0-.48*smoothstep(.18,1.15,r)*z;
     col*=.88+.12*lightShare+.10*remShare-.05*deepShare;
@@ -131,6 +173,8 @@ fun AgslLiveWallpaper(style: String, modifier: Modifier = Modifier) {
         shader.setFloatUniform("deepShare", DreamscapeMotion.deepShare)
         shader.setFloatUniform("remShare", DreamscapeMotion.remShare)
         shader.setFloatUniform("scene", scene)
+        shader.setFloatUniform("particleDensity", WallpaperNeonTuning.particles / 100f)
+        shader.setFloatUniform("rayStrength", WallpaperNeonTuning.rays / 100f)
         drawRect(ShaderBrush(shader))
     }
 }
