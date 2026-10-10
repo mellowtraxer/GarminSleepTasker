@@ -2336,6 +2336,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         else -> "SleepSync Cosmos"
                     },
                     liveAurora = p.getBoolean("wallpaper_enabled",true) && activeWallpaper == "aurora",
+                    liveDreamscape = p.getBoolean("wallpaper_enabled",true) && activeWallpaper == "dreamscape",
                     imagePath = if(p.getBoolean("wallpaper_enabled",true) && wallpaperFile?.exists()==true)
                         wallpaperFile.absolutePath else null,
                     onChange = {
