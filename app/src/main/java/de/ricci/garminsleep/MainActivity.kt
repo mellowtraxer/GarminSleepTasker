@@ -1871,49 +1871,78 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun downloadPreviewUpdate(apkUrl:String,versionName:String) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
-            startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,android.net.Uri.parse("package:$packageName")))
-            android.widget.Toast.makeText(this,"Bitte „Aus dieser Quelle zulassen“ aktivieren und das Update danach erneut starten.",android.widget.Toast.LENGTH_LONG).show()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+            startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:$packageName")))
+            android.widget.Toast.makeText(this,"Bitte Installation aus SleepSync erlauben und erneut versuchen.",android.widget.Toast.LENGTH_LONG).show()
             return
         }
-        val request=android.app.DownloadManager.Request(android.net.Uri.parse(apkUrl))
-            .setTitle("SleepSync $versionName")
-            .setDescription("Update wird heruntergeladen …")
-            .setMimeType("application/vnd.android.package-archive")
-            .setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalFilesDir(this,android.os.Environment.DIRECTORY_DOWNLOADS,"SleepSync-update.apk")
-        val manager=getSystemService(android.content.Context.DOWNLOAD_SERVICE) as android.app.DownloadManager
-        val id=manager.enqueue(request)
-        val receiver=object:android.content.BroadcastReceiver(){
-            override fun onReceive(context:android.content.Context,intent:android.content.Intent){
-                if(intent.getLongExtra(android.app.DownloadManager.EXTRA_DOWNLOAD_ID,-1L)!=id)return
-                unregisterReceiver(this)
-                val status=manager.query(android.app.DownloadManager.Query().setFilterById(id)).use { cursor ->
-                    if(cursor.moveToFirst()) cursor.getInt(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_STATUS)) else -1
-                }
-                if(status!=android.app.DownloadManager.STATUS_SUCCESSFUL){
-                    android.widget.Toast.makeText(this@MainActivity,"Update-Download fehlgeschlagen.",android.widget.Toast.LENGTH_LONG).show()
-                    return
-                }
-                val uri=manager.getUriForDownloadedFile(id) ?: run {
-                    android.widget.Toast.makeText(this@MainActivity,"Update-Datei konnte nicht geöffnet werden.",android.widget.Toast.LENGTH_LONG).show()
-                    return
-                }
-                val install=android.content.Intent(android.content.Intent.ACTION_INSTALL_PACKAGE).apply {
-                    data=uri
-                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    putExtra(android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE,true)
-                    putExtra(android.content.Intent.EXTRA_RETURN_RESULT,false)
+        val loading=AlertDialog.Builder(this).setTitle("SleepSync Update")
+            .setMessage("APK wird heruntergeladen und überprüft …")
+            .setCancelable(false).create()
+        loading.show()
+        launch(Dispatchers.IO) {
+            val result=runCatching {
+                val target=File(cacheDir,"updates/SleepSync-${System.currentTimeMillis()}.apk")
+                target.parentFile?.mkdirs()
+                val conn=(java.net.URL(apkUrl).openConnection() as java.net.HttpURLConnection).apply {
+                    connectTimeout=15000
+                    readTimeout=45000
+                    instanceFollowRedirects=true
+                    setRequestProperty("User-Agent","SleepSync-Updater")
                 }
                 try {
-                    startActivity(install)
-                } catch(e:Exception) {
-                    android.widget.Toast.makeText(this@MainActivity,"Android-Installer konnte nicht geöffnet werden.",android.widget.Toast.LENGTH_LONG).show()
+                    if(conn.responseCode !in 200..299) error("HTTP ${conn.responseCode}")
+                    conn.inputStream.use { input -> target.outputStream().use { output -> input.copyTo(output) } }
+                } finally { conn.disconnect() }
+                if(target.length()<100_000L) error("APK unvollständig (${target.length()} Bytes)")
+                val archive=packageManager.getPackageArchiveInfo(target.absolutePath,0)
+                    ?: error("Download ist keine gültige APK")
+                if(archive.packageName!=packageName)
+                    error("Falsches App-Paket: ${archive.packageName}")
+                val installed=packageManager.getPackageInfo(packageName,0).longVersionCode
+                if(archive.longVersionCode<=installed)
+                    error("APK Build ${archive.longVersionCode} ist nicht neuer als $installed")
+                target
+            }
+            withContext(Dispatchers.Main) {
+                loading.dismiss()
+                result.onSuccess { apk ->
+                    try {
+                        val uri=androidx.core.content.FileProvider.getUriForFile(
+                            this@MainActivity,"$packageName.updateprovider",apk)
+                        val install=android.content.Intent(android.content.Intent.ACTION_INSTALL_PACKAGE).apply {
+                            data=uri
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            putExtra(android.content.Intent.EXTRA_NOT_UNKNOWN_SOURCE,true)
+                            putExtra(android.content.Intent.EXTRA_RETURN_RESULT,true)
+                        }
+                        updateInstallerLauncher.launch(install)
+                    } catch(e:Exception) {
+                        AlertDialog.Builder(this@MainActivity).setTitle("Installer konnte nicht starten")
+                            .setMessage(e.localizedMessage ?: e.javaClass.simpleName).setPositiveButton("OK",null).show()
+                    }
+                }.onFailure { e ->
+                    AlertDialog.Builder(this@MainActivity).setTitle("Update fehlgeschlagen")
+                        .setMessage("Die heruntergeladene APK wurde nicht installiert.\\n\\n${e.localizedMessage ?: e.javaClass.simpleName}")
+                        .setPositiveButton("OK",null).show()
                 }
             }
         }
-        androidx.core.content.ContextCompat.registerReceiver(this,receiver,android.content.IntentFilter(android.app.DownloadManager.ACTION_DOWNLOAD_COMPLETE),androidx.core.content.ContextCompat.RECEIVER_EXPORTED)
-        android.widget.Toast.makeText(this,"SleepSync-Update wird geladen …",android.widget.Toast.LENGTH_LONG).show()
+    }
+
+    private val updateInstallerLauncher=registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val installed=runCatching { packageManager.getPackageInfo(packageName,0).longVersionCode }.getOrDefault(0L)
+        if(result.resultCode!=android.app.Activity.RESULT_OK) {
+            val status=result.data?.getIntExtra(android.content.Intent.EXTRA_INSTALL_RESULT,-1) ?: -1
+            AlertDialog.Builder(this).setTitle("Update nicht abgeschlossen")
+                .setMessage("Android hat die Installation nicht bestätigt. Installierter Build: $installed. Installer-Code: $status.\\n\\nBitte die Meldung des Android-Installers beachten. SleepSync-Daten wurden nicht gelöscht.")
+                .setPositiveButton("OK",null).show()
+        } else {
+            android.widget.Toast.makeText(this,"SleepSync Build $installed installiert.",android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun showGarminSettings() {
