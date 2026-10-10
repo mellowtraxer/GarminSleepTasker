@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import android.graphics.Paint
+import android.graphics.BlurMaskFilter
 import android.graphics.LinearGradient
 import android.graphics.Shader
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -78,65 +79,79 @@ fun FrostedGlassCard(
         )
     )
 
-    Box(modifier = modifier
-        .graphicsLayer {
-            scaleX = pressScale
-            scaleY = pressScale
-        }
-        .then(if (onClick != null) Modifier.clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            onClick = { DreamscapeMotion.ripple(); onClick() }
-        ) else Modifier)
-    ) {
-        // Glow and border share ONE exact rounded path.
-        // No inset contours: those caused the visible double borders.
-        Box(Modifier.matchParentSize().drawBehind {
-            if (glowPower > 0f && blurPower > 0f) {
-                val stroke = (0.65f + neonPower * 1.15f).dp.toPx()
-                val half = stroke / 2f
-                val radius = (cornerRadius.toPx() - half).coerceAtLeast(0f)
-                val blurRadius = (2f + 18f * blurPower).dp.toPx()
-                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    style = Paint.Style.STROKE
-                    strokeWidth = stroke
-                    color = android.graphics.Color.argb(255, 148, 73, 244)
-                    setShadowLayer(
-                        blurRadius, 0f, 0f,
-                        android.graphics.Color.argb(
-                            (glowPower * 240f).toInt().coerceIn(0,255), 145, 60, 255
-                        )
-                    )
-                }
-                drawIntoCanvas { canvas ->
-                    canvas.nativeCanvas.drawRoundRect(
-                        half, half, size.width - half, size.height - half,
-                        radius, radius, paint
-                    )
+    // Reserve space for the glow OUTSIDE the glass surface. This prevents
+    // clipping at the composable's rectangular edges.
+    val haloSpace = 17.dp
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+                clip = false
+            }
+            .then(if (onClick != null) Modifier.clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { DreamscapeMotion.ripple(); onClick() }
+            ) else Modifier)
+            .drawBehind {
+                if (glowPower > 0f) {
+                    val inset = haloSpace.toPx()
+                    val radius = cornerRadius.toPx()
+                    val left = inset
+                    val top = inset
+                    val right = size.width - inset
+                    val bottom = size.height - inset
+                    if (right > left && bottom > top) {
+                        // BlurMaskFilter produces a real soft halo instead of
+                        // extra nested outlines. Only the sharp border below
+                        // draws a visible hard line.
+                        val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                            style = Paint.Style.STROKE
+                            strokeWidth = (2.5f + glowPower * 4f).dp.toPx()
+                            shader = LinearGradient(
+                                left, top, right, bottom,
+                                intArrayOf(
+                                    android.graphics.Color.CYAN,
+                                    0xFF9E59FF.toInt(),
+                                    0xFFFF008F.toInt()
+                                ), null, Shader.TileMode.CLAMP
+                            )
+                            alpha = ((.22f + .78f * glowPower) * 255f).toInt().coerceIn(0,255)
+                            maskFilter = BlurMaskFilter(
+                                (2f + blurPower * 13f).dp.toPx(),
+                                BlurMaskFilter.Blur.NORMAL
+                            )
+                        }
+                        drawIntoCanvas { canvas ->
+                            canvas.nativeCanvas.drawRoundRect(
+                                left, top, right, bottom, radius, radius, halo
+                            )
+                        }
+                    }
                 }
             }
-        })
-
-        // --- 3. SCHICHT: EIGENTLICHE GLASKARTE MIT FEINER KANTE ---
+    ) {
         Box(
             modifier = Modifier
-                .matchParentSize()
+                .fillMaxWidth()
+                .padding(haloSpace)
                 .clip(shape)
                 .background(glassFill)
                 .border(
-                    width = (0.65f + neonPower * 1.15f).dp,
-                    brush = Brush.linearGradient(glowColors.map { it.copy(alpha = (.06f + neonPower * .94f).coerceIn(0f, 1f)) }),
+                    width = (0.6f + neonPower * 1.25f).dp,
+                    brush = Brush.linearGradient(glowColors.map {
+                        it.copy(alpha = (.05f + neonPower * .95f).coerceIn(0f,1f))
+                    }),
                     shape = shape
                 )
-        )
-
-        // Inhalt der Karte mit Innenabstand
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp)
         ) {
-            content()
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(18.dp)
+            ) {
+                content()
+            }
         }
     }
+
 }
