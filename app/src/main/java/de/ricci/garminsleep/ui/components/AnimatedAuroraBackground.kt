@@ -2,6 +2,12 @@ package de.ricci.garminsleep.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.BitmapFactory
+import java.io.File
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -22,6 +28,8 @@ object DreamscapeMotion {
     var remShare by mutableFloatStateOf(.30f)
     var healthEnergy by mutableFloatStateOf(.5f)
     var touchPulse by mutableIntStateOf(0)
+    var wallpaperSource by mutableStateOf("aurora")
+    var wallpaperEnabled by mutableStateOf(true)
     fun updateSleep(light: Long, deep: Long, rem: Long, hr: Double?) {
         val total = (light + deep + rem).coerceAtLeast(1L).toFloat()
         lightShare = (light / total).coerceIn(0f, 1f)
@@ -34,6 +42,15 @@ object DreamscapeMotion {
 
 @Composable
 fun AnimatedAuroraBackground(content: @Composable BoxScope.() -> Unit) {
+    val context = LocalContext.current
+    val source = DreamscapeMotion.wallpaperSource
+    val enabled = DreamscapeMotion.wallpaperEnabled
+    val imagePath = when(source) {
+        "custom" -> File(context.filesDir,"sleepsync_custom_wallpaper").absolutePath
+        "dreamscape" -> File(context.filesDir,"sleepsync_dreamscape.png").absolutePath
+        else -> null
+    }
+    val bitmap = remember(imagePath) { imagePath?.let { path -> runCatching { BitmapFactory.decodeFile(path)?.asImageBitmap() }.getOrNull() } }
     val loop = rememberInfiniteTransition(label = "DreamscapeFlow")
     val phase by loop.animateFloat(
         initialValue = 0f, targetValue = (2 * PI).toFloat(),
@@ -58,7 +75,14 @@ fun AnimatedAuroraBackground(content: @Composable BoxScope.() -> Unit) {
         label = "touchLightWave"
     )
     Box(Modifier.fillMaxSize().background(Color(0xFF030308))) {
-        Canvas(Modifier.fillMaxSize()) {
+        if (enabled && source != "oled" && source != "aurora") {
+            if (bitmap != null) Image(bitmap, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            else if (source == "builtin") Image(
+                painter = androidx.compose.ui.res.painterResource(de.ricci.garminsleep.R.drawable.cosmic_planet),
+                contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop
+            )
+        }
+        if (enabled && source == "aurora") Canvas(Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
             val light = DreamscapeMotion.lightShare
