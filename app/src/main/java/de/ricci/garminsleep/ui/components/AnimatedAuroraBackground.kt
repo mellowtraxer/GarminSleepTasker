@@ -83,7 +83,10 @@ fun AnimatedAuroraBackground(previewAurora: Boolean = false, previewDreamscape: 
     val dreamY = sin(phase + 1.5707963f) * 18f
     val dreamScale = 1.13f + .035f * sin(phase)
     Box(Modifier.fillMaxSize().clipToBounds().background(Color(0xFF030308))) {
-        if (enabled && source != "oled" && source != "aurora") {
+        if (enabled && source.startsWith("live_")) {
+            SleepSyncLiveWallpaper(source.removePrefix("live_"), Modifier.fillMaxSize())
+        }
+        if (enabled && source != "oled" && source != "aurora" && !source.startsWith("live_")) {
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap, contentDescription = null,
