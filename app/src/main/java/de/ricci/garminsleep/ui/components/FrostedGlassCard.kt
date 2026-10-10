@@ -88,8 +88,8 @@ fun FrostedGlassCard(
     // Subtiler Lichteinfall auf dem Milchglas
     val glassFill = Brush.verticalGradient(
         listOf(
-            Color.White.copy(alpha = .035f + glassPower * .25f), // Glasreflex
-            Color.White.copy(alpha = .008f + glassPower * .075f)  // Glasboden
+            Color.White.copy(alpha = .035f + glassPower * .82f), // Glasreflex: 30% ~ previous 100%
+            Color.White.copy(alpha = .008f + glassPower * .25f)  // Glasboden: stronger depth
         )
     )
 
