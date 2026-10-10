@@ -2339,7 +2339,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(132,220,255))
             setPadding(dp(5),dp(7),0,dp(16))
         })
-        val activeWallpaper=p.getString("wallpaper_source","aurora") ?: "aurora"
+        val activeWallpaper=p.getString("wallpaper_source","live_aurora_dream")?.takeIf { it.startsWith("live_") } ?: "live_aurora_dream"
         val wallpaperFile=when(activeWallpaper) {
             "dreamscape" -> File(filesDir,"sleepsync_dreamscape.png")
             "custom" -> File(filesDir,"sleepsync_custom_wallpaper")
@@ -2349,12 +2349,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setContent {
                 de.ricci.garminsleep.ui.components.AtelierWallpaperPreview(
                     title = when {
+                        activeWallpaper.startsWith("live_") -> de.ricci.garminsleep.ui.components.sleepSyncLiveStyles.firstOrNull { "live_" + it.id == activeWallpaper }?.title ?: "AURORA DREAM"
                         !p.getBoolean("wallpaper_enabled",true) -> "OLED Black"
                         activeWallpaper == "aurora" -> "Live Aurora ✦"
                         activeWallpaper == "dreamscape" -> "DreamScape"
                         activeWallpaper == "custom" -> "Dein Wallpaper"
                         else -> "SleepSync Cosmos"
                     },
+                    liveStyle = activeWallpaper.takeIf { it.startsWith("live_") }?.removePrefix("live_"),
                     liveAurora = p.getBoolean("wallpaper_enabled",true) && activeWallpaper == "aurora",
                     liveDreamscape = p.getBoolean("wallpaper_enabled",true) && activeWallpaper == "dreamscape",
                     imagePath = if(p.getBoolean("wallpaper_enabled",true) && wallpaperFile?.exists()==true)
@@ -2374,24 +2376,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
             setContent {
                 de.ricci.garminsleep.ui.components.AtelierWallpaperGallery(
-                    selected = if (!p.getBoolean("wallpaper_enabled",true)) 4 else when(activeWallpaper) {
-                        "aurora" -> 0; "builtin" -> 1; "dreamscape" -> 2; "custom" -> 3; else -> 0
-                    },
+                    selected = de.ricci.garminsleep.ui.components.sleepSyncLiveStyles
+                        .indexOfFirst { "live_" + it.id == activeWallpaper }.coerceAtLeast(0),
                     onSelect = { index ->
-                        fun choose(source:String, enabled:Boolean=true) {
-                            p.edit().putBoolean("wallpaper_enabled",enabled).putString("wallpaper_source",source)
-                                .putBoolean("custom_enabled",true).apply()
-                            de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperSource=source
-                            de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperEnabled=enabled
-                            showDesignStudio()
-                        }
-                        when(index) {
-                            0 -> choose("aurora")
-                            1 -> choose("builtin")
-                            2 -> if(File(filesDir,"sleepsync_dreamscape.png").exists()) choose("dreamscape") else generateDreamScape()
-                            3 -> photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            4 -> choose("oled",false)
-                        }
+                        val source = "live_" + de.ricci.garminsleep.ui.components.sleepSyncLiveStyles[index].id
+                        p.edit().putBoolean("wallpaper_enabled", true)
+                            .putString("wallpaper_source", source)
+                            .putBoolean("custom_enabled", true).apply()
+                        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperSource = source
+                        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperEnabled = true
+                        showDesignStudio()
                     }
                 )
             }
