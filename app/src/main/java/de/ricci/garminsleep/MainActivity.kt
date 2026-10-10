@@ -2382,6 +2382,30 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 )
             }
         }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(18)) })
+        sleepCard.addView(com.google.android.material.switchmaterial.SwitchMaterial(this).apply {
+            text = "✦  PUR-MODUS  ·  Live-Welt ohne Karten genießen"
+            setTextColor(Color.WHITE)
+            textSize = 13f
+            isChecked = false
+            setOnCheckedChangeListener { _, checked ->
+                if (checked) {
+                    isChecked = false
+                    startActivity(android.content.Intent(this@MainActivity, WallpaperCinemaActivity::class.java))
+                }
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(8),0,dp(8),dp(8)) })
+        sleepCard.addView(MaterialButton(this).apply {
+            text = "✦  ALS ANDROID LIVE-WALLPAPER FESTLEGEN  ↗"
+            isAllCaps = false
+            setOnClickListener {
+                val component = android.content.ComponentName(this@MainActivity, SleepSyncWallpaperService::class.java)
+                val intent = android.content.Intent(android.app.WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
+                    .putExtra(android.app.WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component)
+                try { startActivity(intent) } catch (_: Exception) {
+                    startActivity(android.content.Intent(android.app.WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
+                }
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(8),0,dp(8),dp(16)) })
         sleepCard.addView(TextView(this).apply {
             text="WALLPAPER AUSWÄHLEN";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(165,196,255))
