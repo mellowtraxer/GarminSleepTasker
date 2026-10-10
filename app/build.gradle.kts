@@ -18,13 +18,13 @@ android {
     }
 
     defaultConfig {
-        applicationId = "de.ricci.sleepsync.dev"
+        applicationId = "de.ricci.sleepsync.compose"
         minSdk = 28
         targetSdk = 35
         // CI builds get a monotonically increasing version so SleepSync can compare updates reliably.
         val ciRun = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
         versionCode = ciRun ?: 1
-        versionName = if (ciRun != null) "0.1.0-v2-dev.$ciRun" else "0.1.0-v2-dev"
+        versionName = if (ciRun != null) "0.1.0-compose.$ciRun" else "0.1.0-compose"
     }
 
     compileOptions {
