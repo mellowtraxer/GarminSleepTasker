@@ -1,5 +1,8 @@
 package de.ricci.garminsleep.ui.components
 
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -9,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -16,36 +21,72 @@ import androidx.compose.ui.unit.dp
 fun FrostedGlassCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 24.dp,
-    borderColors: List<Color> = listOf(
-        Color(0xFF00F0FF).copy(alpha = 0.9f), // Leuchtendes Cyan oben links
-        Color(0xFFA855F7).copy(alpha = 0.7f), // Übergang zu Violett
-        Color(0xFFEC4899).copy(alpha = 0.4f), // Neon-Pink
-        Color(0x15FFFFFF)                     // Sanftes Ausklingen
+    glowColors: List<Color> = listOf(
+        Color(0xFF00F0FF), // Neon Cyan
+        Color(0xFFA855F7), // Neon Purple
+        Color(0xFFFF007F)  // Neon Pink
     ),
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(cornerRadius)
+    val glowBrush = Brush.linearGradient(glowColors)
 
-    // Subtiler Milchglas-Reflexions-Verlauf von oben nach unten
+    // Subtiler Lichteinfall auf dem Milchglas
     val glassFill = Brush.verticalGradient(
         listOf(
-            Color(0x22FFFFFF), // Hellerer Lichteinfall oben
-            Color(0x0CFFFFFF)  // Dunklerer, matterer Schimmer unten
+            Color(0x24FFFFFF), // Sanfter Glanz oben
+            Color(0x0AFFFFFF)  // Dunkler unten
         )
     )
 
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(glassFill)
-            .border(
-                width = 1.2.dp,
-                brush = Brush.linearGradient(borderColors),
-                shape = shape
+    Box(modifier = modifier) {
+        // --- 1. SCHICHT: WEITER DIFFUSER HALO (AUSSEN) ---
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer {
+                        renderEffect = RenderEffect
+                            .createBlurEffect(35f, 35f, Shader.TileMode.DECAL)
+                            .asComposeRenderEffect()
+                        alpha = 0.55f // Intensität des Außenlichts
+                    }
+                    .border(width = 4.dp, brush = glowBrush, shape = shape)
             )
-            .padding(18.dp)
-    ) {
-        Column {
+
+            // --- 2. SCHICHT: INTENSIVER KERN-GLOW ---
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .graphicsLayer {
+                        renderEffect = RenderEffect
+                            .createBlurEffect(12f, 12f, Shader.TileMode.DECAL)
+                            .asComposeRenderEffect()
+                        alpha = 0.85f // Kräftiges Leuchten direkt am Rand
+                    }
+                    .border(width = 2.5.dp, brush = glowBrush, shape = shape)
+            )
+        }
+
+        // --- 3. SCHICHT: EIGENTLICHE GLASKARTE MIT FEINER KANTE ---
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(shape)
+                .background(glassFill)
+                .border(
+                    width = 1.2.dp,
+                    brush = glowBrush,
+                    shape = shape
+                )
+        )
+
+        // Inhalt der Karte mit Innenabstand
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp)
+        ) {
             content()
         }
     }
