@@ -885,6 +885,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         de.ricci.garminsleep.ui.components.WallpaperNeonTuning.apply {
             primary = p.getInt("wallpaper_neon_primary", 0)
             secondary = p.getInt("wallpaper_neon_secondary", 0)
+            intensity = p.getInt("wallpaper_cinema_intensity", 72)
+            animation = p.getInt("wallpaper_cinema_animation", 55)
+            depth = p.getInt("wallpaper_cinema_depth", 78)
+            particles = p.getInt("wallpaper_cinema_particles", 48)
+            rays = p.getInt("wallpaper_cinema_rays", 62)
         }
     }
 
@@ -2409,6 +2414,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 )
             }
         }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(14),0,dp(8)) })
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.WallpaperCinematicControls(
+                    onValueChanged = { key, value ->
+                        p.edit().putInt("wallpaper_cinema_" + key, value).apply()
+                    }
+                )
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(10)) })
         sleepCard.addView(TextView(this).apply {
             text="FARBSCHEMA";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(177,201,255))
