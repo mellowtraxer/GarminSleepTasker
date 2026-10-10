@@ -451,6 +451,10 @@ private class BottomNavIconView(context: android.content.Context, private val ki
 class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private var settingsBlurTarget: eightbitlab.com.blurview.BlurTarget? = null
     private var highlightOverviewTab: (() -> Unit)? = null
+    private var navigateToPage: ((Int) -> Unit)? = null
+    private var activePageIndex = 0
+    private var pageTransitionGeneration = 0
+    private fun openOverviewFromDetail() { navigateToPage?.invoke(0) ?: showOverview() }
     private lateinit var status: TextView
     private lateinit var sleepCard: LinearLayout
     private lateinit var pageTitle: TextView
@@ -922,6 +926,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 val oldIndex=tabs.indexOfFirst { it.strokeWidth>0 }
                 activate(tabs[index])
                 currentPageIndex=index
+                activePageIndex=index
+                pageTransitionGeneration++
+                val generation=pageTransitionGeneration
                 val direction=if(oldIndex<0 || index>=oldIndex) 1f else -1f
                 val action={
                     when(index) {
@@ -931,15 +938,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         else -> showSettings()
                     }
                 }
-                if(!animate) { action(); return }
+                if(!animate) { sleepCard.animate().cancel(); sleepCard.alpha=1f; sleepCard.translationX=0f; action(); return }
                 sleepCard.animate().cancel()
                 pageTitle.animate().cancel()
                 pageSubtitle.animate().cancel()
-                sleepCard.animate().alpha(0f).translationX(-direction*dp(22).toFloat()).setDuration(105).withEndAction {
-                    action()
-                    sleepCard.translationX=direction*dp(30).toFloat(); sleepCard.alpha=0f
-                    sleepCard.animate().alpha(1f).translationX(0f).setDuration(190).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
-                }.start()
+                sleepCard.animate().alpha(0f).translationX(-direction*dp(14).toFloat())
+                    .setDuration(160).setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+                    .withEndAction {
+                        if(generation == pageTransitionGeneration && !isFinishing && !isDestroyed) {
+                            action()
+                            sleepCard.translationX=direction*dp(14).toFloat(); sleepCard.alpha=0f
+                            sleepCard.animate().alpha(1f).translationX(0f).setDuration(260)
+                                .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                        }
+                    }.start()
                 pageTitle.alpha=.55f; pageSubtitle.alpha=.55f
                 pageTitle.animate().alpha(1f).setDuration(220).start()
                 pageSubtitle.animate().alpha(1f).setDuration(220).start()
@@ -951,6 +963,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(tab(3,"Einstellungen"){})
             tabs.forEachIndexed { index,card -> card.setOnClickListener { openPage(index) } }
             swipeOpenPage={ index -> openPage(index) }
+            navigateToPage={ index -> openPage(index) }
             post { activate(home) }
         }
         actionsTitle = TextView(this).apply { text="Verbindungen & Automatik"; textSize=18f; setTypeface(typeface, Typeface.BOLD); setPadding(0,dp(22),0,dp(8)) }
@@ -1307,7 +1320,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             saveCachedHistory(sleepHistory)
             progress(96,"Letzte Nacht darstellen")
             val latest = history.maxByOrNull { it.endMs } ?: error("Keine Garmin-Schlafsession gefunden")
-            renderDashboard(latest)
+            lastSummary=latest
+            if(activePageIndex==0) renderDashboard(latest)
             progress(98,"Kalender synchronisieren")
             withContext(Dispatchers.IO) { syncLatestNightToCalendar(latest) }
             progress(99,"Ansicht aktualisieren")
@@ -1415,6 +1429,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     private fun showOverview() {
+        activePageIndex=0
         highlightOverviewTab?.invoke()
         styleHomeConnections()
         pageTitle.text = "SleepSync"
@@ -1515,7 +1530,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private fun showHistoryNight(s: SleepSummary) {
         viewingHistoryNight=true
         pageTitle.text="←  Nacht"
-        pageTitle.setOnClickListener { showHistoryPlaceholder() }
+        pageTitle.setOnClickListener { navigateToPage?.invoke(1) ?: showHistoryPlaceholder() }
         pageSubtitle.text=java.time.format.DateTimeFormatter.ofPattern("EEEE, d. MMMM yyyy",java.util.Locale.GERMAN).withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))
         renderDashboard(s)
     }
@@ -1569,7 +1584,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }.getOrDefault(emptyList())
         lastSummary=sleepHistory.maxByOrNull{it.endMs}
-        lastSummary?.let { renderDashboard(it) }
+        if(activePageIndex==0) lastSummary?.let { renderDashboard(it) }
     }
 
     private fun showCalendarPlaceholder() {
@@ -2895,7 +2910,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         fun fmtMin(m:Long)=if(m>=60) (m/60).toString()+" h "+(m%60).toString()+" min" else m.toString()+" min"
         pageTitle.text="Schlafphasen"; pageSubtitle.text="Die Architektur deiner Nacht"
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
-        sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
+        sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { openOverviewFromDetail() } })
 
         sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
             setContent {
@@ -2930,7 +2945,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val light=theme=="light" || (theme=="system" && !sysDark)
         sleepCard.addView(TextView(this).apply {
             text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(px(2),px(8),0,px(12))
-            setOnClickListener { showOverview() }
+            setOnClickListener { openOverviewFromDetail() }
         })
         fun n(v:Double?,suffix:String)=v?.let { String.format(java.util.Locale.GERMANY,"%.1f %s",it,suffix) } ?: "–"
         sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
