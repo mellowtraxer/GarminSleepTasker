@@ -2423,6 +2423,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         .indexOfFirst { "live_" + it.id == activeWallpaper }.coerceAtLeast(0),
                     developerUnlocked = WallpaperPremiumGate.isDeveloperPreview(this@MainActivity),
                     onPremium = {
+                        pendingPremiumGalleryRefresh = true
                         startActivity(android.content.Intent(this@MainActivity, WallpaperPremiumActivity::class.java))
                     },
                     onSelect = { index ->
@@ -3661,8 +3662,14 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         makeOverviewTextWhite(sleepCard)
     }
 
+    private var pendingPremiumGalleryRefresh = false
+
     override fun onResume() {
         super.onResume()
+        if (pendingPremiumGalleryRefresh) {
+            pendingPremiumGalleryRefresh = false
+            showDesignStudio() // Recreate Compose gallery with newly granted developer entitlement.
+        }
         HistoryScrollGate.appVisible=true
         if(::sleepCard.isInitialized) sleepCard.invalidate()
         if(::brandGlow.isInitialized) brandGlow.invalidate()
