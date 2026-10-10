@@ -77,8 +77,8 @@ class SleepSyncWallpaperService : WallpaperService() {
                     val elapsed=(android.os.SystemClock.uptimeMillis()-startTime)/1000f
                     shader.setFloatUniform("resolution",width.toFloat(),height.toFloat())
                     shader.setFloatUniform("time",elapsed*.6f)
-                    shader.setFloatUniform("colorA",*a)
-                    shader.setFloatUniform("colorB",*b)
+                    shader.setFloatUniform("colorA",a)
+                    shader.setFloatUniform("colorB",b)
                     shader.setFloatUniform("depth",prefs.getInt("wallpaper_cinema_depth",78)/100f)
                     shader.setFloatUniform("energy",prefs.getInt("wallpaper_cinema_intensity",72)/100f)
                     shader.setFloatUniform("motion",.55f+speed)
