@@ -72,7 +72,8 @@ class SleepSyncWallpaperService : WallpaperService() {
                     val b=rgb(secondary)
                     val source=prefs.getString("wallpaper_source","live_aurora_dream")
                         ?.removePrefix("live_") ?: "aurora_dream"
-                    val scene=sleepSyncLiveStyles.indexOfFirst { it.id==source }.coerceAtLeast(0).toFloat()
+                    val safeSource=WallpaperPremiumGate.safeStyle(this@SleepSyncWallpaperService, source)
+                    val scene=sleepSyncLiveStyles.indexOfFirst { it.id==safeSource }.coerceAtLeast(0).toFloat()
                     val speed=prefs.getInt("wallpaper_cinema_animation",55)/100f
                     val elapsed=(android.os.SystemClock.uptimeMillis()-startTime)/1000f
                     shader.setFloatUniform("resolution",width.toFloat(),height.toFloat())
