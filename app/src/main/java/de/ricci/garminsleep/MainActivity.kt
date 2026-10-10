@@ -1021,10 +1021,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val systemDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val useLight=savedTheme=="light" || (savedTheme=="system" && !systemDark)
         val wallpaperPrefs=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
-        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperSource=
-            wallpaperPrefs.getString("wallpaper_source","aurora") ?: "aurora"
-        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperEnabled=
-            wallpaperPrefs.getBoolean("wallpaper_enabled",true)
+        val oldWallpaper=wallpaperPrefs.getString("wallpaper_source","live_aurora_dream") ?: "live_aurora_dream"
+        val liveWallpaper=oldWallpaper.takeIf { id ->
+            id.startsWith("live_") && de.ricci.garminsleep.ui.components.sleepSyncLiveStyles.any { "live_" + it.id == id }
+        } ?: "live_aurora_dream"
+        if(oldWallpaper != liveWallpaper || !wallpaperPrefs.getBoolean("wallpaper_enabled",true)) {
+            wallpaperPrefs.edit().putString("wallpaper_source",liveWallpaper).putBoolean("wallpaper_enabled",true).apply()
+        }
+        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperSource=liveWallpaper
+        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperEnabled=true
         // Compose edition: replace the entire old bitmap/Dreamscape wallpaper stack
         // with the actual Jetpack Compose aurora. Classic branch remains unchanged.
         val blurTarget = eightbitlab.com.blurview.BlurTarget(this).apply {
