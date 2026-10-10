@@ -1,8 +1,5 @@
 package de.ricci.garminsleep.ui.components
 
-import android.graphics.RenderEffect
-import android.graphics.Shader
-import android.os.Build
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
@@ -18,10 +15,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -81,33 +82,32 @@ fun FrostedGlassCard(
             onClick = { DreamscapeMotion.ripple(); onClick() }
         ) else Modifier)
     ) {
-        // --- 1. SCHICHT: WEITER DIFFUSER HALO (AUSSEN) ---
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && neonPower > 0f) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .graphicsLayer {
-                        renderEffect = RenderEffect
-                            .createBlurEffect(8f + 40f * blurPower, 8f + 40f * blurPower, Shader.TileMode.DECAL)
-                            .asComposeRenderEffect()
-                        alpha = (neonPower * 1.9f + pressGlow * 0.2f).coerceIn(0f, 1f) // Intensität des Außenlichts
+        // Rounded glow is drawn directly as concentric strokes. Unlike
+        // RenderEffect blur layers this never produces rectangular blur tiles.
+        val glowWidth = (2f + 16f * blurPower).dp
+        Box(
+            Modifier.matchParentSize().drawBehind {
+                if (neonPower > 0f) {
+                    val radius = cornerRadius.toPx()
+                    val maxInset = glowWidth.toPx() * .5f
+                    val colors = glowColors
+                    for (layer in 5 downTo 1) {
+                        val stroke = (1.5f + layer * 2.2f * blurPower).dp.toPx()
+                        val inset = maxInset + 1.dp.toPx()
+                        val tint = colors[(5 - layer).coerceIn(0, colors.lastIndex)]
+                        drawRoundRect(
+                            color = tint.copy(alpha = ((.035f + .018f * (6 - layer)) *
+                                neonPower * 2.3f + pressGlow * .025f).coerceIn(0f, 1f)),
+                            topLeft = Offset(inset, inset),
+                            size = Size((size.width - inset * 2).coerceAtLeast(0f),
+                                (size.height - inset * 2).coerceAtLeast(0f)),
+                            cornerRadius = CornerRadius(radius, radius),
+                            style = Stroke(width = stroke)
+                        )
                     }
-                    .border(width = (2f + neonPower * 8f).dp, brush = glowBrush, shape = shape)
-            )
-
-            // --- 2. SCHICHT: INTENSIVER KERN-GLOW ---
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .graphicsLayer {
-                        renderEffect = RenderEffect
-                            .createBlurEffect(3f + 18f * blurPower, 3f + 18f * blurPower, Shader.TileMode.DECAL)
-                            .asComposeRenderEffect()
-                        alpha = (neonPower * 2.1f + pressGlow * .15f).coerceIn(0f, 1f) // Kräftiges Leuchten direkt am Rand
-                    }
-                    .border(width = (1f + neonPower * 4f).dp, brush = glowBrush, shape = shape)
-            )
-        }
+                }
+            }
+        )
 
         // --- 3. SCHICHT: EIGENTLICHE GLASKARTE MIT FEINER KANTE ---
         Box(
