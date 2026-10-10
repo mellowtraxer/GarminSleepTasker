@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -24,6 +25,7 @@ class WallpaperPremiumActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            var devUnlocked by remember { mutableStateOf(WallpaperPremiumGate.isDeveloperPreview(this@WallpaperPremiumActivity)) }
             Box(Modifier.fillMaxSize().background(Color(0xFF02020A))) {
                 SleepSyncLiveWallpaper("nebula_flow", Modifier.fillMaxSize())
                 Box(Modifier.fillMaxSize().background(Color(0xB9000010)))
@@ -67,6 +69,16 @@ class WallpaperPremiumActivity : ComponentActivity() {
                             }
                         }
                         Spacer(Modifier.height(16.dp))
+                        Text(if (devUnlocked) "✓ ENTWICKLERVORSCHAU AKTIV" else "✦ ENTWICKLERVORSCHAU FREISCHALTEN",
+                            color=Color(0xFF6CF3FF),fontWeight=FontWeight.Bold,
+                            modifier=Modifier.clickable {
+                                WallpaperPremiumGate.setDeveloperPreview(this@WallpaperPremiumActivity, !devUnlocked)
+                                devUnlocked = !devUnlocked
+                                if (devUnlocked) finish()
+                            }.padding(12.dp),fontSize=12.sp)
+                        Text("Nur für interne Tests · kein Kauf · vor Veröffentlichung entfernen",
+                            color=Color(0xFFB6C5F7),fontSize=10.sp,textAlign=TextAlign.Center)
+                        Spacer(Modifier.height(8.dp))
                         Text("AURORA DREAM BLEIBT KOSTENLOS",color=Color.White,
                             modifier=Modifier.clickable { finish() }.padding(10.dp),fontSize=12.sp)
                     }
