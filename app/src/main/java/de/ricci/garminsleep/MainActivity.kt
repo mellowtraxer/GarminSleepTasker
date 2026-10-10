@@ -2618,14 +2618,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     }
 
     // Shared optical DNA for the appearance selector and Design Studio.
-    private fun opticsGlassBackground(tone:Int, radius:Int=22):LayerDrawable {
-        val d=resources.displayMetrics.density
-        val edge=(2*d).toInt().coerceAtLeast(1)
-        return LayerDrawable(arrayOf(
-            GradientDrawable().apply { cornerRadius=radius*d; setColor(Color.argb(designGlassAlpha(),72,88,112)); setStroke((4*d).toInt().coerceAtLeast(1),Color.argb(designNeonAlpha(42),Color.red(tone),Color.green(tone),Color.blue(tone))) },
-            GradientDrawable().apply { cornerRadius=radius*d; setColor(Color.TRANSPARENT); setStroke(edge,Color.argb(designNeonAlpha(255),Color.red(tone),Color.green(tone),Color.blue(tone))) }
-        ))
-    }
+    // All legacy card call sites now use the same FrostedGlassCard optical DNA.
+    private fun opticsGlassBackground(tone:Int, radius:Int=24):android.graphics.drawable.Drawable =
+        frostedGlassCardBackground(radius)
 
     // Native Android equivalent of FrostedGlassCard: translucent glass + multicolor neon rim.
     private fun frostedGlassCardBackground(radiusDp:Int=24):android.graphics.drawable.Drawable =
@@ -2707,7 +2702,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             else -> null
         }
         val previewFrame=android.widget.FrameLayout(this).apply {
-            background=opticsGlassBackground(Color.rgb(99,213,255),27)
+            background=frostedGlassCardBackground(24)
             clipToOutline=true
             outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
             layoutParams=LinearLayout.LayoutParams(-1,dp(258)).apply{setMargins(0,0,0,dp(18))}
