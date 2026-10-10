@@ -54,19 +54,28 @@ fun AtelierColorPalette(selectedColor: Int, onSelect: (Int, Int) -> Unit) {
         Triple("Grün", 0xFF39FF14.toInt(), 0xFF39FF14.toInt()),
         Triple("Orange", 0xFFFF6A00.toInt(), 0xFFFF6A00.toInt()),
         Triple("Gelb", 0xFFFFFF00.toInt(), 0xFFFFFF00.toInt()),
-        Triple("Rot", 0xFFFF1744.toInt(), 0xFFFF1744.toInt())
+        Triple("Rot", 0xFFFF1744.toInt(), 0xFFFF1744.toInt()),
+        Triple("Cyberpunk", 0xFF00F0FF.toInt(), 0xFFFF00B8.toInt()),
+        Triple("Ultraviolet", 0xFFAE48FF.toInt(), 0xFF00F0FF.toInt()),
+        Triple("Laser", 0xFFFF1744.toInt(), 0xFF247BFF.toInt()),
+        Triple("Toxic", 0xFF39FF14.toInt(), 0xFF00F0FF.toInt()),
+        Triple("Sunset", 0xFFFF6A00.toInt(), 0xFFFF00B8.toInt()),
+        Triple("Electric", 0xFFFFFF00.toInt(), 0xFFAE48FF.toInt()),
+        Triple("Synthwave", 0xFFFF00B8.toInt(), 0xFF247BFF.toInt())
+
     )
     val liveSelection = StudioGlassTuning.selectedNeon
+    val liveSecondary = StudioGlassTuning.secondaryNeon
     FrostedGlassCard {
-        Text("✦  NEONFARBEN", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text("✦  NEONFARBEN & DUOS", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             itemsIndexed(palettes) { _, (name, primary, secondary) ->
-                Column(Modifier.width(64.dp).clickable { StudioGlassTuning.selectedNeon = primary; onSelect(primary, secondary) },
+                Column(Modifier.width(64.dp).clickable { StudioGlassTuning.selectedNeon = primary; StudioGlassTuning.secondaryNeon = secondary; onSelect(primary, secondary) },
                     horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.size(44.dp).clip(CircleShape)
-                        .background(if (primary == 0) Brush.linearGradient(listOf(Color(0xFF00F0FF),Color(0xFFAE48FF),Color(0xFFFF00B8))) else Brush.linearGradient(listOf(Color(primary),Color(primary))))
-                        .then(if (liveSelection == primary) Modifier.border(2.dp, Color.White, CircleShape) else Modifier))
+                        .background(if (primary == 0) Brush.linearGradient(listOf(Color(0xFF00F0FF),Color(0xFFAE48FF),Color(0xFFFF00B8))) else Brush.linearGradient(listOf(Color(primary),Color(secondary))))
+                        .then(if (liveSelection == primary && liveSecondary == secondary) Modifier.border(2.dp, Color.White, CircleShape) else Modifier))
                     Spacer(Modifier.height(5.dp))
                     Text(name, color = Color.White, fontSize = 10.sp)
                 }
