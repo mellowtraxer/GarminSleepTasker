@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.toArgb
 
 /** GPU-driven atmospheric rendering for Android 13+; fallback remains the Canvas engine. */
-private const val CINEMATIC_SHADER = """
+internal const val CINEMATIC_SHADER = """
 uniform float2 resolution;
 uniform float time;
 uniform float3 colorA;
