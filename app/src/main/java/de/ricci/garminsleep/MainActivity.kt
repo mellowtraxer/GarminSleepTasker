@@ -3388,54 +3388,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val comparison = durationDelta?.let { delta ->
             "${kotlin.math.abs(delta)} min ${if (delta >= 0) "über" else "unter"} deinem persönlichen Schnitt aus ${referenceNights.size} Nächten"
         } ?: "Persönlicher Vergleich ab drei früheren Nächten"
-        sleepCard.addView(settingsStyleCard(accent2,30,LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(18),dp(19),dp(18),dp(19)); elevation=if(light) dp(10).toFloat() else dp(8).toFloat(); translationZ=if(light) dp(2).toFloat() else 0f; if(light) outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            background = if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(designGlassAlpha(),72,88,112),Color.argb((designGlassAlpha()*.92f).toInt(),58,70,104))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(2),accent2) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(58,25,105),Color.rgb(24,25,72),Color.rgb(6,55,66))).apply { cornerRadius=dp(30).toFloat(); setStroke(dp(1),Color.rgb(107,82,190)) }
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.VERTICAL; layoutParams=LinearLayout.LayoutParams(0,-2,1f)
-                addView(LinearLayout(this@MainActivity).apply { orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
-                    addView(View(this@MainActivity).apply { background=GradientDrawable().apply { shape=GradientDrawable.OVAL; setColor(accent2) }; layoutParams=LinearLayout.LayoutParams(dp(7),dp(7)).apply { marginEnd=dp(7) } })
-                    addView(TextView(this@MainActivity).apply { text="GESAMTSCHLAF"; textSize=10f; letterSpacing=.14f; setTextColor(if(light) Color.rgb(205,220,255) else Color.rgb(184,174,224)); setTypeface(typeface,Typeface.BOLD) })
-                })
-                addView(TextView(this@MainActivity).apply { text=fmt(s.totalMin); textSize=42f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setPadding(0,dp(2),0,0) })
-                addView(TextView(this@MainActivity).apply { text="☾  Schlafzeit"; textSize=12f; setTextColor(if(light) Color.rgb(205,225,245) else Color.rgb(151,210,225)); setPadding(0,dp(2),0,0) })
-            })
-            // SleepSync Ultimate · compact, duration-aware score orbit.
-            // The score is an orientation value, not a medical assessment.
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.VERTICAL; gravity=android.view.Gravity.CENTER
-                layoutParams=LinearLayout.LayoutParams(dp(108),-2)
-                addView(android.widget.FrameLayout(this@MainActivity).apply {
-                    layoutParams=LinearLayout.LayoutParams(dp(94),dp(94))
-                    addView(object:View(this@MainActivity) {
-                        private val ringPaint=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE; strokeCap=Paint.Cap.ROUND }
-                        override fun onDraw(canvas:Canvas) {
-                            super.onDraw(canvas)
-                            val inset=dp(7).toFloat()
-                            val bounds=android.graphics.RectF(inset,inset,width-inset,height-inset)
-                            ringPaint.strokeWidth=dp(6).toFloat()
-                            ringPaint.color=Color.argb(95,180,195,235)
-                            canvas.drawArc(bounds,0f,360f,false,ringPaint)
-                            ringPaint.color=when { nightRating>=80 -> Color.rgb(76,235,190); nightRating>=60 -> Color.rgb(255,200,86); else -> Color.rgb(255,104,135) }
-                            canvas.drawArc(bounds,-90f,360f*nightRating/100f,false,ringPaint)
-                        }
-                    },android.widget.FrameLayout.LayoutParams(-1,-1))
-                    addView(TextView(this@MainActivity).apply {
-                        text="$nightRating"; textSize=29f; gravity=android.view.Gravity.CENTER
-                        setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD)
-                    },android.widget.FrameLayout.LayoutParams(-1,-1))
-                })
-                addView(TextView(this@MainActivity).apply {
-                    text="SLEEP SCORE"; textSize=9f; letterSpacing=.08f; gravity=android.view.Gravity.CENTER
-                    setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD)
-                },LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(4) })
-                addView(TextView(this@MainActivity).apply {
-                    text="$quality% EFFIZIENZ"; textSize=10f; gravity=android.view.Gravity.CENTER
-                    setTextColor(Color.WHITE)
-                },LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(3) })
-                contentDescription="Sleep Score $nightRating von 100, vorläufige Bewertung aus Schlafdauer und Effizienz. Schlafeffizienz $quality Prozent."
-            })
-        }))
+        // Native Compose hero: the existing SleepSummary remains the single data source.
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.SleepDashboardHero(
+                    duration = fmt(s.totalMin),
+                    score = nightRating,
+                    efficiency = quality
+                )
+            }
+        }, LinearLayout.LayoutParams(-1, -2).apply {
+            setMargins(0, dp(8), 0, dp(8))
+        })
         sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else stageLight); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); setPadding(dp(4),dp(18),0,dp(8)) })
         sleepCard.addView(sleepStageStrip(s))
         sleepCard.addView(LinearLayout(this).apply {
