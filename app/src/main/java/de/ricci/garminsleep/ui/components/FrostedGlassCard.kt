@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -38,6 +39,7 @@ object StudioGlassTuning {
     var glass by mutableIntStateOf(34)
     var neon by mutableIntStateOf(35)
     var glow by mutableIntStateOf(35)
+    var selectedNeon by mutableIntStateOf(0)
 }
 
 @Composable
@@ -71,6 +73,8 @@ fun FrostedGlassCard(
     // Blur dissolves the crisp neon stroke into the soft halo. At 100% only light remains.
     val sharpEdgeOpacity = (1f - blurPower).coerceIn(0f, 1f)
     val haloIntensity = (glowPower * (.35f + .65f * blurPower) + neonPower * blurPower * .35f).coerceIn(0f, 1f)
+    val selected = StudioGlassTuning.selectedNeon
+    val activeColors = if (selected == 0) glowColors else listOf(Color(selected), Color(selected), Color(selected))
     val shape = RoundedCornerShape(cornerRadius)
     val glowBrush = Brush.linearGradient(glowColors)
 
@@ -114,11 +118,7 @@ fun FrostedGlassCard(
                             strokeWidth = (2.5f + haloIntensity * 4f).dp.toPx()
                             shader = LinearGradient(
                                 left, top, right, bottom,
-                                intArrayOf(
-                                    android.graphics.Color.CYAN,
-                                    0xFF9E59FF.toInt(),
-                                    0xFFFF008F.toInt()
-                                ), null, Shader.TileMode.CLAMP
+                                activeColors.map { it.toArgb() }.toIntArray(), null, Shader.TileMode.CLAMP
                             )
                             alpha = (haloIntensity * 255f).toInt().coerceIn(0,255)
                             maskFilter = BlurMaskFilter(
@@ -143,7 +143,7 @@ fun FrostedGlassCard(
                 .background(glassFill)
                 .border(
                     width = (0.6f + neonPower * 1.25f).dp,
-                    brush = Brush.linearGradient(glowColors.map {
+                    brush = Brush.linearGradient(activeColors.map {
                         it.copy(alpha = (neonPower * sharpEdgeOpacity).coerceIn(0f,1f))
                     }),
                     shape = shape
