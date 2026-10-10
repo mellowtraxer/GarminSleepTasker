@@ -29,7 +29,7 @@ fun DesignStudioEffects(
     )
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         settings.forEachIndexed { index, (title, key, initial) ->
-            var value by remember(key) { mutableFloatStateOf(initial.coerceIn(0, 100).toFloat()) }
+            var value by remember(key, initial) { mutableFloatStateOf(initial.coerceIn(0, 100).toFloat()) }
             FrostedGlassCard(modifier = Modifier.weight(1f)) {
                 Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 Spacer(Modifier.height(10.dp))
@@ -47,7 +47,15 @@ fun DesignStudioEffects(
                 Spacer(Modifier.height(8.dp))
                 Slider(
                     value = value,
-                    onValueChange = { value = it },
+                    onValueChange = {
+                        value = it
+                        when (key) {
+                            "blur_strength" -> StudioGlassTuning.blur = it.toInt()
+                            "glass_strength" -> StudioGlassTuning.glass = it.toInt()
+                            "neon_strength" -> StudioGlassTuning.neon = it.toInt()
+                        }
+                        onValueChanged(key, it.toInt())
+                    },
                     onValueChangeFinished = { onValueChanged(key, value.toInt()) },
                     valueRange = 0f..100f
                 )
