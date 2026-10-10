@@ -11,6 +11,7 @@ import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import de.ricci.garminsleep.ui.components.CINEMATIC_SHADER
 import de.ricci.garminsleep.ui.components.HYPER_COSMIC_SHADER
+import de.ricci.garminsleep.ui.components.LIQUID_CHROME_SHADER
 import de.ricci.garminsleep.ui.components.sleepSyncLiveStyles
 import kotlin.math.min
 
@@ -27,6 +28,7 @@ class SleepSyncWallpaperService : WallpaperService() {
         private val startTime = android.os.SystemClock.uptimeMillis()
         private val shader = if (Build.VERSION.SDK_INT >= 33) RuntimeShader(CINEMATIC_SHADER) else null
         private val hyperShader = if (Build.VERSION.SDK_INT >= 33) RuntimeShader(HYPER_COSMIC_SHADER) else null
+        private val chromeShader = if (Build.VERSION.SDK_INT >= 33) RuntimeShader(LIQUID_CHROME_SHADER) else null
         private var touchX = .5f
         private var touchY = .5f
         private val frame = object : Runnable {
@@ -100,7 +102,17 @@ class SleepSyncWallpaperService : WallpaperService() {
                     shader.setFloatUniform("scene",scene)
                     shader.setFloatUniform("particleDensity",prefs.getInt("wallpaper_cinema_particles",48)/100f)
                     shader.setFloatUniform("rayStrength",prefs.getInt("wallpaper_cinema_rays",62)/100f)
-                    if (safeSource == "hyper_cosmic" && hyperShader != null) {
+                    if (safeSource == "liquid_chrome" && chromeShader != null) {
+                        chromeShader.setFloatUniform("iResolution",width.toFloat(),height.toFloat())
+                        chromeShader.setFloatUniform("iTime",elapsed)
+                        chromeShader.setFloatUniform("iTouch",touchX,touchY)
+                        chromeShader.setFloatUniform("colorA",a)
+                        chromeShader.setFloatUniform("colorB",b)
+                        chromeShader.setFloatUniform("intensity",prefs.getInt("wallpaper_cinema_intensity",72)/100f)
+                        chromeShader.setFloatUniform("depth",prefs.getInt("wallpaper_cinema_depth",78)/100f)
+                        chromeShader.setFloatUniform("motion",.5f+speed)
+                        paint.shader=chromeShader
+                    } else if (safeSource == "hyper_cosmic" && hyperShader != null) {
                         hyperShader.setFloatUniform("iResolution",width.toFloat(),height.toFloat())
                         hyperShader.setFloatUniform("iTime",elapsed*.6f)
                         hyperShader.setFloatUniform("iTouch",touchX,touchY)
