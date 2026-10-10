@@ -89,36 +89,30 @@ fun FrostedGlassCard(
             onClick = { DreamscapeMotion.ripple(); onClick() }
         ) else Modifier)
     ) {
-        // Real, rounded soft-light shadow. Blur controls the shadow radius,
-        // Glow controls its intensity, Neon controls the crisp border.
-        // Draw INSIDE the allocated bounds to avoid clipped rectangular tiles.
+        // Glow and border share ONE exact rounded path.
+        // No inset contours: those caused the visible double borders.
         Box(Modifier.matchParentSize().drawBehind {
             if (glowPower > 0f && blurPower > 0f) {
-                val blurRadius = (2f + 14f * blurPower).dp.toPx()
-                val inset = blurRadius + 2.dp.toPx()
-                val left = inset
-                val top = inset
-                val right = size.width - inset
-                val bottom = size.height - inset
-                if (right > left && bottom > top) {
-                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        style = Paint.Style.STROKE
-                        strokeWidth = 1.5.dp.toPx()
-                        shader = LinearGradient(left, top, right, bottom,
-                            intArrayOf(0xFF00F0FF.toInt(), 0xFFA855F7.toInt(), 0xFFFF007F.toInt()),
-                            null, Shader.TileMode.CLAMP)
-                        setShadowLayer(blurRadius, 0f, 0f,
-                            android.graphics.Color.argb(
-                                (glowPower * 240f).toInt().coerceIn(0, 255), 168, 62, 245))
-                    }
-                    drawIntoCanvas { canvas ->
-                        canvas.nativeCanvas.drawRoundRect(
-                            left, top, right, bottom,
-                            (cornerRadius.toPx() - inset).coerceAtLeast(3.dp.toPx()),
-                            (cornerRadius.toPx() - inset).coerceAtLeast(3.dp.toPx()),
-                            paint
+                val stroke = (0.65f + neonPower * 1.15f).dp.toPx()
+                val half = stroke / 2f
+                val radius = (cornerRadius.toPx() - half).coerceAtLeast(0f)
+                val blurRadius = (2f + 18f * blurPower).dp.toPx()
+                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = stroke
+                    color = android.graphics.Color.argb(255, 148, 73, 244)
+                    setShadowLayer(
+                        blurRadius, 0f, 0f,
+                        android.graphics.Color.argb(
+                            (glowPower * 240f).toInt().coerceIn(0,255), 145, 60, 255
                         )
-                    }
+                    )
+                }
+                drawIntoCanvas { canvas ->
+                    canvas.nativeCanvas.drawRoundRect(
+                        half, half, size.width - half, size.height - half,
+                        radius, radius, paint
+                    )
                 }
             }
         })
