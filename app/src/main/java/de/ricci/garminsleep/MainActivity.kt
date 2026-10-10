@@ -931,6 +931,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 val generation=pageTransitionGeneration
                 val direction=if(oldIndex<0 || index>=oldIndex) 1f else -1f
                 val action={
+                    scroll.scrollTo(0,0)
                     when(index) {
                         0 -> showOverview()
                         1 -> showHistoryPlaceholder()
@@ -1054,22 +1055,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 android.view.MotionEvent.ACTION_DOWN -> {
                     swipeDownX=event.x; swipeDownY=event.y; swipeLastX=event.x; swipeDownTime=event.eventTime
                     swipeTracking=true; swipeHorizontal=false
-                    sleepCard.animate().cancel()
                     false
                 }
                 android.view.MotionEvent.ACTION_MOVE -> {
                     if(!swipeTracking) return@setOnTouchListener false
                     val dx=event.x-swipeDownX
                     val dy=event.y-swipeDownY
-                    if(!swipeHorizontal && kotlin.math.abs(dx)>dp(10) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*1.15f) {
+                    if(!swipeHorizontal && kotlin.math.abs(dx)>dp(26) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*2.2f) {
                         swipeHorizontal=true
                         scroll.parent?.requestDisallowInterceptTouchEvent(true)
                     }
                     if(swipeHorizontal) {
                         val edgeResistance=(dx>0 && currentPageIndex==0)||(dx<0 && currentPageIndex==3)
-                        val drag=if(edgeResistance) dx*.22f else dx*.72f
+                        val drag=if(edgeResistance) dx*.12f else dx*.35f
                         sleepCard.translationX=drag
-                        sleepCard.alpha=(1f-(kotlin.math.abs(drag)/(scroll.width.coerceAtLeast(1)*1.8f))).coerceIn(.72f,1f)
+                        sleepCard.alpha=1f
                         swipeLastX=event.x
                         true
                     } else false
@@ -1081,8 +1081,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     val dy=event.y-swipeDownY
                     val dt=(event.eventTime-swipeDownTime).coerceAtLeast(1L)
                     val velocity=dx*1000f/dt
-                    val commit=swipeHorizontal && kotlin.math.abs(dy)<dp(150) &&
-                        (kotlin.math.abs(dx)>scroll.width*.20f || kotlin.math.abs(velocity)>720f)
+                    val commit=swipeHorizontal && kotlin.math.abs(dy)<dp(65) &&
+                        (kotlin.math.abs(dx)>scroll.width*.28f || (kotlin.math.abs(dx)>dp(85) && kotlin.math.abs(velocity)>1100f))
                     if(commit) {
                         val next=if(dx<0) currentPageIndex+1 else currentPageIndex-1
                         if(next in 0..3) {
