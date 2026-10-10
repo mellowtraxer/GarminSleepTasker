@@ -2328,96 +2328,24 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             "custom" -> File(filesDir,"sleepsync_custom_wallpaper")
             else -> null
         }
-        val previewFrame=android.widget.FrameLayout(this).apply {
-            background=frostedGlassCardBackground(24)
-            clipToOutline=true
-            outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            layoutParams=LinearLayout.LayoutParams(-1,dp(258)).apply{setMargins(0,0,0,dp(18))}
-        }
-        val previewImage=android.widget.ImageView(this).apply {
-            scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
-            if(p.getBoolean("wallpaper_enabled",true) && wallpaperFile?.exists()==true) {
-                setImageURI(Uri.fromFile(wallpaperFile))
-            } else {
-                setImageResource(R.drawable.cosmic_crescent)
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.AtelierWallpaperPreview(
+                    title = when {
+                        !p.getBoolean("wallpaper_enabled",true) -> "OLED Black"
+                        activeWallpaper == "dreamscape" -> "DreamScape"
+                        activeWallpaper == "custom" -> "Dein Wallpaper"
+                        else -> "SleepSync Cosmos"
+                    },
+                    imagePath = if(p.getBoolean("wallpaper_enabled",true) && wallpaperFile?.exists()==true)
+                        wallpaperFile.absolutePath else null,
+                    onChange = {
+                        android.widget.Toast.makeText(this@MainActivity,
+                            "Wähle unten dein Wallpaper aus.",android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                )
             }
-        }
-        previewFrame.addView(previewImage,android.widget.FrameLayout.LayoutParams(-1,-1))
-        // View-based translation of AnimatedAuroraBackground: reversible, seamless aurora.
-        val auroraView=object:View(this@MainActivity) {
-            private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
-            private val phaseA=ValueAnimator.ofFloat(0f,1f).apply {
-                duration=12000L;repeatCount=ValueAnimator.INFINITE
-                repeatMode=ValueAnimator.REVERSE;interpolator=LinearInterpolator()
-                addUpdateListener{invalidate()}
-            }
-            private val phaseB=ValueAnimator.ofFloat(1f,0f).apply {
-                duration=16000L;repeatCount=ValueAnimator.INFINITE
-                repeatMode=ValueAnimator.REVERSE;interpolator=LinearInterpolator()
-                addUpdateListener{invalidate()}
-            }
-            override fun onAttachedToWindow(){
-                super.onAttachedToWindow()
-                if(!phaseA.isStarted)phaseA.start()
-                if(!phaseB.isStarted)phaseB.start()
-            }
-            override fun onDetachedFromWindow(){
-                phaseA.cancel();phaseB.cancel()
-                super.onDetachedFromWindow()
-            }
-            override fun onDraw(canvas:Canvas){
-                super.onDraw(canvas)
-                val w=width.toFloat();val h=height.toFloat()
-                if(w<=0f||h<=0f)return
-                val a=phaseA.animatedValue as? Float ?: 0f
-                val b=phaseB.animatedValue as? Float ?: 1f
-                fun orb(cx:Float,cy:Float,r:Float,color:Int){
-                    paint.shader=android.graphics.RadialGradient(cx,cy,r,
-                        intArrayOf(color,Color.TRANSPARENT),null,Shader.TileMode.CLAMP)
-                    canvas.drawCircle(cx,cy,r,paint)
-                    paint.shader=null
-                }
-                orb(w*(.2f+.6f*a),h*.25f,w*.9f,0x3D00F0FF)
-                orb(w*(.8f-.5f*b),h*.55f,w*.85f,0x4DA855F7)
-                orb(w*(.3f+.4f*b),h*.85f,w*.8f,0x33FF0077)
-            }
-        }
-        previewFrame.addView(auroraView,android.widget.FrameLayout.LayoutParams(-1,-1))
-        previewFrame.addView(View(this).apply {
-            background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
-                Color.argb(55,4,8,29),Color.argb(125,4,8,29),Color.rgb(7,10,29)
-            ))
-        },android.widget.FrameLayout.LayoutParams(-1,-1))
-        previewFrame.addView(LinearLayout(this).apply {
-            orientation=LinearLayout.VERTICAL
-            setPadding(dp(20),dp(15),dp(20),dp(19))
-            addView(TextView(this@MainActivity).apply {
-                text="✦  AKTUELLES WALLPAPER";textSize=10f;letterSpacing=.13f
-                setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(116,235,255))
-            })
-            addView(android.widget.Space(this@MainActivity),LinearLayout.LayoutParams(1,0,1f))
-            addView(TextView(this@MainActivity).apply {
-                text=when {
-                    !p.getBoolean("wallpaper_enabled",true) -> "OLED Black"
-                    activeWallpaper=="dreamscape" -> "DreamScape"
-                    activeWallpaper=="custom" -> "Dein Wallpaper"
-                    else -> "SleepSync Cosmos"
-                }
-                textSize=25f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
-                setShadowLayer(dp(10).toFloat(),0f,0f,Color.rgb(92,89,230))
-            })
-            addView(TextView(this@MainActivity).apply {
-                text="Dein Schlafkosmos. In deinem Licht."
-                textSize=12f;setTextColor(Color.rgb(209,227,247))
-                setPadding(0,dp(4),0,dp(12))
-            })
-            addView(TextView(this@MainActivity).apply {
-                text="✦  WALLPAPER WECHSELN  ↗"
-                textSize=11f;setTypeface(typeface,Typeface.BOLD)
-                setTextColor(Color.rgb(104,231,255))
-            })
-        },android.widget.FrameLayout.LayoutParams(-1,-1))
-        sleepCard.addView(previewFrame)
+        }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,dp(18)) })
         sleepCard.addView(TextView(this).apply {
             text="WALLPAPER AUSWÄHLEN";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(165,196,255))
