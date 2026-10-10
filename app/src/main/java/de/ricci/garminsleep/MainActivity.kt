@@ -1025,7 +1025,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val scene = android.widget.FrameLayout(this).apply {
             addView(box, android.widget.FrameLayout.LayoutParams(-1,-2))
         }
-        val scroll = ScrollView(this).apply {
+        val scroll = PremiumSwipeScrollView(this).apply {
             isFillViewport=true
             clipToPadding=false
             background=ColorDrawable(Color.TRANSPARENT)
@@ -1046,69 +1046,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 scroll.postDelayed(historyScrollResume,220L)
             }
         }
-        var swipeDownX=0f
-        var swipeDownY=0f
-        var swipeLastX=0f
-        var swipeDownTime=0L
-        var swipeTracking=false
-        var swipeHorizontal=false
-        scroll.setOnTouchListener { _,event ->
-            when(event.actionMasked) {
-                android.view.MotionEvent.ACTION_DOWN -> {
-                    swipeDownX=event.x; swipeDownY=event.y; swipeLastX=event.x; swipeDownTime=event.eventTime
-                    swipeTracking=true; swipeHorizontal=false
-                    false
-                }
-                android.view.MotionEvent.ACTION_MOVE -> {
-                    if(!swipeTracking) return@setOnTouchListener false
-                    val dx=event.x-swipeDownX
-                    val dy=event.y-swipeDownY
-                    if(!swipeHorizontal && kotlin.math.abs(dx)>dp(26) && kotlin.math.abs(dx)>kotlin.math.abs(dy)*2.2f) {
-                        swipeHorizontal=true
-                        scroll.parent?.requestDisallowInterceptTouchEvent(true)
-                    }
-                    if(swipeHorizontal) {
-                        val edgeResistance=(dx>0 && currentPageIndex==0)||(dx<0 && currentPageIndex==3)
-                        val drag=if(edgeResistance) dx*.08f else dx*.22f
-                        sleepCard.translationX=drag
-                        sleepCard.alpha=1f
-                        swipeLastX=event.x
-                        true
-                    } else false
-                }
-                android.view.MotionEvent.ACTION_UP -> {
-                    if(!swipeTracking) return@setOnTouchListener false
-                    swipeTracking=false
-                    val dx=event.x-swipeDownX
-                    val dy=event.y-swipeDownY
-                    val dt=(event.eventTime-swipeDownTime).coerceAtLeast(1L)
-                    val velocity=dx*1000f/dt
-                    val commit=swipeHorizontal && kotlin.math.abs(dy)<dp(65) &&
-                        (kotlin.math.abs(dx)>scroll.width*.28f || (kotlin.math.abs(dx)>dp(85) && kotlin.math.abs(velocity)>1100f))
-                    if(commit) {
-                        val next=if(dx<0) currentPageIndex+1 else currentPageIndex-1
-                        if(next in 0..3) {
-                            sleepCard.animate().cancel()
-                            sleepCard.translationX=0f; sleepCard.alpha=1f
-                            swipeOpenPage(next)
-                        } else {
-                            sleepCard.animate().translationX(0f).alpha(1f).setDuration(180).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
-                        }
-                    } else if(swipeHorizontal) {
-                        sleepCard.animate().translationX(0f).alpha(1f).setDuration(180).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
-                    }
-                    scroll.parent?.requestDisallowInterceptTouchEvent(false)
-                    swipeHorizontal
-                }
-                android.view.MotionEvent.ACTION_CANCEL -> {
-                    swipeTracking=false
-                    if(swipeHorizontal) sleepCard.animate().translationX(0f).alpha(1f).setDuration(160).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
-                    swipeHorizontal=false
-                    scroll.parent?.requestDisallowInterceptTouchEvent(false)
-                    false
-                }
-                else -> false
-            }
+        // Direction-locked gesture handling lives in PremiumSwipeScrollView.
+        // Do not animate the content under the finger: only transition after a
+        // deliberate horizontal gesture is completed.
+        scroll.onPageSwipe = { direction ->
+            val next = currentPageIndex + direction
+            if(next in 0..3) swipeOpenPage(next)
         }
         val navShell = MaterialCardView(this).apply {
             radius=dp(18).toFloat()
