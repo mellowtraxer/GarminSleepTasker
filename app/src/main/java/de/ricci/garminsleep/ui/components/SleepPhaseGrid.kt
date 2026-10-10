@@ -1,6 +1,5 @@
 package de.ricci.garminsleep.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +31,7 @@ fun SleepPhaseGrid(
         for (row in phases.chunked(2)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 row.forEach { (title, minutes, color) ->
-                    FrostedGlassCard(modifier = Modifier.weight(1f).clickable(onClick = onPhaseClick)) {
+                    FrostedGlassCard(modifier = Modifier.weight(1f), onClick = onPhaseClick) {
                         Text(title, color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
                         Text("${minutes / 60} h ${minutes % 60} min", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
