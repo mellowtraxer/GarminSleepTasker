@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -52,6 +53,14 @@ fun SleepDnaHologram(
         label = "dnaOrbit"
     )
     val span = (endMs - startMs).coerceAtLeast(1L)
+    val clockFormat = remember { java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()) }
+    val startLabel = clockFormat.format(java.time.Instant.ofEpochMilli(startMs))
+    val endLabel = clockFormat.format(java.time.Instant.ofEpochMilli(endMs))
+    val minutes = phases.groupBy { it.name.trim().lowercase() }.mapValues { (_, items) ->
+        items.sumOf { (minOf(it.endMs, endMs) - maxOf(it.startMs, startMs)).coerceAtLeast(0L) } / 60000L
+    }
+    fun formatMinutes(value: Long?) = value?.let { "${it / 60}h ${(it % 60).toString().padStart(2, '0')}" } ?: "–"
+
     fun select(x: Float, y: Float, width: Float, height: Float) {
         val angle = ((Math.toDegrees(atan2((y - height / 2f).toDouble(), (x - width / 2f).toDouble())) + 450.0) % 360.0)
         val time = (startMs + (span * angle / 360.0).toLong()).coerceIn(startMs, endMs.coerceAtLeast(startMs + 1) - 1)
@@ -59,7 +68,27 @@ fun SleepDnaHologram(
         onExplore(time)
     }
     FrostedGlassCard(modifier = modifier.fillMaxWidth()) {
-        Box(Modifier.fillMaxWidth().height(276.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxWidth().height(292.dp), contentAlignment = Alignment.Center) {
+            val palette = StudioGlassTuning.palette()
+            Text("✦  SLEEPDNA  ·  NACHT-HOLOGRAMM",
+                modifier = Modifier.align(Alignment.TopCenter),
+                color = palette[0], fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = .7.sp)
+            @Composable
+            fun Readout(title: String, value: String, tint: Color, modifier: Modifier, right: Boolean) {
+                Column(modifier.width(62.dp), horizontalAlignment = if (right) Alignment.End else Alignment.Start) {
+                    Text(title, color = tint, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text(value, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Readout("START", startLabel, palette[0], Modifier.align(Alignment.CenterStart).offset(y = (-62).dp), false)
+            Readout("ENDE", endLabel, palette[1], Modifier.align(Alignment.CenterEnd).offset(y = (-62).dp), true)
+            Readout("TIEF", formatMinutes(minutes["tief"]), Color(0xFF8264FF), Modifier.align(Alignment.CenterStart).offset(y = 68.dp), false)
+            Readout("REM", formatMinutes(minutes["rem"]), Color(0xFFE466FF), Modifier.align(Alignment.CenterEnd).offset(y = 68.dp), true)
+            Text("RING BERÜHREN  ·  NACHT ERKUNDEN",
+                modifier = Modifier.align(Alignment.BottomCenter),
+                color = Color(0xFFBDD2ED).copy(alpha = .72f), fontSize = 9.sp,
+                letterSpacing = .4.sp, textAlign = TextAlign.Center)
+
             Canvas(
                 Modifier.fillMaxSize()
                     .pointerInput(startMs, endMs) {
@@ -156,8 +185,7 @@ fun SleepDnaHologram(
                 }
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val clock = remember { java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()) }
-                Text(focused?.let { clock.format(java.time.Instant.ofEpochMilli(it)) }
+                Text(focused?.let { clockFormat.format(java.time.Instant.ofEpochMilli(it)) }
                     ?: "${durationMinutes / 60}:${(durationMinutes % 60).toString().padStart(2, '0')}",
                     color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Bold)
                 Text(if (focused == null) "SCHLAFDAUER" else "AUSGEWÄHLTE UHRZEIT",
