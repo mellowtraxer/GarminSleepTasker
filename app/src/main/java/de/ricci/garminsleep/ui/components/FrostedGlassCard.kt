@@ -109,35 +109,31 @@ fun FrostedGlassCard(
                 onClick = { DreamscapeMotion.ripple(); onClick() }
             ) else Modifier)
             .drawBehind {
-                if (haloIntensity > 0f) {
-                    val inset = haloSpace.toPx()
-                    val radius = cornerRadius.toPx()
-                    val left = inset
-                    val top = inset
-                    val right = size.width - inset
-                    val bottom = size.height - inset
-                    if (right > left && bottom > top) {
-                        // BlurMaskFilter produces a real soft halo instead of
-                        // extra nested outlines. Only the sharp border below
-                        // draws a visible hard line.
-                        val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                            style = Paint.Style.STROKE
-                            strokeWidth = (2.5f + haloIntensity * 4f).dp.toPx()
-                            shader = LinearGradient(
-                                left, top, right, bottom,
-                                activeColors.map { it.toArgb() }.toIntArray(), null, Shader.TileMode.CLAMP
-                            )
-                            alpha = (haloIntensity * 255f).toInt().coerceIn(0,255)
-                            maskFilter = BlurMaskFilter(
-                                (2f + blurPower * 13f).dp.toPx(),
-                                BlurMaskFilter.Blur.NORMAL
-                            )
+                val inset = haloSpace.toPx()
+                val radius = cornerRadius.toPx()
+                val left = inset
+                val top = inset
+                val right = size.width - inset
+                val bottom = size.height - inset
+                if (right > left && bottom > top) {
+                    val gradient = LinearGradient(left, top, right, bottom,
+                        activeColors.map { it.toArgb() }.toIntArray(), null, Shader.TileMode.CLAMP)
+                    drawIntoCanvas { canvas ->
+                        fun tube(widthDp: Float, blurDp: Float, opacity: Float) {
+                            if (opacity <= 0f) return
+                            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                                style = Paint.Style.STROKE
+                                strokeWidth = widthDp.dp.toPx()
+                                shader = gradient
+                                alpha = (opacity.coerceIn(0f, 1f) * 255f).toInt()
+                                if (blurDp > 0f) maskFilter = BlurMaskFilter(
+                                    blurDp.dp.toPx(), BlurMaskFilter.Blur.NORMAL)
+                            }
+                            canvas.nativeCanvas.drawRoundRect(left, top, right, bottom, radius, radius, paint)
                         }
-                        drawIntoCanvas { canvas ->
-                            canvas.nativeCanvas.drawRoundRect(
-                                left, top, right, bottom, radius, radius, halo
-                            )
-                        }
+                        tube(7f + glowPower * 9f, 11f + glowPower * 15f, haloIntensity * .68f)
+                        tube(3.5f + neonPower * 2.5f, 3f + blurPower * 8f, haloIntensity * .92f)
+                        tube(1.2f + neonPower * 1.5f, blurPower * 9f, neonPower * sharpEdgeOpacity)
                     }
                 }
             }
@@ -148,13 +144,7 @@ fun FrostedGlassCard(
                 .padding(haloSpace)
                 .clip(shape)
                 .background(glassFill)
-                .border(
-                    width = (0.6f + neonPower * 1.25f).dp,
-                    brush = Brush.linearGradient(activeColors.map {
-                        it.copy(alpha = (neonPower * sharpEdgeOpacity).coerceIn(0f,1f))
-                    }),
-                    shape = shape
-                )
+
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(18.dp)
