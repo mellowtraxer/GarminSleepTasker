@@ -21,14 +21,18 @@ import androidx.compose.ui.unit.sp
 import de.ricci.garminsleep.R
 
 @Composable
-fun AtelierWallpaperGallery(selected: Int, onSelect: (Int) -> Unit) {
+fun AtelierWallpaperGallery(selected: Int, onSelect: (Int) -> Unit, onPremium: () -> Unit) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
         itemsIndexed(sleepSyncLiveStyles) { index, style ->
-            FrostedGlassCard(modifier = Modifier.width(164.dp), onClick = { onSelect(index) }) {
+            FrostedGlassCard(modifier = Modifier.width(164.dp), onClick = { if (index == 0) onSelect(index) else onPremium() }) {
                 Box(Modifier.fillMaxWidth().height(124.dp).clip(RoundedCornerShape(12.dp))
                     .background(Color(0xFF03030B))) {
                     SleepSyncLiveWallpaper(style.id, Modifier.fillMaxSize())
-                    if (selected == index) Text("✓", color = Color.White,
+                    if (index != 0) Text("🔒 PREMIUM", color = Color.White,
+                        fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.TopStart)
+                            .background(Color(0xC9000012), RoundedCornerShape(8.dp)).padding(5.dp))
+                    if (selected == index && index == 0) Text("✓", color = Color.White,
                         modifier = Modifier.align(Alignment.TopEnd)
                             .background(Color(0xFFB44AFF), CircleShape).padding(horizontal = 6.dp))
                     Text("▶", color = Color.White.copy(alpha = .85f),
@@ -37,7 +41,8 @@ fun AtelierWallpaperGallery(selected: Int, onSelect: (Int) -> Unit) {
                 Spacer(Modifier.height(5.dp))
                 Text(style.title, color = if (selected == index) Color(0xFF61E9FF) else Color.White,
                     fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                Text(style.subtitle, color = Color(0xFFB8C7E0), fontSize = 9.sp)
+                Text(if (index == 0) "FREE · " + style.subtitle else style.subtitle,
+                    color = Color(0xFFB8C7E0), fontSize = 9.sp)
             }
         }
     }
