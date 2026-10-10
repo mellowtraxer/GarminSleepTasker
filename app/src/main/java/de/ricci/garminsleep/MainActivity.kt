@@ -1936,7 +1936,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     ) { result ->
         val installed=runCatching { packageManager.getPackageInfo(packageName,0).longVersionCode }.getOrDefault(0L)
         if(result.resultCode!=android.app.Activity.RESULT_OK) {
-            val status=result.data?.getIntExtra(android.content.Intent.EXTRA_INSTALL_RESULT,-1) ?: -1
+            val status=result.data?.getIntExtra("android.intent.extra.INSTALL_RESULT",-1) ?: -1
             AlertDialog.Builder(this).setTitle("Update nicht abgeschlossen")
                 .setMessage("Android hat die Installation nicht bestätigt. Installierter Build: $installed. Installer-Code: $status.\\n\\nBitte die Meldung des Android-Installers beachten. SleepSync-Daten wurden nicht gelöscht.")
                 .setPositiveButton("OK",null).show()
