@@ -26,6 +26,7 @@ import de.ricci.garminsleep.R
 fun AtelierWallpaperPreview(
     title: String,
     imagePath: String?,
+    liveStyle: String? = null,
     liveAurora: Boolean = false,
     liveDreamscape: Boolean = false,
     onChange: () -> Unit,
@@ -36,7 +37,9 @@ fun AtelierWallpaperPreview(
     }
     FrostedGlassCard(modifier = modifier.fillMaxWidth(), onClick = onChange) {
         Box(Modifier.fillMaxWidth().height(260.dp).clip(RoundedCornerShape(15.dp))) {
-            if (liveDreamscape) {
+            if (liveStyle != null) {
+                SleepSyncLiveWallpaper(liveStyle, Modifier.fillMaxSize())
+            } else if (liveDreamscape) {
                 AnimatedAuroraBackground(previewDreamscape = true) { }
             } else if (liveAurora) {
                 AnimatedAuroraBackground(previewAurora = true) { }
@@ -54,11 +57,11 @@ fun AtelierWallpaperPreview(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("✦  DREAM STUDIO  /  LIVE PREVIEW", color = Color(0xFF7EEBFF), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.weight(1f))
-                    Text(if (liveAurora || liveDreamscape) "● LIVE" else "● FOTO", color = Color(0xFF75FFD9), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(if (liveStyle != null || liveAurora || liveDreamscape) "● LIVE" else "● FOTO", color = Color(0xFF75FFD9), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
                 Column {
                     Text(title, color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                    Text(if (liveAurora) "Fließende Neonseide · Reagiert auf deine Nacht" else if (liveDreamscape) "Schwebender Kosmos · Sanfter Endlos-Loop" else "Dein Schlafkosmos. In deinem Licht.", color = Color(0xFFD7E9FF), fontSize = 12.sp)
+                    Text(if (liveStyle != null) (sleepSyncLiveStyles.firstOrNull { it.id == liveStyle }?.subtitle ?: "Animierte OLED-Lichtwelt") else if (liveAurora) "Fließende Neonseide · Reagiert auf deine Nacht" else if (liveDreamscape) "Schwebender Kosmos · Sanfter Endlos-Loop" else "Dein Schlafkosmos. In deinem Licht.", color = Color(0xFFD7E9FF), fontSize = 12.sp)
                     Spacer(Modifier.height(10.dp))
                     Text("✦  LOOK WECHSELN  ↗", color = Color(0xFF7EEBFF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
