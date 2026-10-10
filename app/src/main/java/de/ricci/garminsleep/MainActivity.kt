@@ -2932,68 +2932,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(px(2),px(8),0,px(12))
             setOnClickListener { showOverview() }
         })
-        fun chartCard(name:String, glyph:String, color:Int, value:String, points:List<MetricPoint>):View {
-            val tokenColor=when(name){"Puls"->designColor("heart",Color.rgb(255,82,126));"SpO₂"->designColor("spo2",Color.rgb(44,205,255));"Atmung"->designColor("resp",Color.rgb(80,225,184));"HRV"->designColor("hrv",Color.rgb(213,96,255));else->color}
-            return (if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
-                background=LayerDrawable(arrayOf(
-                    GradientDrawable().apply {
-                        cornerRadius=px(22).toFloat()
-                        setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(188,9,15,31))
-                        setStroke(px(4),Color.argb(42,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor)))
-                    },
-                    GradientDrawable().apply {
-                        cornerRadius=px(22).toFloat()
-                        setColor(Color.TRANSPARENT)
-                        setStroke(px(2),Color.argb(255,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor)))
-                    }
-                ))
-                if(light && this is eightbitlab.com.blurview.BlurView) {
-                    outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-                    clipToOutline=true
-                    settingsBlurTarget?.let { target ->
-                        setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true)
-                            .setBlurRadius(effectiveBlurRadius())
-                            .setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))
+        fun n(v:Double?,suffix:String)=v?.let { String.format(java.util.Locale.GERMANY,"%.1f %s",it,suffix) } ?: "–"
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                val metrics=listOf(
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("Puls","❤️",n(s.avgHr,"bpm"),"bpm",s.heartRateSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFFFF527E)),
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("SpO₂","🩸",n(s.avgSpo2,"%"),"%",s.spo2Series.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFF2CCDFF)),
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("Atmung","🫁",n(s.avgResp,"/min"),"/min",s.respirationSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFF50E1B8)),
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("HRV","💓",n(s.avgHrv,"ms"),"ms",s.hrvSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFFD560FF))
+                )
+                androidx.compose.foundation.layout.Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)) {
+                    metrics.forEach { metric ->
+                        de.ricci.garminsleep.ui.components.HealthGraphCard(metric,s.startMs,s.endMs)
                     }
                 }
-                layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,0,0,px(14)) }
-                addView(LinearLayout(this@MainActivity).apply {
-                    orientation=LinearLayout.VERTICAL; setPadding(px(16),px(15),px(16),px(12))
-                    addView(LinearLayout(this@MainActivity).apply {
-                        orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL
-                        addView(TextView(this@MainActivity).apply { text=glyph+"  "+name.uppercase(); textSize=12f; letterSpacing=.08f; setTextColor(tokenColor); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-                        addView(TextView(this@MainActivity).apply { text=value; textSize=22f; setTextColor(Color.WHITE); setTypeface(typeface,Typeface.BOLD); setShadowLayer(px(7).toFloat(),0f,0f,Color.argb(75,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor))) })
-                    })
-                    if(points.isNotEmpty()) {
-                        addView(TextView(this@MainActivity).apply {
-                            text="●  "+points.size.toString()+" Messpunkte  ·  Garmin"
-                            textSize=9f; setTextColor(Color.argb(175,Color.red(tokenColor),Color.green(tokenColor),Color.blue(tokenColor))); setPadding(0,px(4),0,0)
-                        })
-                        val min=points.minOf { it.value }; val max=points.maxOf { it.value }
-                        fun fv(v:Double)=if(kotlin.math.abs(v-kotlin.math.round(v))<0.05) kotlin.math.round(v).toInt().toString() else String.format(java.util.Locale.GERMANY,"%.1f",v)
-                        val unit=when(name) { "Puls"->"bpm"; "SpO₂"->"%"; "Atmung"->"/min"; "HRV"->"ms"; else->"" }
-                        addView(TextView(this@MainActivity).apply {
-                            text="MIN  "+fv(min)+" "+unit+"     •     MAX  "+fv(max)+" "+unit
-                            textSize=10f; letterSpacing=.05f; setTextColor(if(light) Color.rgb(220,228,245) else Color.rgb(154,164,191)); setPadding(0,px(7),0,px(2))
-                        })
-                    }
-                    addView(SleepMetricChartView(this@MainActivity,tokenColor,name,s.startMs,s.endMs,points))
-                })
             }
-        }
-        fun n(v:Double?,suffix:String)=v?.let { String.format(java.util.Locale.GERMANY,"%.1f %s",it,suffix) } ?: "–"
-        val cards=listOf(
-            chartCard("Puls","❤️",Color.rgb(255,82,126),n(s.avgHr,"bpm"),s.heartRateSeries),
-            chartCard("SpO₂","🩸",Color.rgb(44,205,255),n(s.avgSpo2,"%"),s.spo2Series),
-            chartCard("Atmung","🫁",Color.rgb(80,225,184),n(s.avgResp,"/min"),s.respirationSeries),
-            chartCard("HRV","💓",Color.rgb(213,96,255),n(s.avgHrv,"ms"),s.hrvSeries)
-        )
-        sleepCard.addView(TextView(this).apply {
-            text="NACHTVERLAUF  ·  "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.startMs))+" – "+java.time.format.DateTimeFormatter.ofPattern("HH:mm").withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.ofEpochMilli(s.endMs))
-            textSize=10f; letterSpacing=.08f; setTextColor(if(light) Color.rgb(210,222,244) else Color.rgb(112,122,153)); setPadding(px(2),0,0,px(10))
-        })
-        cards.forEach { sleepCard.addView(it) }
-        cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].post { cards[listOf("Puls","SpO₂","Atmung","HRV").indexOf(label).coerceAtLeast(0)].requestFocus() }
+        },LinearLayout.LayoutParams(-1,-2))
     }
 
     private inner class NeonGlowFrame(context: android.content.Context, private val tone:Int, private val radiusPx:Float): android.widget.FrameLayout(context) {
@@ -3265,14 +3219,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(View(this@MainActivity).apply { layoutParams=LinearLayout.LayoutParams(dp(7),dp(1)) })
             addView(TextView(this@MainActivity).apply { text="GARMIN  ●"; tag="sleepsync_colored_pill"; textSize=9f; letterSpacing=.08f; setTextColor(Color.rgb(7,66,92)); setTypeface(typeface,Typeface.BOLD); setPadding(dp(9),dp(4),dp(9),dp(4)); background=GradientDrawable().apply { cornerRadius=dp(13).toFloat(); setColor(Color.rgb(124,225,255)); setStroke(dp(1),Color.rgb(32,165,218)) } })
         })
-        val vitals = GridLayout(this).apply {
-            columnCount = 2
-            addView(metricCard("❤️","Puls",num(s.avgHr,"bpm"), onClick={ showMetricDetail("Puls","❤️",Color.rgb(255,82,126),s) }, series=s.heartRateSeries))
-            addView(metricCard("🩸","SpO₂","Ø ${num(s.avgSpo2,"%")}\nMin. ${num(s.minSpo2,"%")}", onClick={ showMetricDetail("SpO₂","🩸",Color.rgb(44,205,255),s) }, series=s.spo2Series))
-            addView(metricCard("🫁","Atmung","Ø ${num(s.avgResp,"/min")}\nMin. ${num(s.minResp,"/min")}", onClick={ showMetricDetail("Atmung","🫁",Color.rgb(80,225,184),s) }, series=s.respirationSeries))
-            addView(metricCard("💓","HRV",num(s.avgHrv,"ms"), onClick={ showMetricDetail("HRV","💓",Color.rgb(213,96,255),s) }, series=s.hrvSeries))
-        }
-        sleepCard.addView(vitals)
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                fun n(v:Double?,suffix:String)=v?.let { String.format(java.util.Locale.GERMANY,"%.1f %s",it,suffix) } ?: "–"
+                val metrics=listOf(
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("Puls","❤️",n(s.avgHr,"bpm"),"bpm",s.heartRateSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFFFF527E)),
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("SpO₂","🩸",n(s.avgSpo2,"%"),"%",s.spo2Series.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFF2CCDFF)),
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("Atmung","🫁",n(s.avgResp,"/min"),"/min",s.respirationSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFF50E1B8)),
+                    de.ricci.garminsleep.ui.components.HealthGraphMetric("HRV","💓",n(s.avgHrv,"ms"),"ms",s.hrvSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFFD560FF))
+                )
+                de.ricci.garminsleep.ui.components.HealthOverviewGrid(metrics,s.startMs,s.endMs) { index ->
+                    val names=listOf("Puls","SpO₂","Atmung","HRV")
+                    val glyphs=listOf("❤️","🩸","🫁","💓")
+                    val tones=listOf(Color.rgb(255,82,126),Color.rgb(44,205,255),Color.rgb(80,225,184),Color.rgb(213,96,255))
+                    showMetricDetail(names[index],glyphs[index],tones[index],s)
+                }
+            }
+        },LinearLayout.LayoutParams(-1,-2))
         sleepCard.addView(MaterialCardView(this).apply {
             radius=dp(18).toFloat(); cardElevation=if(light) dp(10).toFloat() else 0f; strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(24,94,105); setCardBackgroundColor(Color.TRANSPARENT); if(light) { background=GradientDrawable().apply { cornerRadius=dp(18).toFloat(); setColor(Color.argb(designGlassAlpha(),72,88,112)); setStroke(dp(1),Color.rgb(76,225,169)) }; addBlurLayer(this,18,::dp) } else setCardBackgroundColor(Color.rgb(7,25,31))
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,0) }
