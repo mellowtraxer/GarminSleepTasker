@@ -21,6 +21,7 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+        <activity android:name=".WallpaperPremiumActivity" android:exported="false" />
         <activity android:name=".WallpaperCinemaActivity" android:exported="false" />
         <service android:name=".SleepSyncWallpaperService"
             android:label="SleepSync Live Worlds"
