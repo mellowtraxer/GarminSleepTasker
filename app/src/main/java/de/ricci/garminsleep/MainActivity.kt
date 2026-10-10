@@ -2423,6 +2423,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 )
             }
         }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(10),0,dp(10)) })
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.NeonWallpaperColorWheel(
+                    onChange = { primary, secondary ->
+                        p.edit().putInt("wallpaper_neon_primary", primary)
+                            .putInt("wallpaper_neon_secondary", secondary).apply()
+                    }
+                )
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(12),0,dp(8)) })
         sleepCard.addView(TextView(this).apply {
             text="FARBSCHEMA";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(177,201,255))
