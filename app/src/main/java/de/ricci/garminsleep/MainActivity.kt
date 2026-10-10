@@ -2423,36 +2423,32 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }, LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(15) })
         val bottom=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        fun optionPanel(title:String,items:List<Triple<String,String,String>>,current:String,onChoose:(String)->Unit):LinearLayout{
-            val panel=LinearLayout(this).apply{
-                orientation=LinearLayout.VERTICAL;setPadding(dp(9),dp(12),dp(9),dp(11));background=glassPanel(neonCyan)
-            }
-            panel.addView(studioLabel(title).apply{textSize=13f})
-            val strip=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-            items.forEach{(key,label,icon)->
-                val active=current==key
-                strip.addView(LinearLayout(this).apply{
-                    orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
-                    setPadding(dp(2),dp(8),dp(2),dp(8))
-                    background=GradientDrawable().apply{cornerRadius=dp(12).toFloat();setColor(if(active)0xFF252059.toInt() else 0xFF101B39.toInt());setStroke(dp(if(active)2 else 1),if(active)neonViolet else 0xFF384C77.toInt())}
-                    addView(TextView(this@MainActivity).apply{text=icon;textSize=22f;gravity=android.view.Gravity.CENTER;setTextColor(if(active)neonViolet else Color.WHITE)})
-                    addView(studioSmall(label).apply{gravity=android.view.Gravity.CENTER;textSize=9f;maxLines=1})
-                    setOnClickListener{onChoose(key)}
-                },LinearLayout.LayoutParams(0,dp(86),1f).apply{setMargins(dp(2),dp(10),dp(2),0)})
-            }
-            panel.addView(strip)
-            return panel
-        }
         val uiPrefs=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
         val theme=uiPrefs.getString("theme","dark")?:"dark"
-        bottom.addView(optionPanel("☾  Theme",listOf(Triple("dark","OLED Dark","☾"),Triple("light","Light","☼"),Triple("auto","Auto","◐")),theme){key->
-            uiPrefs.edit().putString("theme",key).apply();showDesignStudio()
-        },LinearLayout.LayoutParams(0,-2,1f).apply{marginEnd=dp(5)})
         val animation=p.getString("animation_intensity","soft")?:"soft"
-        bottom.addView(optionPanel("≋  Animationen",listOf(Triple("soft","Sanft","∿"),Triple("normal","Normal","〰"),Triple("intense","Intensiv","≋")),animation){key->
-            p.edit().putString("animation_intensity",key).putBoolean("custom_enabled",true).apply();showDesignStudio()
-        },LinearLayout.LayoutParams(0,-2,1f).apply{marginStart=dp(5)})
-        sleepCard.addView(bottom,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(14)})
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                androidx.compose.foundation.layout.Row(
+                    modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp)
+                ) {
+                    de.ricci.garminsleep.ui.components.StudioOptionPanel(
+                        title="☾ Theme",
+                        options=listOf(Triple("dark","OLED Dark","☾"),Triple("light","Light","☼"),Triple("auto","Auto","◐")),
+                        selected=theme,
+                        onSelect={key-> uiPrefs.edit().putString("theme",key).apply();showDesignStudio() },
+                        modifier=androidx.compose.ui.Modifier.weight(1f)
+                    )
+                    de.ricci.garminsleep.ui.components.StudioOptionPanel(
+                        title="≋ Animationen",
+                        options=listOf(Triple("soft","Sanft","∿"),Triple("normal","Normal","〰"),Triple("intense","Intensiv","≋")),
+                        selected=animation,
+                        onSelect={key-> p.edit().putString("animation_intensity",key).putBoolean("custom_enabled",true).apply();showDesignStudio() },
+                        modifier=androidx.compose.ui.Modifier.weight(1f)
+                    )
+                }
+            }
+        },LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(14)})
         sleepCard.addView(MaterialButton(this).apply{
             text="✓  Übernehmen";isAllCaps=false;textSize=17f;setTypeface(typeface,Typeface.BOLD)
             setTextColor(Color.WHITE)
