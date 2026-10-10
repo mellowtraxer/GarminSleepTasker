@@ -1882,202 +1882,39 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
     }
     private fun showSettings() {
-        val density=resources.displayMetrics.density
-        fun dp(n:Int)=(n*density).toInt()
-        pageTitle.text="SleepSync"
-        pageSubtitle.text="Einstellungen · Dein Schlaf. Dein Stil. Deine Kontrolle."
-        actionsTitle.visibility=View.GONE
-        actionsBox.visibility=View.GONE
+        pageTitle.text = "SleepSync"
+        pageSubtitle.text = "Einstellungen · Dein Schlaf. Dein Stil. Deine Kontrolle."
+        actionsTitle.visibility = View.GONE
+        actionsBox.visibility = View.GONE
         sleepCard.removeAllViews()
-        val ui=getSharedPreferences("sleepsync_ui",MODE_PRIVATE)
-        val mode=ui.getString("theme","dark") ?: "dark"
-        val themeLabel=when(mode){"light"->"Neon Sunrise";"system"->"Automatisch";else->"OLED Night"}
-        val cyan=Color.rgb(70,220,248)
-        val violet=Color.rgb(169,114,255)
-        val ink=Color.rgb(8,13,33)
-        val muted=Color.rgb(181,197,226)
-        fun panel(color:Int)=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-            Color.argb(247,5,13,38),Color.argb(244,13,16,53),Color.argb(249,5,11,33)
-        )).apply {cornerRadius=dp(24).toFloat();setStroke(dp(1),Color.argb(150,Color.red(color),Color.green(color),Color.blue(color)))}
-        fun label(t:String)=TextView(this).apply{
-            text=t;textSize=10f;letterSpacing=.17f;setTypeface(typeface,Typeface.BOLD)
-            setTextColor(cyan);setPadding(dp(6),dp(17),0,dp(10))
+        val mode = getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
+        val themeLabel = when(mode) {
+            "light" -> "Neon Sunrise"
+            "system" -> "Automatisch"
+            else -> "OLED Night"
         }
-        fun tile(symbol:String,title:String,subtitle:String,color:Int,click:()->Unit):LinearLayout {
-            return LinearLayout(this).apply{
-                orientation=LinearLayout.VERTICAL
-                setPadding(dp(16),dp(18),dp(14),dp(17))
-                background=panel(color)
-                isClickable=true;isFocusable=true
-                setOnClickListener{click()}
-                addView(TextView(this@MainActivity).apply{
-                    text=symbol;textSize=26f;setTextColor(color)
-                    setShadowLayer(dp(8).toFloat(),0f,0f,color)
-                })
-                addView(TextView(this@MainActivity).apply{
-                    text=title;textSize=17f;setTypeface(typeface,Typeface.BOLD)
-                    setTextColor(Color.WHITE);setPadding(0,dp(10),0,dp(5))
-                })
-                addView(TextView(this@MainActivity).apply{
-                    text=subtitle;textSize=11f;setTextColor(muted)
-                    maxLines=2
-                })
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setViewCompositionStrategy(
+                androidx.compose.ui.platform.ViewCompositionStrategy.DisposeOnDetachedFromWindow
+            )
+            setContent {
+                de.ricci.garminsleep.ui.components.SleepSyncSettingsCards(
+                    themeLabel = themeLabel,
+                    garminLinked = garminClient.isLinked(),
+                    onDesign = { showDesignStudio() },
+                    onUpdates = { checkForPreviewUpdate() },
+                    onAutomation = { showAutomationSettings() },
+                    onGarmin = { showGarminSettings() },
+                    onHealth = { showHealthSettings() },
+                    onPrivacy = { showPrivacySettings() },
+                    onAbout = { showAboutSettings() },
+                    onTool = { index ->
+                        if (index in 0 until minOf(5,actionsBox.childCount))
+                            actionsBox.getChildAt(index).performClick()
+                    }
+                )
             }
-        }
-        fun cosmicArtwork(moon:Boolean):View = object:View(this@MainActivity) {
-            private val brush=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-            private val bitmap=android.graphics.BitmapFactory.decodeResource(resources,
-                if(moon) R.drawable.cosmic_crescent else R.drawable.cosmic_planet)
-            override fun onDraw(canvas:Canvas) {
-                val w=width.toFloat();val h=height.toFloat()
-                if(w<=0f||h<=0f)return
-                // Keep the artwork on the right, while preserving a quiet text area.
-                val dst=android.graphics.RectF(w*.39f,0f,w,h)
-                val srcAspect=bitmap.width.toFloat()/bitmap.height
-                val dstAspect=dst.width()/dst.height()
-                val src=if(srcAspect>dstAspect) {
-                    val crop=(bitmap.height*dstAspect).toInt()
-                    val left=(bitmap.width-crop)/2
-                    android.graphics.Rect(left,0,left+crop,bitmap.height)
-                } else {
-                    val crop=(bitmap.width/dstAspect).toInt()
-                    val top=(bitmap.height-crop)/2
-                    android.graphics.Rect(0,top,bitmap.width,top+crop)
-                }
-                canvas.drawBitmap(bitmap,src,dst,brush)
-                brush.shader=android.graphics.LinearGradient(0f,0f,w,0f,
-                    intArrayOf(0xFF10142F.toInt(),0xF5101432.toInt(),0x8A101431.toInt(),0x10101431),
-                    floatArrayOf(0f,.42f,.73f,1f),Shader.TileMode.CLAMP)
-                canvas.drawRect(0f,0f,w,h,brush)
-                brush.shader=null
-            }
-        }
-        // Editorial masthead: the whole screen is a navigation dashboard, not a list of settings.
-        sleepCard.addView(android.widget.FrameLayout(this).apply {
-            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                0xFF101735.toInt(),0xFF241347.toInt(),0xFF081B3E.toInt()
-            )).apply { cornerRadius=dp(29).toFloat();setStroke(dp(2),cyan) }
-            clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            addView(cosmicArtwork(false),android.widget.FrameLayout.LayoutParams(-1,-1))
-            addView(LinearLayout(this@MainActivity).apply{
-            orientation=LinearLayout.VERTICAL
-            setPadding(dp(23),dp(25),dp(23),dp(23))
-            addView(TextView(this@MainActivity).apply{
-                text="✦  SLEEPSYNC / YOUR UNIVERSE";textSize=10f;letterSpacing=.14f
-                setTypeface(typeface,Typeface.BOLD);setTextColor(cyan)
-            })
-            addView(TextView(this@MainActivity).apply{
-                text="Dein Kosmos.\nDeine Kontrolle."
-                textSize=29f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
-                setPadding(0,dp(16),0,dp(11))
-                setShadowLayer(dp(14).toFloat(),0f,0f,violet)
-            })
-            addView(TextView(this@MainActivity).apply{
-                text="Dein Schlaf. Deine Daten. Dein Design."
-                textSize=13f;setTextColor(Color.rgb(212,223,248))
-            })
-            addView(TextView(this@MainActivity).apply{
-                text="●  ${if(garminClient.isLinked()) "GARMIN VERBUNDEN" else "GARMIN OFFLINE"}     ✦  $themeLabel"
-                textSize=10f;setTextColor(Color.rgb(119,237,215))
-                setPadding(0,dp(19),0,0)
-            })
-            },android.widget.FrameLayout.LayoutParams(-1,-2))
-        },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),dp(5),dp(3),dp(10))})
-        sleepCard.addView(label("✦  DEIN KOSMOS"))
-        val studio=android.widget.FrameLayout(this).apply {
-            background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                Color.rgb(14,11,46),Color.rgb(57,17,98),Color.rgb(9,47,92),Color.rgb(7,12,35)
-            )).apply {cornerRadius=dp(27).toFloat();setStroke(dp(2),cyan)}
-            clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            setOnClickListener{showDesignStudio()}
-            addView(cosmicArtwork(true),android.widget.FrameLayout.LayoutParams(-1,-1))
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.VERTICAL;setPadding(dp(20),dp(22),dp(17),dp(20))
-                addView(TextView(this@MainActivity).apply {
-                    text="✦  DESIGN STUDIO";textSize=11f;letterSpacing=.16f
-                    setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(131,225,255))
-                })
-                addView(TextView(this@MainActivity).apply {
-                    text="Dein Universum.\nDeine Regeln.";textSize=26f
-                    setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
-                    setPadding(0,dp(13),0,dp(8))
-                    setShadowLayer(dp(12).toFloat(),0f,0f,violet)
-                })
-                addView(TextView(this@MainActivity).apply {
-                    text="Wallpaper, Farben, Effekte\nund Animationen."
-                    textSize=12f;setTextColor(Color.rgb(225,231,255))
-                })
-                addView(TextView(this@MainActivity).apply {
-                    text="✦  DESIGN STUDIO ÖFFNEN   →"
-                    textSize=12f;setTypeface(typeface,Typeface.BOLD)
-                    setTextColor(Color.rgb(105,244,255));setPadding(0,dp(24),0,0)
-                })
-            },android.widget.FrameLayout.LayoutParams(-1,-1))
-        }
-        sleepCard.addView(studio,LinearLayout.LayoutParams(-1,dp(245)).apply {
-            setMargins(dp(3),0,dp(3),dp(10))
-        })
-        sleepCard.addView(label("✦  SCHNELLZUGRIFF"))
-        val quick=android.widget.GridLayout(this).apply{columnCount=2}
-        val quickItems=listOf(
-            tile("↻","Updates","Neue Version prüfen",cyan){checkForPreviewUpdate()},
-            tile("⚙","Automatik","Sync & Kalender",violet){showAutomationSettings()},
-            tile("⌚","Garmin","Verbindung & Daten",Color.rgb(241,113,225)){showGarminSettings()},
-            tile("♥","Health Connect","Gesundheitsdaten",cyan){showHealthSettings()}
-        )
-        quickItems.forEachIndexed{i,v->
-            quick.addView(v,android.widget.GridLayout.LayoutParams(
-                android.widget.GridLayout.spec(i/2),android.widget.GridLayout.spec(i%2,1f)
-            ).apply{width=0;columnSpec=android.widget.GridLayout.spec(i%2,1f);setMargins(dp(3),dp(3),dp(3),dp(3))})
-        }
-        sleepCard.addView(quick)
-        sleepCard.addView(label("✦  TOOLS & DIAGNOSE"))
-        fun compact(symbol:String,title:String,sub:String,color:Int,click:()->Unit) {
-            sleepCard.addView(LinearLayout(this).apply{
-                orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                setPadding(dp(17),dp(15),dp(15),dp(15))
-                background=panel(color)
-                setOnClickListener{click()}
-                addView(TextView(this@MainActivity).apply{
-                    text=symbol;textSize=22f;setTextColor(color)
-                },LinearLayout.LayoutParams(dp(42),-2))
-                addView(LinearLayout(this@MainActivity).apply{
-                    orientation=LinearLayout.VERTICAL
-                    addView(TextView(this@MainActivity).apply{
-                        text=title;textSize=15f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
-                    })
-                    addView(TextView(this@MainActivity).apply{
-                        text=sub;textSize=11f;setTextColor(muted);setPadding(0,dp(3),0,0)
-                    })
-                },LinearLayout.LayoutParams(0,-2,1f))
-                addView(TextView(this@MainActivity).apply{text="›";textSize=25f;setTextColor(color)})
-            },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(3),dp(4),dp(3),dp(4))})
-        }
-        compact("◈","Datenschutz","Lokale Daten & Berechtigungen",Color.rgb(131,189,255)){showPrivacySettings()}
-        compact("ⓘ","Über SleepSync","Version, Build & Informationen",violet){showAboutSettings()}
-        var toolsOpen=false
-        val toolContainer=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;visibility=View.GONE}
-        compact("⚙","TOOLS & DIAGNOSE","Verbindungen, Datenabruf und Systemprüfung",cyan){
-            toolsOpen=!toolsOpen
-            toolContainer.visibility=if(toolsOpen)View.VISIBLE else View.GONE
-        }
-        val toolNames=listOf("Health Connect · Berechtigungen","Garmin Connect · Verbinden","Garmin Connect · Trennen","Schlafdaten neu laden","App-Signatur anzeigen")
-        for(i in 0 until minOf(5,actionsBox.childCount)){
-            val original=actionsBox.getChildAt(i)
-            toolContainer.addView(TextView(this).apply{
-                text="↗   ${toolNames[i]}";textSize=13f;setTextColor(Color.rgb(213,232,250))
-                setPadding(dp(21),dp(15),dp(14),dp(15))
-                background=panel(Color.rgb(77,136,199))
-                setOnClickListener{original.performClick()}
-            },LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(9),dp(3),dp(9),dp(3))})
-        }
-        sleepCard.addView(toolContainer)
-        sleepCard.addView(TextView(this).apply{
-            text="NEVER GO BACK. ALWAYS FORWARD.  ✦"
-            textSize=10f;letterSpacing=.11f;gravity=android.view.Gravity.CENTER
-            setTextColor(Color.rgb(160,136,225))
-            setPadding(0,dp(30),0,dp(28))
-        })
+        },LinearLayout.LayoutParams(-1,-2))
     }
 
     private fun checkForPreviewUpdate() {
