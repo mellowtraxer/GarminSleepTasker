@@ -1,6 +1,7 @@
 package de.ricci.garminsleep.ui.components
 
 import androidx.compose.animation.core.*
+import android.os.Build
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -48,6 +49,10 @@ val sleepSyncLiveStyles = listOf(
 
 @Composable
 fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        AgslLiveWallpaper(style, modifier)
+        return
+    }
     val transition = rememberInfiniteTransition(label = "LiveWallpaper")
     val phase by transition.animateFloat(
         0f, (2f * PI).toFloat(),
