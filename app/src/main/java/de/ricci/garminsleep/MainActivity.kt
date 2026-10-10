@@ -933,6 +933,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 val direction=if(oldIndex<0 || index>=oldIndex) 1f else -1f
                 val action={
                     mainPageScroll?.scrollTo(0,0)
+                    de.ricci.garminsleep.ui.components.DreamscapeMotion.scrollOffset=0f
                     when(index) {
                         0 -> showOverview()
                         1 -> showHistoryPlaceholder()
@@ -1042,6 +1043,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         scroll.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
             if(scrollY!=oldScrollY){
                 HistoryScrollGate.scrolling=true
+                de.ricci.garminsleep.ui.components.DreamscapeMotion.scrollOffset=scrollY.toFloat()
                 scroll.removeCallbacks(historyScrollResume)
                 scroll.postDelayed(historyScrollResume,220L)
             }
@@ -2968,6 +2970,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     ))
 
     private fun renderDashboard(s: SleepSummary) {
+        de.ricci.garminsleep.ui.components.DreamscapeMotion.updateSleep(s.lightMin,s.deepMin,s.remMin,s.avgHr)
         lastSummary = s
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
