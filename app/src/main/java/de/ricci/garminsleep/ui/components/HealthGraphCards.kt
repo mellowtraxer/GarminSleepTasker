@@ -2,6 +2,10 @@ package de.ricci.garminsleep.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.abs
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,8 +35,11 @@ fun HealthGraphCard(
     endMs: Long,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    selectedTimeMs: Long? = null,
+    onTimeSelected: ((Long) -> Unit)? = null
 ) {
+    val nearest = selectedTimeMs?.let { selected -> metric.points.minByOrNull { abs(it.timeMs - selected) } }
     FrostedGlassCard(modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)) {
         Text("${metric.glyph}  ${metric.title.uppercase()}", color = metric.tone,
             fontWeight = FontWeight.Bold, fontSize = 11.sp)
@@ -48,8 +55,32 @@ fun HealthGraphCard(
                     color = Color(0xFFBAC9DB), fontSize = 10.sp)
             }
         }
+        if (!compact && selectedTimeMs != null) {
+            val time = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+                .withZone(java.time.ZoneId.systemDefault())
+                .format(java.time.Instant.ofEpochMilli(selectedTimeMs))
+            val reading = nearest?.let { String.format(java.util.Locale.GERMANY, "%.1f %s", it.value, metric.unit) } ?: "Kein Messwert"
+            Text("$time  ·  $reading", color = metric.tone, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
         Spacer(Modifier.height(9.dp))
-        Canvas(Modifier.fillMaxWidth().height(if (compact) 64.dp else 210.dp)) {
+        val gestures = if (!compact && onTimeSelected != null) {
+            Modifier.pointerInput(startMs, endMs) {
+                detectTapGestures { position ->
+                    onTimeSelected(startMs + ((endMs - startMs) * (position.x / size.width.toFloat()).coerceIn(0f, 1f)).toLong())
+                }
+            }.pointerInput(startMs, endMs) {
+                detectDragGestures(
+                    onDragStart = { position ->
+                        onTimeSelected(startMs + ((endMs - startMs) * (position.x / size.width.toFloat()).coerceIn(0f, 1f)).toLong())
+                    },
+                    onDrag = { change, _ ->
+                        change.consume()
+                        onTimeSelected(startMs + ((endMs - startMs) * (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)).toLong())
+                    }
+                )
+            }
+        } else Modifier
+        Canvas(Modifier.fillMaxWidth().height(if (compact) 64.dp else 210.dp).then(gestures)) {
             val sorted = metric.points.sortedBy { it.timeMs }
             if (sorted.size < 2) return@Canvas
             val min = sorted.minOf { it.value }.toFloat()
@@ -64,6 +95,16 @@ fun HealthGraphCard(
             }
             drawPath(path, metric.tone.copy(alpha = .16f), style = Stroke(7.dp.toPx()))
             drawPath(path, metric.tone, style = Stroke(if (compact) 2.dp.toPx() else 2.5.dp.toPx()))
+            if (!compact && selectedTimeMs != null) {
+                val x = ((selectedTimeMs - startMs).toFloat() / range).coerceIn(0f, 1f) * size.width
+                drawLine(Color.White.copy(alpha = .65f), Offset(x, 0f), Offset(x, size.height), strokeWidth = 1.dp.toPx())
+                if (nearest != null) {
+                    val y = size.height * (.88f - .76f * ((nearest.value.toFloat() - min) / spread))
+                    val px = ((nearest.timeMs - startMs).toFloat() / range).coerceIn(0f, 1f) * size.width
+                    drawCircle(metric.tone.copy(alpha = .3f), radius = 10.dp.toPx(), center = Offset(px, y))
+                    drawCircle(Color.White, radius = 4.dp.toPx(), center = Offset(px, y))
+                }
+            }
         }
         if (!compact) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
