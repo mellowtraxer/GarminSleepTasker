@@ -2285,6 +2285,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         de.ricci.garminsleep.ui.components.StudioGlassTuning.neon=p.getInt("neon_strength",35)
         de.ricci.garminsleep.ui.components.StudioGlassTuning.glow=p.getInt("glow_strength",35)
         de.ricci.garminsleep.ui.components.StudioGlassTuning.selectedNeon=p.getInt("neon_palette",0)
+        de.ricci.garminsleep.ui.components.StudioGlassTuning.secondaryNeon=p.getInt("neon_palette_secondary",0)
         pageTitle.text="Design Studio";pageSubtitle.text="Gestalte deinen persönlichen Schlafkosmos"
         actionsTitle.visibility=View.GONE;actionsBox.visibility=View.GONE;sleepCard.removeAllViews()
         val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
@@ -2421,7 +2422,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 de.ricci.garminsleep.ui.components.AtelierColorPalette(
                     selectedColor = p.getInt("neon_palette",0),
                     onSelect = { primary, secondary ->
-                        p.edit().putInt("neon_palette",primary).putBoolean("custom_enabled",true).apply()
+                        p.edit().putInt("neon_palette",primary).putInt("neon_palette_secondary",secondary).putBoolean("custom_enabled",true).apply()
                     }
                 )
             }
