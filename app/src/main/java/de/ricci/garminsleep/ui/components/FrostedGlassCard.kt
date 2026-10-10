@@ -40,6 +40,13 @@ object StudioGlassTuning {
     var neon by mutableIntStateOf(35)
     var glow by mutableIntStateOf(35)
     var selectedNeon by mutableIntStateOf(0)
+    var secondaryNeon by mutableIntStateOf(0)
+    fun palette(default: List<Color> = listOf(Color(0xFF00F0FF), Color(0xFFAE48FF), Color(0xFFFF00B8))): List<Color> {
+        val primary = selectedNeon
+        if (primary == 0) return default
+        val secondary = secondaryNeon.takeIf { it != 0 } ?: primary
+        return listOf(Color(primary), Color(secondary), Color(primary))
+    }
 }
 
 @Composable
@@ -74,7 +81,7 @@ fun FrostedGlassCard(
     val sharpEdgeOpacity = (1f - blurPower).coerceIn(0f, 1f)
     val haloIntensity = (glowPower * (.35f + .65f * blurPower) + neonPower * blurPower * .35f).coerceIn(0f, 1f)
     val selected = StudioGlassTuning.selectedNeon
-    val activeColors = if (selected == 0) glowColors else listOf(Color(selected), Color(selected), Color(selected))
+    val activeColors = StudioGlassTuning.palette(glowColors)
     val shape = RoundedCornerShape(cornerRadius)
     val glowBrush = Brush.linearGradient(glowColors)
 
