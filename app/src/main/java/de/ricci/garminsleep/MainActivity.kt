@@ -2283,6 +2283,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         de.ricci.garminsleep.ui.components.StudioGlassTuning.blur=p.getInt("blur_strength",20)
         de.ricci.garminsleep.ui.components.StudioGlassTuning.glass=p.getInt("glass_strength",34)
         de.ricci.garminsleep.ui.components.StudioGlassTuning.neon=p.getInt("neon_strength",35)
+        de.ricci.garminsleep.ui.components.StudioGlassTuning.glow=p.getInt("glow_strength",35)
         pageTitle.text="Design Studio";pageSubtitle.text="Gestalte deinen persönlichen Schlafkosmos"
         actionsTitle.visibility=View.GONE;actionsBox.visibility=View.GONE;sleepCard.removeAllViews()
         val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
@@ -2407,6 +2408,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     blur = p.getInt("blur_strength",20),
                     glass = p.getInt("glass_strength",34),
                     neon = p.getInt("neon_strength",35),
+                    glow = p.getInt("glow_strength",35),
                     onValueChanged = { key, value ->
                         p.edit().putInt(key,value).putBoolean("custom_enabled",true).apply()
                     }
