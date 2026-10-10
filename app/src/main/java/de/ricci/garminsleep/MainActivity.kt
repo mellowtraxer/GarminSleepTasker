@@ -2421,6 +2421,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 de.ricci.garminsleep.ui.components.AtelierWallpaperGallery(
                     selected = de.ricci.garminsleep.ui.components.sleepSyncLiveStyles
                         .indexOfFirst { "live_" + it.id == activeWallpaper }.coerceAtLeast(0),
+                    developerUnlocked = WallpaperPremiumGate.isDeveloperPreview(this@MainActivity),
                     onPremium = {
                         startActivity(android.content.Intent(this@MainActivity, WallpaperPremiumActivity::class.java))
                     },
