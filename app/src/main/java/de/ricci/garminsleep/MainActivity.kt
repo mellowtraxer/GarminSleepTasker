@@ -2941,13 +2941,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     de.ricci.garminsleep.ui.components.HealthGraphMetric("Atmung","🫁",n(s.avgResp,"/min"),"/min",s.respirationSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFF50E1B8)),
                     de.ricci.garminsleep.ui.components.HealthGraphMetric("HRV","💓",n(s.avgHrv,"ms"),"ms",s.hrvSeries.map { de.ricci.garminsleep.ui.components.HealthGraphPoint(it.timeMs,it.value) },androidx.compose.ui.graphics.Color(0xFFD560FF))
                 )
-                var selectedTime by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) }
+                val selectedTime = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) }
                 androidx.compose.foundation.layout.Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)) {
                     metrics.forEach { metric ->
                         de.ricci.garminsleep.ui.components.HealthGraphCard(
                             metric,s.startMs,s.endMs,
-                            selectedTimeMs=selectedTime,
-                            onTimeSelected={ selectedTime=it }
+                            selectedTimeMs=selectedTime.value,
+                            onTimeSelected={ selectedTime.value=it }
                         )
                     }
                 }
