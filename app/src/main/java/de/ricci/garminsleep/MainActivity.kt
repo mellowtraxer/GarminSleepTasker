@@ -2627,6 +2627,37 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         ))
     }
 
+    // Native Android equivalent of FrostedGlassCard: translucent glass + multicolor neon rim.
+    private fun frostedGlassCardBackground(radiusDp:Int=24):android.graphics.drawable.Drawable =
+        object:android.graphics.drawable.Drawable() {
+            private val density=resources.displayMetrics.density
+            private val brush=Paint(Paint.ANTI_ALIAS_FLAG)
+            override fun draw(canvas:Canvas) {
+                val bounds=getBounds()
+                val w=bounds.width().toFloat();val h=bounds.height().toFloat()
+                if(w<=0f||h<=0f)return
+                val r=radiusDp*density
+                val rect=android.graphics.RectF(bounds.left.toFloat(),bounds.top.toFloat(),bounds.right.toFloat(),bounds.bottom.toFloat())
+                brush.style=Paint.Style.FILL
+                brush.shader=android.graphics.LinearGradient(0f,rect.top,0f,rect.bottom,
+                    intArrayOf(0x22FFFFFF,0x0CFFFFFF),null,Shader.TileMode.CLAMP)
+                canvas.drawRoundRect(rect,r,r,brush)
+                brush.shader=null
+                val stroke=1.2f*density
+                brush.style=Paint.Style.STROKE;brush.strokeWidth=stroke
+                brush.shader=android.graphics.LinearGradient(rect.left,rect.top,rect.right,rect.bottom,
+                    intArrayOf(0xE600F0FF.toInt(),0xB3A855F7.toInt(),0x66EC4899,0x15FFFFFF),
+                    floatArrayOf(0f,.34f,.69f,1f),Shader.TileMode.CLAMP)
+                rect.inset(stroke*.5f,stroke*.5f)
+                canvas.drawRoundRect(rect,r,r,brush)
+                brush.shader=null;brush.style=Paint.Style.FILL
+            }
+            override fun setAlpha(alpha:Int){brush.alpha=alpha;invalidateSelf()}
+            override fun setColorFilter(filter:android.graphics.ColorFilter?){brush.colorFilter=filter;invalidateSelf()}
+            @Deprecated("Deprecated in Java")
+            override fun getOpacity():Int=android.graphics.PixelFormat.TRANSLUCENT
+        }
+
     private fun showDesignStudio() {
         val d=resources.displayMetrics.density; fun dp(v:Int)=(v*d).toInt()
         val p=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
@@ -2839,9 +2870,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             Triple("Dynamisch",Color.rgb(140,82,250),Color.rgb(27,217,243))
         )
 
-        fun glassPanel(tone:Int)=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xF0081232.toInt(),0xEC151038.toInt(),0xF0091B38.toInt())).apply{
-            cornerRadius=dp(21).toFloat();setStroke(dp(1).coerceAtLeast(1),tone)
-        }
+        fun glassPanel(tone:Int):android.graphics.drawable.Drawable=frostedGlassCardBackground(24)
         fun studioLabel(title:String)=TextView(this).apply{text=title;textSize=14f;setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)}
         fun studioSmall(title:String)=TextView(this).apply{text=title;textSize=10f;setTextColor(0xFFCBD8F8.toInt())}
         val neonCyan=0xFF38DFFF.toInt()
