@@ -2335,6 +2335,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         activeWallpaper == "custom" -> "Dein Wallpaper"
                         else -> "SleepSync Cosmos"
                     },
+                    liveAurora = p.getBoolean("wallpaper_enabled",true) && activeWallpaper == "aurora",
                     imagePath = if(p.getBoolean("wallpaper_enabled",true) && wallpaperFile?.exists()==true)
                         wallpaperFile.absolutePath else null,
                     onChange = {
@@ -2396,32 +2397,6 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val neonCyan=0xFF38DFFF.toInt()
         val neonViolet=0xFFC45BFF.toInt()
         fun sectionHeading(name:String)=sleepCard.addView(studioLabel(name),LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(21),0,dp(10))})
-        sectionHeading("Wallpaper auswählen")
-        val gallery=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        val images=intArrayOf(R.drawable.cosmic_crescent,R.drawable.cosmic_planet,R.drawable.cosmic_crescent,R.drawable.cosmic_planet,R.drawable.cosmic_crescent,R.drawable.cosmic_planet)
-        for(i in 0..5){
-            val tile=android.widget.FrameLayout(this).apply{
-                background=glassPanel(if(i==0)neonCyan else 0xFF556DAD.toInt())
-                clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-                addView(android.widget.ImageView(this@MainActivity).apply{
-                    scaleType=android.widget.ImageView.ScaleType.CENTER_CROP;setImageResource(images[i])
-                    alpha=if(i==0)1f else .82f
-                },android.widget.FrameLayout.LayoutParams(-1,-1))
-                if(i==0)addView(TextView(this@MainActivity).apply{
-                    text="✓";textSize=18f;gravity=android.view.Gravity.CENTER
-                    setTextColor(Color.WHITE);background=GradientDrawable().apply{shape=GradientDrawable.OVAL;setColor(neonViolet)}
-                },android.widget.FrameLayout.LayoutParams(dp(27),dp(27),android.view.Gravity.TOP or android.view.Gravity.RIGHT).apply{setMargins(0,dp(5),dp(5),0)})
-                setOnClickListener{
-                    when(i){
-                        0->if(File(filesDir,"sleepsync_dreamscape.png").exists()){p.edit().putString("wallpaper_source","dreamscape").putBoolean("wallpaper_enabled",true).apply();showDesignStudio()}else generateDreamScape()
-                        1,3,5->{p.edit().putString("wallpaper_source","builtin").putBoolean("wallpaper_enabled",true).apply();showDesignStudio()}
-                        2,4->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    }
-                }
-            }
-            gallery.addView(tile,LinearLayout.LayoutParams(dp(105),dp(92)).apply{setMargins(dp(2),0,dp(9),0)})
-        }
-        sleepCard.addView(android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(gallery)})
         sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
             setContent {
                 de.ricci.garminsleep.ui.components.DesignStudioEffects(
