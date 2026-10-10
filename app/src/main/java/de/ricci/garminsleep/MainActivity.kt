@@ -1007,6 +1007,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val savedTheme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
         val systemDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val useLight=savedTheme=="light" || (savedTheme=="system" && !systemDark)
+        val wallpaperPrefs=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
+        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperSource=
+            wallpaperPrefs.getString("wallpaper_source","aurora") ?: "aurora"
+        de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperEnabled=
+            wallpaperPrefs.getBoolean("wallpaper_enabled",true)
         // Compose edition: replace the entire old bitmap/Dreamscape wallpaper stack
         // with the actual Jetpack Compose aurora. Classic branch remains unchanged.
         val blurTarget = eightbitlab.com.blurview.BlurTarget(this).apply {
@@ -2314,7 +2319,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(132,220,255))
             setPadding(dp(5),dp(7),0,dp(16))
         })
-        val activeWallpaper=p.getString("wallpaper_source","builtin") ?: "builtin"
+        val activeWallpaper=p.getString("wallpaper_source","aurora") ?: "aurora"
         val wallpaperFile=when(activeWallpaper) {
             "dreamscape" -> File(filesDir,"sleepsync_dreamscape.png")
             "custom" -> File(filesDir,"sleepsync_custom_wallpaper")
@@ -2325,6 +2330,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 de.ricci.garminsleep.ui.components.AtelierWallpaperPreview(
                     title = when {
                         !p.getBoolean("wallpaper_enabled",true) -> "OLED Black"
+                        activeWallpaper == "aurora" -> "Live Aurora ✦"
                         activeWallpaper == "dreamscape" -> "DreamScape"
                         activeWallpaper == "custom" -> "Dein Wallpaper"
                         else -> "SleepSync Cosmos"
@@ -2346,18 +2352,23 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
             setContent {
                 de.ricci.garminsleep.ui.components.AtelierWallpaperGallery(
-                    selected = if (!p.getBoolean("wallpaper_enabled",true)) 3 else when(activeWallpaper) {
-                        "dreamscape" -> 0; "custom" -> 2; else -> 1
+                    selected = if (!p.getBoolean("wallpaper_enabled",true)) 4 else when(activeWallpaper) {
+                        "aurora" -> 0; "builtin" -> 1; "dreamscape" -> 2; "custom" -> 3; else -> 0
                     },
                     onSelect = { index ->
+                        fun choose(source:String, enabled:Boolean=true) {
+                            p.edit().putBoolean("wallpaper_enabled",enabled).putString("wallpaper_source",source)
+                                .putBoolean("custom_enabled",true).apply()
+                            de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperSource=source
+                            de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperEnabled=enabled
+                            showDesignStudio()
+                        }
                         when(index) {
-                            0 -> if(File(filesDir,"sleepsync_dreamscape.png").exists()) {
-                                p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","dreamscape").putBoolean("custom_enabled",true).apply()
-                                showDesignStudio()
-                            } else generateDreamScape()
-                            1 -> { p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();showDesignStudio() }
-                            2 -> photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            3 -> { p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();showDesignStudio() }
+                            0 -> choose("aurora")
+                            1 -> choose("builtin")
+                            2 -> if(File(filesDir,"sleepsync_dreamscape.png").exists()) choose("dreamscape") else generateDreamScape()
+                            3 -> photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            4 -> choose("oled",false)
                         }
                     }
                 )
