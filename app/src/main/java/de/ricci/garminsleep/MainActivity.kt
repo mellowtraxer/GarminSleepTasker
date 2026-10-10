@@ -3211,27 +3211,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         })
         collapseDashboardSection(healthSectionStart,"GESUNDHEITSWERTE",
             "Puls ${num(s.avgHr,"bpm")}  ·  SpO₂ ${num(s.avgSpo2,"%")}  ·  Atmung & HRV",accent2)
-        sleepCard.addView(LinearLayout(this).apply {
-            orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(16),0,dp(7))
-            addView(TextView(this@MainActivity).apply { text="NACHT-INSIGHT"; textSize=11f; letterSpacing=.14f; setTextColor(stageRem); setTypeface(typeface,Typeface.BOLD); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-            addView(TextView(this@MainActivity).apply {
-                text=nightTitle
-                tag="sleepsync_colored_pill"; textSize=9f; letterSpacing=.08f; setTypeface(typeface,Typeface.BOLD); setTextColor(if(nightRating>=80) Color.rgb(5,69,39) else if(nightRating>=60) Color.rgb(90,62,0) else Color.rgb(105,16,26)); setPadding(dp(10),dp(5),dp(10),dp(5))
-                background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); val pillColor=if(nightRating>=80) Color.rgb(111,245,153) else if(nightRating>=60) Color.rgb(255,219,91) else Color.rgb(255,125,132); setColor(pillColor); setStroke(dp(1),if(nightRating>=80) Color.rgb(31,172,91) else if(nightRating>=60) Color.rgb(209,154,20) else Color.rgb(216,54,70)) }
-            })
-        })
         sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
             setContent {
-                de.ricci.garminsleep.ui.components.FrostedGlassCard {
-                    androidx.compose.material3.Text(
-                        text = nightExplanation + "\n" + comparison,
-                        color = androidx.compose.ui.graphics.Color.White,
-                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
-                    )
-                }
+                de.ricci.garminsleep.ui.components.LivingSleepMoon(
+                    rating = nightRating,
+                    title = nightTitle,
+                    explanation = nightExplanation,
+                    comparison = comparison
+                )
             }
         }, LinearLayout.LayoutParams(-1,-2).apply {
-            setMargins(dp(4),dp(10),dp(4),0)
+            setMargins(dp(4),dp(16),dp(4),0)
         })
         val dnaSectionStart=sleepCard.childCount
         // Sleep DNA 2.0: a touch-driven fingerprint, entirely derived from measured intervals.
