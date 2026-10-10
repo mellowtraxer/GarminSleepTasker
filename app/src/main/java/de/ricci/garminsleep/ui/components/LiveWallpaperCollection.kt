@@ -17,6 +17,11 @@ import kotlin.math.*
 object WallpaperNeonTuning {
     var primary by mutableIntStateOf(0)
     var secondary by mutableIntStateOf(0)
+    var intensity by mutableIntStateOf(72)
+    var animation by mutableIntStateOf(55)
+    var depth by mutableIntStateOf(78)
+    var particles by mutableIntStateOf(48)
+    var rays by mutableIntStateOf(62)
     fun palette(): List<Color> {
         if (primary == 0) return listOf(Color(0xFF00F0FF), Color(0xFFAE48FF), Color(0xFFFF00B8))
         val second = secondary.takeIf { it != 0 } ?: primary
@@ -46,7 +51,7 @@ fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "LiveWallpaper")
     val phase by transition.animateFloat(
         0f, (2f * PI).toFloat(),
-        infiniteRepeatable(tween(36000, easing = LinearEasing)), label = "SeamlessCycle"
+        infiniteRepeatable(tween((60000 - WallpaperNeonTuning.animation * 480).coerceAtLeast(9000), easing = LinearEasing)), label = "SeamlessCycle"
     )
     val palette = WallpaperNeonTuning.palette()
     val c0 = palette[0]
@@ -58,6 +63,10 @@ fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
         if (w <= 0f || h <= 0f) return@Canvas
         val motion = phase
         val scale = min(w, h)
+        val intensity = WallpaperNeonTuning.intensity / 100f
+        val depth = WallpaperNeonTuning.depth / 100f
+        val particles = WallpaperNeonTuning.particles / 100f
+        val rays = WallpaperNeonTuning.rays / 100f
         fun aura(x: Float, y: Float, radius: Float, color: Color, alpha: Float) {
             val center = Offset(x, y)
             drawCircle(
@@ -83,6 +92,23 @@ fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
                 cubicTo(x + amplitude, h * .24f, x - amplitude, h * .65f, x + width, h * 1.12f)
             }
             drawPath(edge, tint.copy(alpha = alpha * .65f), style = Stroke(2.2f, cap = StrokeCap.Round))
+        }
+        val vanish = Offset(w * (.5f + .10f * sin(motion)), h * (.46f + .035f * cos(motion)))
+        aura(vanish.x, vanish.y, w * (1.15f + depth * .65f), c1, .09f * intensity)
+        if (rays > .01f) {
+            repeat(7) { i ->
+                val angle = (i - 3) * .26f + sin(motion + i) * .035f
+                val endpoint = Offset(vanish.x + sin(angle) * h * 1.35f,
+                    vanish.y + cos(angle) * h * 1.35f)
+                val rayPath = Path().apply {
+                    moveTo(vanish.x, vanish.y)
+                    lineTo(endpoint.x - w * .045f, endpoint.y)
+                    lineTo(endpoint.x + w * .045f, endpoint.y)
+                    close()
+                }
+                drawPath(rayPath, Brush.verticalGradient(
+                    listOf(c0.copy(alpha = .10f * rays * intensity), Color.Transparent)))
+            }
         }
         when (style) {
             "aurora_dream" -> {
@@ -205,5 +231,20 @@ fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
                 }
             }
         }
+        if (particles > .01f) {
+            repeat((particles * 85).toInt()) { i ->
+                val layer = (i % 4 + 1) / 4f
+                val t = motion / (2f * PI).toFloat()
+                val x = w * ((i * .6180339f + t * layer * .16f) % 1f)
+                val y = h * ((i * .41421356f + sin(motion + i) * .013f * layer + 1f) % 1f)
+                val radius = scale * (.0015f + .005f * layer * depth)
+                val tint = listOf(c0,c1,c2)[i % 3]
+                drawCircle(tint.copy(alpha = .22f * intensity * layer), radius * 3.5f, Offset(x,y))
+                drawCircle(tint.copy(alpha = .58f * intensity * layer), radius, Offset(x,y))
+            }
+        }
+        drawRect(Brush.radialGradient(
+            listOf(Color.Transparent, Color.Black.copy(alpha = .36f * depth)),
+            center = Offset(w * .5f, h * .48f), radius = max(w,h) * .78f))
     }
 }
