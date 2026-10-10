@@ -16,6 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.Color
 import kotlin.math.PI
 import kotlin.math.sin
@@ -89,21 +92,46 @@ fun AnimatedAuroraBackground(previewAurora: Boolean = false, content: @Composabl
             val deep = DreamscapeMotion.deepShare
             val rem = DreamscapeMotion.remShare
             val energy = DreamscapeMotion.healthEnergy
-            val cyan = Offset(w * (.30f + .17f * sin(phase)), h * (.22f + .05f * sin(phase + 1f)) - scroll * .035f)
-            val violet = Offset(w * (.66f + .16f * sin(phase + 2f)), h * (.53f + .06f * sin(phase + 2.5f)) - scroll * .075f)
-            val pink = Offset(w * (.42f + .18f * sin(phase + 4f)), h * (.82f + .05f * sin(phase + 3f)) - scroll * .12f)
-            drawCircle(
-                Brush.radialGradient(listOf(Color(0xFF00F0FF).copy(alpha = .12f + light * .22f), Color.Transparent), center = cyan, radius = w * 1.05f),
-                radius = w * 1.05f, center = cyan
-            )
-            drawCircle(
-                Brush.radialGradient(listOf(Color(0xFFA855F7).copy(alpha = .15f + deep * .32f), Color.Transparent), center = violet, radius = w),
-                radius = w, center = violet
-            )
-            drawCircle(
-                Brush.radialGradient(listOf(Color(0xFFFF007F).copy(alpha = .10f + rem * .28f), Color.Transparent), center = pink, radius = w * .95f),
-                radius = w * .95f, center = pink
-            )
+            // Silk ribbons: transparent Bezier surfaces with luminous edges.
+            // All oscillations use integer harmonics of the same 2π phase, so
+            // the loop is mathematically seamless.
+            val colors = listOf(Color(0xFF00F0FF), Color(0xFFB452FF), Color(0xFFFF1AC6))
+            val shares = listOf(light, deep, rem)
+            for (layer in 0..2) {
+                val t = layer.toFloat()
+                val parallax = scroll * (.025f + t * .018f)
+                val shift = sin(phase + t * 2.0944f) * w * .065f
+                val x0 = w * (.13f + t * .11f) + shift
+                val x1 = w * (.85f - t * .09f) - shift
+                val y0 = h * (.13f + t * .21f) - parallax
+                val y1 = h * (.82f - t * .13f) - parallax
+                val thickness = w * (.13f + .025f * sin(phase * 2f + t))
+                val ribbon = Path().apply {
+                    moveTo(x0, y0)
+                    cubicTo(w * (.90f - t * .09f), h * (.13f + t * .12f) - parallax,
+                        w * (.03f + t * .11f), h * (.59f + t * .07f) - parallax, x1, y1)
+                    cubicTo(w * (.03f + t * .11f) + thickness, h * (.59f + t * .07f) - parallax,
+                        w * (.90f - t * .09f) + thickness, h * (.13f + t * .12f) - parallax,
+                        x0 + thickness, y0)
+                    close()
+                }
+                val tint = colors[layer]
+                drawPath(
+                    ribbon,
+                    brush = Brush.linearGradient(
+                        listOf(tint.copy(alpha = .04f), tint.copy(alpha = .28f + shares[layer] * .24f),
+                            colors[(layer + 1) % 3].copy(alpha = .15f), Color.Transparent),
+                        start = Offset(x0, y0), end = Offset(x1, y1)
+                    )
+                )
+                val edge = Path().apply {
+                    moveTo(x0, y0)
+                    cubicTo(w * (.90f - t * .09f), h * (.13f + t * .12f) - parallax,
+                        w * (.03f + t * .11f), h * (.59f + t * .07f) - parallax, x1, y1)
+                }
+                drawPath(edge, tint.copy(alpha = .11f), style = Stroke(width = 13f, cap = StrokeCap.Round))
+                drawPath(edge, tint.copy(alpha = .65f), style = Stroke(width = 2.4f, cap = StrokeCap.Round))
+            }
             if (ripple > .001f) {
                 val center = Offset(w * .5f, h * .52f)
                 val radius = w * (.15f + .9f * ripple)
