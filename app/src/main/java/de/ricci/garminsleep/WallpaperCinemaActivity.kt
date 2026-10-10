@@ -36,10 +36,11 @@ class WallpaperCinemaActivity : ComponentActivity() {
         WallpaperNeonTuning.rays = prefs.getInt("wallpaper_cinema_rays",62)
         val style = prefs.getString("wallpaper_source","live_aurora_dream")
             ?.removePrefix("live_") ?: "aurora_dream"
+        val allowedStyle = WallpaperPremiumGate.safeStyle(this, style)
         setContent {
             var controls by remember { mutableStateOf(true) }
             Box(Modifier.fillMaxSize()) {
-                SleepSyncLiveWallpaper(style,Modifier.fillMaxSize())
+                SleepSyncLiveWallpaper(allowedStyle,Modifier.fillMaxSize())
                 Box(Modifier.fillMaxSize().clickable { controls = !controls })
                 if (controls) {
                     Column(Modifier.align(Alignment.BottomCenter).padding(24.dp),
