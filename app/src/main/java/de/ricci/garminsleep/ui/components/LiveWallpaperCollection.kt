@@ -13,6 +13,17 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import kotlin.math.*
 
+/** Independent wallpaper palette. Card neon colors never change when these values change. */
+object WallpaperNeonTuning {
+    var primary by mutableIntStateOf(0)
+    var secondary by mutableIntStateOf(0)
+    fun palette(): List<Color> {
+        if (primary == 0) return listOf(Color(0xFF00F0FF), Color(0xFFAE48FF), Color(0xFFFF00B8))
+        val second = secondary.takeIf { it != 0 } ?: primary
+        return listOf(Color(primary), Color(second), Color(primary))
+    }
+}
+
 /** Procedural OLED wallpapers. All motions use a common seamless 2π phase. */
 data class LiveWallpaperStyle(val id: String, val title: String, val subtitle: String)
 val sleepSyncLiveStyles = listOf(
@@ -37,7 +48,7 @@ fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
         0f, (2f * PI).toFloat(),
         infiniteRepeatable(tween(36000, easing = LinearEasing)), label = "SeamlessCycle"
     )
-    val palette = StudioGlassTuning.palette()
+    val palette = WallpaperNeonTuning.palette()
     val c0 = palette[0]
     val c1 = palette[1]
     val c2 = palette[2]
