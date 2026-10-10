@@ -988,118 +988,17 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val savedTheme=getSharedPreferences("sleepsync_ui",MODE_PRIVATE).getString("theme","dark") ?: "dark"
         val systemDark=(resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES
         val useLight=savedTheme=="light" || (savedTheme=="system" && !systemDark)
-        val nightAtmosphere = if(useLight) LayerDrawable(arrayOf(
-            GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(247,250,255),Color.rgb(232,244,255),Color.rgb(242,236,255),Color.rgb(226,247,255))),
-            GradientDrawable(GradientDrawable.Orientation.TR_BL,intArrayOf(Color.argb(48,255,184,218),Color.TRANSPARENT,Color.argb(45,86,214,255))),
-            GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(Color.argb(35,56,224,214),Color.TRANSPARENT,Color.argb(34,176,105,255)))
-        )) else LayerDrawable(arrayOf(
-            GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(20,10,58), Color.rgb(8,30,68), Color.rgb(5,6,14), Color.rgb(2,3,9))),
-            GradientDrawable(GradientDrawable.Orientation.TR_BL, intArrayOf(Color.argb(105,121,64,255), Color.TRANSPARENT, Color.argb(70,0,214,255)))
-        ))
+        // Compose edition: replace the entire old bitmap/Dreamscape wallpaper stack
+        // with the actual Jetpack Compose aurora. Classic branch remains unchanged.
         val blurTarget = eightbitlab.com.blurview.BlurTarget(this).apply {
-            val designPrefs=getSharedPreferences("sleepsync_design",MODE_PRIVATE)
-            val wallpaperOn=designPrefs.getBoolean("wallpaper_enabled",true)
-            if(wallpaperOn) addView(android.widget.ImageView(this@MainActivity).apply {
-                scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
-                adjustViewBounds=false
-                val custom=File(filesDir,"sleepsync_custom_wallpaper")
-                if(designPrefs.getString("wallpaper_source","builtin")=="dreamscape" && File(filesDir,"sleepsync_dreamscape.png").exists()) setImageURI(Uri.fromFile(File(filesDir,"sleepsync_dreamscape.png")))
-                else if(designPrefs.getString("wallpaper_source","builtin")=="custom" && custom.exists()) setImageURI(Uri.fromFile(custom))
-                else setImageResource(if(useLight) R.drawable.sleepsync_day else R.drawable.sleepsync_night)
-                alpha=1f
-            }, android.widget.FrameLayout.LayoutParams(-1,-1))
-            if(wallpaperOn && designPrefs.getString("wallpaper_source","builtin")=="dreamscape") {
-                addView(object:View(this@MainActivity) {
-                    private val paint=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-                    private var progress=0f
-                    private val animator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
-                        duration=36000L
-                        repeatCount=android.animation.ValueAnimator.INFINITE
-                        repeatMode=android.animation.ValueAnimator.REVERSE
-                        interpolator=android.view.animation.LinearInterpolator()
-                        addUpdateListener { progress=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate() }
-                    }
-                    override fun onAttachedToWindow() {
-                        super.onAttachedToWindow()
-                        if(android.provider.Settings.Global.getFloat(contentResolver,
-                            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,1f)>0f) animator.start()
-                    }
-                    override fun onDetachedFromWindow() { animator.cancel();super.onDetachedFromWindow() }
-                    override fun onDraw(canvas:android.graphics.Canvas) {
-                        super.onDraw(canvas)
-                        val w=width.toFloat();val h=height.toFloat()
-                        if(w<=0f||h<=0f)return
-                        val t=progress*2f*Math.PI.toFloat()
-                        val breathe=.5f+.5f*kotlin.math.sin(t)
-                        val pulseDistance=1f-kotlin.math.cos(t*2f)
-                        val pulse=kotlin.math.exp(-pulseDistance*7f)
-                        val colors=intArrayOf(Color.rgb(255,62,134),Color.rgb(165,255,53),
-                            Color.rgb(48,233,211),Color.rgb(208,75,242))
-                        // Layered translucent silk ribbons with parallax, soft halo and a bright fold.
-                        val density=resources.displayMetrics.density
-                        for(layer in 0..3) {
-                            val base=h*(.21f+layer*.18f)
-                            val amplitude=h*(.035f+layer*.008f)*(1f+.23f*breathe)
-                            val tone=colors[layer]
-                            fun wave(u:Float,depth:Float):Float {
-                                return kotlin.math.sin(u*12.0+layer*1.25+t*(1f+depth.toFloat())).toFloat()+
-                                    .36f*kotlin.math.sin(u*28.0-layer*.7-t*2f+depth).toFloat()
-                            }
-                            // Back-to-front translucent surfaces create the illusion of twisting fabric.
-                            for(depth in 0..3) {
-                                val thickness=density*(14f+depth*7f)
-                                val ribbon=android.graphics.Path()
-                                for(step in 0..100) {
-                                    val u=step/100f
-                                    val x=w*u
-                                    val y=base+amplitude*wave(u,depth*.38f)+
-                                        kotlin.math.sin(u*9.0+t+depth).toFloat()*density*depth*5f
-                                    if(step==0)ribbon.moveTo(x,y) else ribbon.lineTo(x,y)
-                                }
-                                paint.shader=null
-                                paint.style=android.graphics.Paint.Style.STROKE
-                                paint.strokeCap=android.graphics.Paint.Cap.ROUND
-                                paint.strokeJoin=android.graphics.Paint.Join.ROUND
-                                paint.strokeWidth=thickness
-                                paint.color=Color.argb((10+depth*5+7*breathe).toInt(),
-                                    Color.red(tone),Color.green(tone),Color.blue(tone))
-                                canvas.drawPath(ribbon,paint)
-                            }
-                            val highlight=android.graphics.Path()
-                            for(step in 0..110) {
-                                val u=step/110f
-                                val y=base+amplitude*wave(u,0f)
-                                if(step==0)highlight.moveTo(0f,y) else highlight.lineTo(w*u,y)
-                            }
-                            paint.style=android.graphics.Paint.Style.STROKE
-                            paint.strokeCap=android.graphics.Paint.Cap.ROUND
-                            paint.strokeJoin=android.graphics.Paint.Join.ROUND
-                            paint.shader=null
-                            paint.strokeWidth=density*5f
-                            paint.color=Color.argb((46+20*breathe+8*pulse).toInt(),
-                                Color.red(tone),Color.green(tone),Color.blue(tone))
-                            canvas.drawPath(highlight,paint)
-                            paint.strokeWidth=density*1.35f
-                            paint.color=Color.argb((125+40*breathe).toInt(),255,235,255)
-                            canvas.drawPath(highlight,paint)
-                            paint.style=android.graphics.Paint.Style.FILL
-                            for(dot in 0..7) {
-                                val u=(dot/8f+progress+layer*.13f)%1f
-                                val y=base+amplitude*wave(u,0f)
-                                paint.color=Color.argb((55+55*breathe).toInt(),
-                                    Color.red(tone),Color.green(tone),Color.blue(tone))
-                                canvas.drawCircle(w*u,y,density*(.9f+dot%3*.45f),paint)
-                            }
-                        }
-                    }
-                },android.widget.FrameLayout.LayoutParams(-1,-1))
-            }
-            if(!wallpaperOn) addView(View(this@MainActivity).apply {
-                background=ColorDrawable(if(useLight) Color.rgb(38,45,64) else Color.rgb(5,6,14))
+            addView(androidx.compose.ui.platform.ComposeView(this@MainActivity).apply {
+                setViewCompositionStrategy(
+                    androidx.compose.ui.platform.ViewCompositionStrategy.DisposeOnDetachedFromWindow
+                )
+                setContent {
+                    de.ricci.garminsleep.ui.components.AnimatedAuroraBackground { }
+                }
             },android.widget.FrameLayout.LayoutParams(-1,-1))
-            addView(View(this@MainActivity).apply {
-                background=if(useLight) GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(34,255,255,255),Color.argb(12,240,247,255),Color.argb(24,225,245,255))) else GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.TRANSPARENT,Color.argb(35,2,5,15),Color.argb(150,2,4,12)))
-            }, android.widget.FrameLayout.LayoutParams(-1,-1))
         }
         settingsBlurTarget=blurTarget
         // Scroll only the UI; keep the wallpaper in one fixed viewport layer.
