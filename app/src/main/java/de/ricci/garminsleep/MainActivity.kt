@@ -3291,161 +3291,27 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setTextColor(if(light) Color.WHITE else Color.rgb(194,204,235))
             setPadding(dp(8),dp(8),dp(8),dp(12))
         }
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat()
-            cardElevation=if(light) dp(10).toFloat() else dp(2).toFloat()
-            strokeWidth=dp(1)
-            strokeColor=Color.argb(180,147,105,235)
-            setCardBackgroundColor(Color.TRANSPARENT)
-            if(light) {
-                background=GradientDrawable().apply {
-                    cornerRadius=dp(24).toFloat()
-                    setColor(Color.argb(designGlassAlpha(),72,88,112))
-                    setStroke(dp(1),Color.argb(180,147,105,235))
-                }
-                addBlurLayer(this,24,::dp)
-            } else setCardBackgroundColor(Color.argb(220,22,25,56))
-            addView(object:View(this@MainActivity) {
-                private val ink=android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-                private var dnaBreath=0f
-                private val dnaAnimator=android.animation.ValueAnimator.ofFloat(0f,1f).apply {
-                    duration=5200L
-                    repeatCount=android.animation.ValueAnimator.INFINITE
-                    interpolator=android.view.animation.LinearInterpolator()
-                    addUpdateListener { dnaBreath=it.animatedValue as Float;if(HistoryScrollGate.shouldRender())invalidate() }
-                }
-                override fun onAttachedToWindow() {
-                    super.onAttachedToWindow()
-                    if(android.animation.ValueAnimator.areAnimatorsEnabled()) dnaAnimator.start()
-                }
-                override fun onDetachedFromWindow() {
-                    dnaAnimator.cancel()
-                    super.onDetachedFromWindow()
-                }
-                private var focusedTime:Long?=null
-                private val palette=mapOf("leicht" to stageLight,"tief" to stageDeep,"rem" to stageRem,"wach" to stageAwake)
-                private val span=(s.endMs-s.startMs).coerceAtLeast(1L).toDouble()
-                private val clock=java.time.format.DateTimeFormatter.ofPattern("HH:mm")
-                    .withZone(java.time.ZoneId.systemDefault())
-                private fun angle(t:Long)=(((t-s.startMs)/span)*360.0).toFloat().coerceIn(0f,360f)
-                init {
-                    setLayerType(View.LAYER_TYPE_SOFTWARE,null)
-                    isClickable=true; isFocusable=true
-                    contentDescription="Interaktive Sleep DNA. Ring berühren, um Schlafphase und Uhrzeit zu erkunden."
-                }
-                override fun onDraw(canvas:android.graphics.Canvas) {
-                    super.onDraw(canvas)
-                    val w=width.toFloat();val h=height.toFloat()
-                    if(w<=0f||h<=0f)return
-                    val cx=w/2f;val cy=h/2f
-                    val breathWave=.5f+.5f*kotlin.math.sin((dnaBreath*2f*Math.PI).toFloat())
-                    val outer=kotlin.math.min(w,h)*.36f
-                    val inner=outer-dp(37)
-                    val track=android.graphics.RectF(cx-outer,cy-outer,cx+outer,cy+outer)
-                    val innerTrack=android.graphics.RectF(cx-inner,cy-inner,cx+inner,cy+inner)
-                    ink.shader=null
-                    ink.style=android.graphics.Paint.Style.STROKE
-                    ink.strokeCap=android.graphics.Paint.Cap.ROUND
-                    ink.strokeWidth=dp(2).toFloat()
-                    ink.color=Color.argb(85,174,178,229)
-                    canvas.drawCircle(cx,cy,outer,ink)
-                    ink.strokeWidth=dp(1).toFloat()
-                    ink.color=Color.argb(55,170,145,245)
-                    canvas.drawCircle(cx,cy,outer+dp(12),ink)
-
-                    if(dnaSegments.isNotEmpty()) {
-                        dnaSegments.forEach { phase ->
-                            val start=angle(phase.startMs);val sweep=angle(phase.endMs)-start
-                            if(sweep<=0f)return@forEach
-                            val tone=palette[phase.stageLabel.trim().lowercase()]?:Color.rgb(122,134,161)
-                            ink.color=tone
-                            ink.strokeWidth=(resources.displayMetrics.density*(5.5f+1.2f*breathWave))
-                            ink.setShadowLayer((resources.displayMetrics.density*(3f+10f*breathWave)),0f,0f,tone)
-                            canvas.drawArc(track,start-90f,sweep,false,ink)
-                            ink.clearShadowLayer()
-                            ink.strokeWidth=dp(1.2f.toInt()).toFloat()
-                            ink.color=Color.argb(90,Color.red(tone),Color.green(tone),Color.blue(tone))
-                            canvas.drawArc(track,start-90f,sweep,false,ink)
-                        }
-                        // Separate proportional ring: phase shares across the complete night.
-                        val phaseValues=listOf(s.lightMin to stageLight,s.deepMin to stageDeep,
-                            s.remMin to stageRem,s.awakeMin to stageAwake)
-                        val phaseSum=phaseValues.sumOf { it.first.toLong() }.coerceAtLeast(1L)
-                        var phaseStart=-90f
-                        val phaseRadius=inner
-                        val phaseTrack=android.graphics.RectF(cx-phaseRadius,cy-phaseRadius,
-                            cx+phaseRadius,cy+phaseRadius)
-                        phaseValues.forEach { (minutes,tone) ->
-                            val sweep=minutes.toFloat()/phaseSum*360f
-                            ink.color=tone
-                            ink.strokeWidth=(resources.displayMetrics.density*(3.7f+.7f*breathWave))
-                            ink.setShadowLayer((resources.displayMetrics.density*(2f+6f*breathWave)),0f,0f,tone)
-                            canvas.drawArc(phaseTrack,phaseStart,sweep,false,ink)
-                            ink.clearShadowLayer()
-                            phaseStart+=sweep
-                        }
-                    } else {
-                        val values=listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake)
-                        val total=values.sumOf { it.first.toLong() }.coerceAtLeast(1L)
-                        var start=-90f
-                        values.forEach { (minutes,tone) ->
-                            val sweep=minutes.toFloat()/total*360f
-                            ink.color=tone;ink.strokeWidth=(resources.displayMetrics.density*(5.5f+1.2f*breathWave))
-                            ink.setShadowLayer((resources.displayMetrics.density*(3f+10f*breathWave)),0f,0f,tone)
-                            canvas.drawArc(track,start,sweep,false,ink)
-                            ink.clearShadowLayer()
-                            start+=sweep
-                        }
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.SleepDnaHologram(
+                    startMs = s.startMs,
+                    endMs = s.endMs,
+                    durationMinutes = s.totalMin,
+                    phases = dnaSegments.map {
+                        de.ricci.garminsleep.ui.components.DnaPhase(it.startMs,it.endMs,it.stageLabel)
+                    },
+                    onExplore = { time ->
+                        val clock = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+                            .withZone(java.time.ZoneId.systemDefault())
+                        val phase = dnaSegments.lastOrNull { time >= it.startMs && time < it.endMs }
+                        dnaDetail.text = if (phase != null)
+                            "${clock.format(java.time.Instant.ofEpochMilli(time))}  ·  ${phase.stageLabel}  ·  ${((phase.endMs-phase.startMs)/60000L).coerceAtLeast(1L)} min"
+                        else "Keine Schlafphase für diese Uhrzeit"
                     }
-                    focusedTime?.let { time ->
-                        val rad=Math.toRadians((angle(time)-90f).toDouble())
-                        val px=cx+kotlin.math.cos(rad).toFloat()*outer
-                        val py=cy+kotlin.math.sin(rad).toFloat()*outer
-                        ink.style=android.graphics.Paint.Style.FILL
-                        ink.color=Color.WHITE
-                        canvas.drawCircle(px,py,dp(5).toFloat(),ink)
-                    }
-                    ink.style=android.graphics.Paint.Style.FILL
-                    ink.textAlign=android.graphics.Paint.Align.CENTER
-                    ink.typeface=Typeface.create(Typeface.DEFAULT,Typeface.BOLD)
-                    ink.color=Color.WHITE
-                    val phase=focusedTime?.let { time -> dnaSegments.lastOrNull { time>=it.startMs && time<it.endMs } }
-                    ink.textSize=dp(29).toFloat()
-                    val primary=if(focusedTime==null) String.format(java.util.Locale.GERMANY,"%d:%02d",s.totalMin/60,s.totalMin%60)
-                        else clock.format(java.time.Instant.ofEpochMilli(focusedTime!!))
-                    canvas.drawText(primary,cx,cy+dp(1),ink)
-                    ink.textSize=dp(10).toFloat()
-                    ink.color=Color.rgb(202,211,247)
-                    canvas.drawText(if(focusedTime==null) "SCHLAFDAUER" else phase?.stageLabel?.uppercase()?:"KEINE PHASENDATEN",
-                        cx,cy+dp(22),ink)
-                }
-                override fun onTouchEvent(event:android.view.MotionEvent):Boolean {
-                    when(event.actionMasked) {
-                        android.view.MotionEvent.ACTION_DOWN,android.view.MotionEvent.ACTION_MOVE -> {
-                            parent?.requestDisallowInterceptTouchEvent(true)
-                            val degrees=((Math.toDegrees(kotlin.math.atan2(
-                                (event.y-height/2f).toDouble(),(event.x-width/2f).toDouble()))+450.0)%360.0)
-                            focusedTime=(s.startMs+(degrees/360.0*span).toLong()).coerceIn(s.startMs,s.endMs-1)
-                            val phase=dnaSegments.lastOrNull { segment -> focusedTime?.let { it>=segment.startMs && it<segment.endMs }==true }
-                            dnaDetail.text=if(phase!=null) "${clock.format(java.time.Instant.ofEpochMilli(focusedTime!!))}  ·  ${phase.stageLabel}  ·  ${((phase.endMs-phase.startMs)/60000L).coerceAtLeast(1L)} min" else "Keine Schlafphase für diese Uhrzeit"
-                            invalidate()
-                            return true
-                        }
-                        android.view.MotionEvent.ACTION_UP -> {
-                            parent?.requestDisallowInterceptTouchEvent(false)
-                            performClick();return true
-                        }
-                        android.view.MotionEvent.ACTION_CANCEL -> {
-                            parent?.requestDisallowInterceptTouchEvent(false);return true
-                        }
-                    }
-                    return true
-                }
-                override fun performClick():Boolean { super.performClick();return true }
-            }.apply {
-                layoutParams=android.widget.FrameLayout.LayoutParams(-1,dp(250))
-            })
-            layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(dp(4),0,dp(4),dp(5)) }
+                )
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(dp(4),0,dp(4),dp(5))
         })
         val dnaLegend=LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL
