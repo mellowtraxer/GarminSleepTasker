@@ -44,11 +44,16 @@ val sleepSyncLiveStyles = listOf(
     LiveWallpaperStyle("zen_glow", "ZEN GLOW", "Schwebende Lichtringe"),
     LiveWallpaperStyle("silk_dream", "SILK DREAM", "Seidige Lichtschleier"),
     LiveWallpaperStyle("horizon_line", "HORIZON LINE", "Leuchtender Horizont"),
-    LiveWallpaperStyle("star_dust", "STAR DUST", "Treibende Sternenlichter")
+    LiveWallpaperStyle("star_dust", "STAR DUST", "Treibende Sternenlichter"),
+    LiveWallpaperStyle("hyper_cosmic", "HYPER-COSMIC SILK", "Interaktive Plasma-Seide & Stardust")
 )
 
 @Composable
 fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
+    if (style == "hyper_cosmic" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        HyperGlowUniverse(modifier)
+        return
+    }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         AgslLiveWallpaper(style, modifier)
         return
