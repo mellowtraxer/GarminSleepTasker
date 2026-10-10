@@ -1847,6 +1847,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     connectTimeout=15000
                     readTimeout=45000
                     instanceFollowRedirects=true
+                    useCaches=false
+                    setRequestProperty("Cache-Control","no-cache, no-store, max-age=0")
+                    setRequestProperty("Pragma","no-cache")
                     setRequestProperty("User-Agent","SleepSync-Updater")
                 }
                 try {
