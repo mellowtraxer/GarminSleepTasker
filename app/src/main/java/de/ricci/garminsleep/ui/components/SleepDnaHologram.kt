@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -58,7 +59,7 @@ fun SleepDnaHologram(
         onExplore(time)
     }
     FrostedGlassCard(modifier = modifier.fillMaxWidth()) {
-        Box(Modifier.fillMaxWidth().height(246.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxWidth().height(276.dp), contentAlignment = Alignment.Center) {
             Canvas(
                 Modifier.fillMaxSize()
                     .pointerInput(startMs, endMs) {
@@ -75,11 +76,34 @@ fun SleepDnaHologram(
                     }
             ) {
                 val center = Offset(size.width / 2, size.height / 2)
-                val outer = minOf(size.width, size.height) * .36f
+                val outer = minOf(size.width, size.height) * .405f
                 val inner = outer * .70f
+                val neon = StudioGlassTuning.palette()
+                val primary = neon[0]
+                val secondary = neon[1]
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        listOf(primary.copy(alpha = .16f * breath),
+                            secondary.copy(alpha = .07f * breath), Color.Transparent),
+                        center = center, radius = outer * 1.5f
+                    ), radius = outer * 1.5f, center = center
+                )
+                for (tick in 0 until 60) {
+                    val angle = tick * Math.PI / 30.0 - Math.PI / 2.0
+                    val major = tick % 5 == 0
+                    val startR = outer * if (major) 1.10f else 1.13f
+                    val endR = outer * if (major) 1.18f else 1.16f
+                    drawLine(
+                        (if (tick % 2 == 0) primary else secondary).copy(alpha = if (major) .55f else .20f),
+                        Offset(center.x + cos(angle).toFloat() * startR, center.y + sin(angle).toFloat() * startR),
+                        Offset(center.x + cos(angle).toFloat() * endR, center.y + sin(angle).toFloat() * endR),
+                        strokeWidth = if (major) 1.7.dp.toPx() else .75.dp.toPx()
+                    )
+                }
                 val track = Color(0xFF7289AF).copy(alpha = .22f)
                 drawCircle(track, outer, center, style = Stroke(7.dp.toPx()))
-                drawCircle(Color(0xFFB19BFF).copy(alpha = .18f * breath), outer + 13.dp.toPx(), center, style = Stroke(1.dp.toPx()))
+                drawCircle(primary.copy(alpha = .16f * breath), outer + 10.dp.toPx(), center, style = Stroke(10.dp.toPx()))
+                drawCircle(secondary.copy(alpha = .33f * breath), outer + 10.dp.toPx(), center, style = Stroke(1.2.dp.toPx()))
                 // Innerer Ring: vier zusammenhängende Phasenanteile, nicht der Zeitverlauf.
                 // Nur gültige Intervalle innerhalb der Nacht zählen.
                 val shares = phases.groupBy { it.name.trim().lowercase() }
@@ -123,8 +147,8 @@ fun SleepDnaHologram(
                     center.x + cos(orbitAngle).toFloat() * (outer + 13.dp.toPx()),
                     center.y + sin(orbitAngle).toFloat() * (outer + 13.dp.toPx())
                 )
-                drawCircle(Color(0xFF70E8FF).copy(alpha = .20f * breath), 9.dp.toPx(), orbit)
-                drawCircle(Color(0xFFB9FAFF).copy(alpha = .85f), 2.dp.toPx(), orbit)
+                drawCircle(primary.copy(alpha = .20f * breath), 9.dp.toPx(), orbit)
+                drawCircle(secondary.copy(alpha = .85f), 2.dp.toPx(), orbit)
                 focused?.let { time ->
                     val angle = Math.toRadians(((time - startMs).toDouble() / span * 360.0) - 90.0)
                     val marker = Offset(center.x + cos(angle).toFloat() * outer, center.y + sin(angle).toFloat() * outer)
