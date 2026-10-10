@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import kotlin.math.PI
 import kotlin.math.sin
@@ -44,10 +46,10 @@ object DreamscapeMotion {
 }
 
 @Composable
-fun AnimatedAuroraBackground(previewAurora: Boolean = false, content: @Composable BoxScope.() -> Unit) {
+fun AnimatedAuroraBackground(previewAurora: Boolean = false, previewDreamscape: Boolean = false, content: @Composable BoxScope.() -> Unit) {
     val context = LocalContext.current
-    val source = if (previewAurora) "aurora" else DreamscapeMotion.wallpaperSource
-    val enabled = previewAurora || DreamscapeMotion.wallpaperEnabled
+    val source = when { previewAurora -> "aurora"; previewDreamscape -> "dreamscape"; else -> DreamscapeMotion.wallpaperSource }
+    val enabled = previewAurora || previewDreamscape || DreamscapeMotion.wallpaperEnabled
     val imagePath = when(source) {
         "custom" -> File(context.filesDir,"sleepsync_custom_wallpaper").absolutePath
         "dreamscape" -> File(context.filesDir,"sleepsync_dreamscape.png").absolutePath
@@ -77,9 +79,39 @@ fun AnimatedAuroraBackground(previewAurora: Boolean = false, content: @Composabl
         finishedListener = { if (waveActive) waveActive = false },
         label = "touchLightWave"
     )
-    Box(Modifier.fillMaxSize().background(Color(0xFF030308))) {
+    val dreamX = sin(phase) * 13f
+    val dreamY = sin(phase + 1.5707963f) * 18f
+    val dreamScale = 1.13f + .035f * sin(phase)
+    Box(Modifier.fillMaxSize().clipToBounds().background(Color(0xFF030308))) {
         if (enabled && source != "oled" && source != "aurora") {
-            if (bitmap != null) Image(bitmap, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap, contentDescription = null,
+                    modifier = Modifier.fillMaxSize().graphicsLayer {
+                        if (source == "dreamscape") {
+                            scaleX = dreamScale
+                            scaleY = dreamScale
+                            translationX = dreamX * density - scroll * .012f
+                            translationY = dreamY * density - scroll * .022f
+                        }
+                    },
+                    contentScale = ContentScale.Crop
+                )
+                if (source == "dreamscape") {
+                    Canvas(Modifier.fillMaxSize()) {
+                        val center = Offset(size.width * (.48f + .06f * sin(phase)),
+                            size.height * (.46f + .05f * sin(phase + 1f)))
+                        drawCircle(
+                            Brush.radialGradient(
+                                listOf(Color(0xFF37E5FF).copy(alpha = .09f + .035f * sin(phase)),
+                                    Color(0xFFAD53FF).copy(alpha = .045f), Color.Transparent),
+                                center = center, radius = size.width * .95f
+                            ),
+                            radius = size.width * .95f, center = center
+                        )
+                    }
+                }
+            }
             else if (source == "builtin") Image(
                 painter = androidx.compose.ui.res.painterResource(de.ricci.garminsleep.R.drawable.cosmic_planet),
                 contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop
