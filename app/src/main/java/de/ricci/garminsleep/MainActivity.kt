@@ -453,6 +453,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     private var highlightOverviewTab: (() -> Unit)? = null
     private var navigateToPage: ((Int) -> Unit)? = null
     private var activePageIndex = 0
+    private var mainPageScroll: ScrollView? = null
     private var pageTransitionGeneration = 0
     private fun openOverviewFromDetail() { navigateToPage?.invoke(0) ?: showOverview() }
     private lateinit var status: TextView
@@ -931,7 +932,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 val generation=pageTransitionGeneration
                 val direction=if(oldIndex<0 || index>=oldIndex) 1f else -1f
                 val action={
-                    scroll.scrollTo(0,0)
+                    mainPageScroll?.scrollTo(0,0)
                     when(index) {
                         0 -> showOverview()
                         1 -> showHistoryPlaceholder()
@@ -943,13 +944,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 sleepCard.animate().cancel()
                 pageTitle.animate().cancel()
                 pageSubtitle.animate().cancel()
-                sleepCard.animate().alpha(0f).translationX(-direction*dp(14).toFloat())
-                    .setDuration(160).setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
+                sleepCard.animate().alpha(0f).translationX(-direction*dp(10).toFloat())
+                    .setDuration(170).setInterpolator(android.view.animation.AccelerateDecelerateInterpolator())
                     .withEndAction {
                         if(generation == pageTransitionGeneration && !isFinishing && !isDestroyed) {
                             action()
-                            sleepCard.translationX=direction*dp(14).toFloat(); sleepCard.alpha=0f
-                            sleepCard.animate().alpha(1f).translationX(0f).setDuration(260)
+                            sleepCard.translationX=direction*dp(10).toFloat(); sleepCard.alpha=0f
+                            sleepCard.animate().alpha(1f).translationX(0f).setDuration(300)
                                 .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
                         }
                     }.start()
@@ -1031,6 +1032,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             addView(scene)
             layoutParams = android.widget.FrameLayout.LayoutParams(-1,-1)
         }
+        mainPageScroll=scroll
         // Pause expensive animation redraws while scrolling on any SleepSync page.
         val historyScrollResume=Runnable {
             HistoryScrollGate.scrolling=false
@@ -1067,7 +1069,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     }
                     if(swipeHorizontal) {
                         val edgeResistance=(dx>0 && currentPageIndex==0)||(dx<0 && currentPageIndex==3)
-                        val drag=if(edgeResistance) dx*.12f else dx*.35f
+                        val drag=if(edgeResistance) dx*.08f else dx*.22f
                         sleepCard.translationX=drag
                         sleepCard.alpha=1f
                         swipeLastX=event.x
