@@ -39,6 +39,17 @@ jobs:
           echo "Keystore certificate:"
           keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep -E "SHA256:|SHA-256:"
 
+      - name: Download cosmic card artwork
+        run: |
+          mkdir -p app/src/main/res/drawable-nodpi
+          curl --fail --location --retry 3 --max-time 35 \
+            'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=1100&q=88&fit=crop' \
+            -o app/src/main/res/drawable-nodpi/cosmic_planet.jpg
+          curl --fail --location --retry 3 --max-time 35 \
+            'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1100&q=88&fit=crop' \
+            -o app/src/main/res/drawable-nodpi/cosmic_crescent.jpg
+          file app/src/main/res/drawable-nodpi/cosmic_*.jpg
+
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
 
