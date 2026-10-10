@@ -2690,6 +2690,46 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }
         previewFrame.addView(previewImage,android.widget.FrameLayout.LayoutParams(-1,-1))
+        // View-based translation of AnimatedAuroraBackground: reversible, seamless aurora.
+        val auroraView=object:View(this@MainActivity) {
+            private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
+            private val phaseA=ValueAnimator.ofFloat(0f,1f).apply {
+                duration=12000L;repeatCount=ValueAnimator.INFINITE
+                repeatMode=ValueAnimator.REVERSE;interpolator=LinearInterpolator()
+                addUpdateListener{invalidate()}
+            }
+            private val phaseB=ValueAnimator.ofFloat(1f,0f).apply {
+                duration=16000L;repeatCount=ValueAnimator.INFINITE
+                repeatMode=ValueAnimator.REVERSE;interpolator=LinearInterpolator()
+                addUpdateListener{invalidate()}
+            }
+            override fun onAttachedToWindow(){
+                super.onAttachedToWindow()
+                if(!phaseA.isStarted)phaseA.start()
+                if(!phaseB.isStarted)phaseB.start()
+            }
+            override fun onDetachedFromWindow(){
+                phaseA.cancel();phaseB.cancel()
+                super.onDetachedFromWindow()
+            }
+            override fun onDraw(canvas:Canvas){
+                super.onDraw(canvas)
+                val w=width.toFloat();val h=height.toFloat()
+                if(w<=0f||h<=0f)return
+                val a=phaseA.animatedValue as? Float ?: 0f
+                val b=phaseB.animatedValue as? Float ?: 1f
+                fun orb(cx:Float,cy:Float,r:Float,color:Int){
+                    paint.shader=android.graphics.RadialGradient(cx,cy,r,
+                        intArrayOf(color,Color.TRANSPARENT),null,Shader.TileMode.CLAMP)
+                    canvas.drawCircle(cx,cy,r,paint)
+                    paint.shader=null
+                }
+                orb(w*(.2f+.6f*a),h*.25f,w*.9f,0x3D00F0FF)
+                orb(w*(.8f-.5f*b),h*.55f,w*.85f,0x4DA855F7)
+                orb(w*(.3f+.4f*b),h*.85f,w*.8f,0x33FF0077)
+            }
+        }
+        previewFrame.addView(auroraView,android.widget.FrameLayout.LayoutParams(-1,-1))
         previewFrame.addView(View(this).apply {
             background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
                 Color.argb(55,4,8,29),Color.argb(125,4,8,29),Color.rgb(7,10,29)
