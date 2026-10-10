@@ -1078,11 +1078,12 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             cardElevation=0f
             strokeWidth=dp(2)
             strokeColor=Color.rgb(70,205,225)
-            setCardBackgroundColor(if(useLight) Color.argb(designGlassAlpha(190),52,67,94) else Color.argb(230,6,12,25))
-            foreground=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.argb(22,70,205,225),Color.TRANSPARENT,Color.argb(26,120,170,255))).apply { cornerRadius=dp(18).toFloat() }
+            setCardBackgroundColor(Color.argb(130,12,19,34))
+            foreground=null
             elevation=dp(8).toFloat()
             outlineAmbientShadowColor=Color.rgb(70,205,225)
             outlineSpotShadowColor=Color.rgb(70,205,225)
+            nav.setBackgroundColor(Color.TRANSPARENT)
             addView(nav)
             layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,dp(68)).apply { setMargins(dp(18),dp(4),dp(18),dp(8)) }
         }
@@ -3034,8 +3035,22 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     sectionPrefs.edit().putBoolean(sectionKey,open).apply()
                 }
             }
-            sleepCard.addView(header,LinearLayout.LayoutParams(-1,-2).apply {
-                setMargins(dp(4),dp(12),dp(4),dp(5))
+            header.background = null
+            val neonHeader = androidx.compose.ui.platform.ComposeView(this).apply {
+                setViewCompositionStrategy(androidx.compose.ui.platform.ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+                setContent {
+                    de.ricci.garminsleep.ui.components.FrostedGlassCard(
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                    ) {
+                        androidx.compose.ui.viewinterop.AndroidView(
+                            factory = { header },
+                            modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+            sleepCard.addView(neonHeader,LinearLayout.LayoutParams(-1,-2).apply {
+                setMargins(dp(4),dp(7),dp(4),dp(2))
             })
             sleepCard.addView(details)
         }
