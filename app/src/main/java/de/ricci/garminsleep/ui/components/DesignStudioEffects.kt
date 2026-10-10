@@ -19,16 +19,21 @@ fun DesignStudioEffects(
     blur: Int,
     glass: Int,
     neon: Int,
+    glow: Int,
     onValueChanged: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val settings = listOf(
         Triple("✦ Blur", "blur_strength", blur),
         Triple("◉ Glas", "glass_strength", glass),
-        Triple("✧ Neon", "neon_strength", neon)
+        Triple("✧ Neon", "neon_strength", neon),
+        Triple("✺ Glow", "glow_strength", glow)
     )
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        settings.forEachIndexed { index, (title, key, initial) ->
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        settings.chunked(2).forEachIndexed { rowIndex, pair ->
+          Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+           pair.forEachIndexed { columnIndex, (title, key, initial) ->
+            val index = rowIndex * 2 + columnIndex
             var value by remember(key, initial) { mutableFloatStateOf(initial.coerceIn(0, 100).toFloat()) }
             FrostedGlassCard(modifier = Modifier.weight(1f)) {
                 Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
@@ -38,7 +43,7 @@ fun DesignStudioEffects(
                         .background(
                             Brush.linearGradient(
                                 listOf(
-                                    listOf(Color(0xFF22D9F5), Color(0xFF9B5AFF), Color(0xFFE14DFF))[index].copy(alpha = .25f + value / 140f),
+                                    listOf(Color(0xFF22D9F5), Color(0xFF9B5AFF), Color(0xFFE14DFF), Color(0xFFFF4DDA))[index].copy(alpha = .25f + value / 140f),
                                     Color(0xFF10152C)
                                 )
                             ), RoundedCornerShape(12.dp)
@@ -53,6 +58,7 @@ fun DesignStudioEffects(
                             "blur_strength" -> StudioGlassTuning.blur = it.toInt()
                             "glass_strength" -> StudioGlassTuning.glass = it.toInt()
                             "neon_strength" -> StudioGlassTuning.neon = it.toInt()
+                            "glow_strength" -> StudioGlassTuning.glow = it.toInt()
                         }
                         onValueChanged(key, it.toInt())
                     },
@@ -61,6 +67,8 @@ fun DesignStudioEffects(
                 )
                 Text("${value.toInt()} %", color = Color(0xFFBDCAE0), fontSize = 10.sp)
             }
+           }
+          }
         }
     }
 }
