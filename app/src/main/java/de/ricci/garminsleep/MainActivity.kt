@@ -3418,7 +3418,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 delta>0L -> "Du hast ${delta} Minuten länger geschlafen als im Durchschnitt der ${previous.size} vorherigen Nächte."
                 else -> "Du hast ${-delta} Minuten kürzer geschlafen als im Durchschnitt der ${previous.size} vorherigen Nächte."
             }
-            sleepCard.addView(LinearLayout(this).apply {
+            val dnaSevenNightTrend = LinearLayout(this).apply {
                 orientation=LinearLayout.VERTICAL
                 setPadding(dp(17),dp(14),dp(17),dp(15))
                 background=GradientDrawable(GradientDrawable.Orientation.TL_BR,
@@ -3486,9 +3486,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     text="Vergleich mit ${previous.size} früheren erfassten Nächten · Schlafdauer, keine medizinische Bewertung"
                     textSize=10f;setTextColor(Color.rgb(164,187,214))
                 })
-            },LinearLayout.LayoutParams(-1,-2).apply {
-                setMargins(dp(4),dp(7),dp(4),dp(10))
-            })
+            }
+            addSleepDnaNeonCard(dnaSevenNightTrend, 7, 10)
         }
 
 
