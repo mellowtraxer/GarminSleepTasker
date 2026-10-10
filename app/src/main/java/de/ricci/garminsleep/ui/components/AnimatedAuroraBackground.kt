@@ -41,10 +41,10 @@ object DreamscapeMotion {
 }
 
 @Composable
-fun AnimatedAuroraBackground(content: @Composable BoxScope.() -> Unit) {
+fun AnimatedAuroraBackground(previewAurora: Boolean = false, content: @Composable BoxScope.() -> Unit) {
     val context = LocalContext.current
-    val source = DreamscapeMotion.wallpaperSource
-    val enabled = DreamscapeMotion.wallpaperEnabled
+    val source = if (previewAurora) "aurora" else DreamscapeMotion.wallpaperSource
+    val enabled = previewAurora || DreamscapeMotion.wallpaperEnabled
     val imagePath = when(source) {
         "custom" -> File(context.filesDir,"sleepsync_custom_wallpaper").absolutePath
         "dreamscape" -> File(context.filesDir,"sleepsync_dreamscape.png").absolutePath
