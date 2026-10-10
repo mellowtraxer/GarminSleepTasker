@@ -10,6 +10,7 @@ import android.os.Looper
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import de.ricci.garminsleep.ui.components.CINEMATIC_SHADER
+import de.ricci.garminsleep.ui.components.HYPER_COSMIC_SHADER
 import de.ricci.garminsleep.ui.components.sleepSyncLiveStyles
 import kotlin.math.min
 
@@ -25,6 +26,9 @@ class SleepSyncWallpaperService : WallpaperService() {
         private var height = 1
         private val startTime = android.os.SystemClock.uptimeMillis()
         private val shader = if (Build.VERSION.SDK_INT >= 33) RuntimeShader(CINEMATIC_SHADER) else null
+        private val hyperShader = if (Build.VERSION.SDK_INT >= 33) RuntimeShader(HYPER_COSMIC_SHADER) else null
+        private var touchX = .5f
+        private var touchY = .5f
         private val frame = object : Runnable {
             override fun run() {
                 if (!visible) return
@@ -32,10 +36,17 @@ class SleepSyncWallpaperService : WallpaperService() {
                 handler.postDelayed(this, 33L)
             }
         }
+        override fun onTouchEvent(event: android.view.MotionEvent) {
+            if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN || event.actionMasked == android.view.MotionEvent.ACTION_MOVE) {
+                touchX = (event.x / width).coerceIn(0f,1f)
+                touchY = (event.y / height).coerceIn(0f,1f)
+            }
+            super.onTouchEvent(event)
+        }
         override fun onVisibilityChanged(visible: Boolean) {
             this.visible = visible
             handler.removeCallbacks(frame)
-            if (visible) handler.post(frame)
+            if (visible) { setTouchEventsEnabled(true); handler.post(frame) }
         }
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, w: Int, h: Int) {
             super.onSurfaceChanged(holder, format, w, h)
@@ -89,7 +100,20 @@ class SleepSyncWallpaperService : WallpaperService() {
                     shader.setFloatUniform("scene",scene)
                     shader.setFloatUniform("particleDensity",prefs.getInt("wallpaper_cinema_particles",48)/100f)
                     shader.setFloatUniform("rayStrength",prefs.getInt("wallpaper_cinema_rays",62)/100f)
-                    paint.shader=shader
+                    if (safeSource == "hyper_cosmic" && hyperShader != null) {
+                        hyperShader.setFloatUniform("iResolution",width.toFloat(),height.toFloat())
+                        hyperShader.setFloatUniform("iTime",elapsed*.6f)
+                        hyperShader.setFloatUniform("iTouch",touchX,touchY)
+                        hyperShader.setFloatUniform("colorCyan",a)
+                        hyperShader.setFloatUniform("colorMagenta",b)
+                        hyperShader.setFloatUniform("colorCore",.65f,.2f,1f)
+                        hyperShader.setFloatUniform("intensity",prefs.getInt("wallpaper_cinema_intensity",72)/100f)
+                        hyperShader.setFloatUniform("depth",prefs.getInt("wallpaper_cinema_depth",78)/100f)
+                        hyperShader.setFloatUniform("particleDensity",prefs.getInt("wallpaper_cinema_particles",48)/100f)
+                        paint.shader=hyperShader
+                    } else {
+                        paint.shader=shader
+                    }
                     c.drawRect(0f,0f,width.toFloat(),height.toFloat(),paint)
                     paint.shader=null
                 }
