@@ -80,19 +80,29 @@ fun SleepDnaHologram(
                 val track = Color(0xFF7289AF).copy(alpha = .22f)
                 drawCircle(track, outer, center, style = Stroke(7.dp.toPx()))
                 drawCircle(Color(0xFFB19BFF).copy(alpha = .18f * breath), outer + 13.dp.toPx(), center, style = Stroke(1.dp.toPx()))
-                val total = phases.sumOf { (it.endMs - it.startMs).coerceAtLeast(0L) }.coerceAtLeast(1L)
+                // Innerer Ring: vier zusammenhängende Phasenanteile, nicht der Zeitverlauf.
+                // Nur gültige Intervalle innerhalb der Nacht zählen.
+                val shares = phases.groupBy { it.name.trim().lowercase() }
+                    .mapValues { (_, intervals) ->
+                        intervals.sumOf { phase ->
+                            (minOf(phase.endMs, endMs) - maxOf(phase.startMs, startMs)).coerceAtLeast(0L)
+                        }
+                    }
+                val total = shares.values.sum().coerceAtLeast(1L)
                 var innerStart = -90f
-                phases.forEach { phase ->
-                    val sweep = (phase.endMs - phase.startMs).coerceAtLeast(0L).toFloat() / total * 360f
-                    val color = dnaTones[phase.name.trim().lowercase()] ?: Color(0xFF9AA9CA)
+                listOf("leicht", "tief", "rem", "wach").forEach { stage ->
+                    val duration = shares[stage] ?: 0L
+                    if (duration <= 0L) return@forEach
+                    val sweep = duration.toFloat() / total * 360f
+                    val color = dnaTones.getValue(stage)
                     drawArc(color.copy(alpha = .20f * breath), innerStart, sweep, false,
                         topLeft = Offset(center.x - inner, center.y - inner),
                         size = androidx.compose.ui.geometry.Size(inner * 2, inner * 2),
-                        style = Stroke(13.dp.toPx(), cap = StrokeCap.Round))
+                        style = Stroke(13.dp.toPx(), cap = StrokeCap.Butt))
                     drawArc(color, innerStart, sweep, false,
                         topLeft = Offset(center.x - inner, center.y - inner),
                         size = androidx.compose.ui.geometry.Size(inner * 2, inner * 2),
-                        style = Stroke(4.dp.toPx(), cap = StrokeCap.Round))
+                        style = Stroke(4.dp.toPx(), cap = StrokeCap.Butt))
                     innerStart += sweep
                 }
                 phases.forEach { phase ->
