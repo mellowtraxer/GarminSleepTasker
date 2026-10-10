@@ -3493,22 +3493,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 background=GradientDrawable().apply { cornerRadius=dp(14).toFloat(); val pillColor=if(nightRating>=80) Color.rgb(111,245,153) else if(nightRating>=60) Color.rgb(255,219,91) else Color.rgb(255,125,132); setColor(pillColor); setStroke(dp(1),if(nightRating>=80) Color.rgb(31,172,91) else if(nightRating>=60) Color.rgb(209,154,20) else Color.rgb(216,54,70)) }
             })
         })
-        sleepCard.addView(MaterialCardView(this).apply {
-            radius=dp(24).toFloat(); cardElevation=if(light) dp(14).toFloat() else dp(2).toFloat(); strokeWidth=if(light) 0 else dp(1); strokeColor=Color.rgb(81,62,137); setCardBackgroundColor(Color.TRANSPARENT); if(light) { background=GradientDrawable().apply { cornerRadius=dp(24).toFloat(); setColor(Color.argb(designGlassAlpha(),72,88,112)); setStroke(dp(1),stageRem) }; addBlurLayer(this,24,::dp) } else setCardBackgroundColor(Color.rgb(19,15,39))
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(15),dp(13),dp(15),dp(13))
-                addView(TextView(this@MainActivity).apply {
-                    text="✦"; textSize=20f; gravity=android.view.Gravity.CENTER; setTextColor(accent2); setPadding(0,dp(5),0,dp(5))
-                    background=if(light) GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.argb(238,245,252,255),Color.argb(230,240,235,255))).apply { shape=GradientDrawable.OVAL; setStroke(dp(1),Color.rgb(116,126,224)) } else GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(17,62,78),Color.rgb(55,29,91))).apply { shape=GradientDrawable.OVAL; setStroke(dp(1),Color.rgb(48,151,177)) }
-                    layoutParams=LinearLayout.LayoutParams(dp(36),dp(36)).apply { marginEnd=dp(11) }
-                })
-                addView(TextView(this@MainActivity).apply {
-                    layoutParams=LinearLayout.LayoutParams(0,LinearLayout.LayoutParams.WRAP_CONTENT,1f)
-                    text=nightExplanation + "\n" + comparison
-                    textSize=13f; setTextColor(if(light) Color.WHITE else Color.rgb(220,224,244)); setTypeface(typeface,Typeface.BOLD)
-                })
-            })
-            layoutParams=LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT).apply { setMargins(dp(4),dp(10),dp(4),0) }
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.FrostedGlassCard {
+                    androidx.compose.material3.Text(
+                        text = nightExplanation + "\n" + comparison,
+                        color = androidx.compose.ui.graphics.Color.White,
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply {
+            setMargins(dp(4),dp(10),dp(4),0)
         })
         val dnaSectionStart=sleepCard.childCount
         // Sleep DNA 2.0: a touch-driven fingerprint, entirely derived from measured intervals.
