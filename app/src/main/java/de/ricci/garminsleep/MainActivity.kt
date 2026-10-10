@@ -3005,121 +3005,26 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE; sleepCard.removeAllViews()
         sleepCard.addView(TextView(this).apply { text="‹  Zurück zur Übersicht"; textSize=12f; setTextColor(accent2); setPadding(dp(2),dp(8),0,dp(14)); setOnClickListener { showOverview() } })
 
-        // One-glance summary: sleep duration + full-night composition.
-        sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
-            background=LayerDrawable(arrayOf(
-                GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(42,Color.red(accent2),Color.green(accent2),Color.blue(accent2)))},
-                GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(accent2),Color.green(accent2),Color.blue(accent2)))},
-                GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.argb(if(light) 60 else 22,255,255,255),Color.TRANSPARENT,Color.argb(if(light) 35 else 20,6,8,25))).apply{cornerRadius=dp(22).toFloat()}
-            ))
-            if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
-            layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
-            addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16))
-                addView(TextView(this@MainActivity).apply{text="NACHT-ZUSAMMENFASSUNG";textSize=10f;letterSpacing=.12f;setTextColor(if(light) Color.rgb(159,214,255) else Color.rgb(146,191,255));setTypeface(typeface,Typeface.BOLD)})
-                addView(TextView(this@MainActivity).apply{text=fmtMin(s.totalMin);textSize=30f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(5),0,dp(2))})
-                addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs))+" – "+tf.format(Instant.ofEpochMilli(s.endMs))+"  ·  Schlafdauer";textSize=11f;setTextColor(secondary)})
-                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(13),0,dp(8))
-                    listOf(s.lightMin to stageLight,s.deepMin to stageDeep,s.remMin to stageRem,s.awakeMin to stageAwake).forEach{q->if(q.first>0)addView(View(this@MainActivity).apply{background=GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(q.second)}},LinearLayout.LayoutParams(0,dp(10),q.first.toFloat()).apply{setMargins(0,0,dp(2),0)})}
-                })
-                addView(LinearLayout(this@MainActivity).apply {
-                    orientation=LinearLayout.HORIZONTAL
-                    gravity=android.view.Gravity.CENTER_VERTICAL
-                    val phases=listOf(
-                        Triple("Leicht",s.lightMin,stageLight),
-                        Triple("Tief",s.deepMin,stageDeep),
-                        Triple("REM",s.remMin,stageRem),
-                        Triple("Wach",s.awakeMin,stageAwake)
-                    )
-                    phases.forEach { (name,minutes,color) ->
-                        addView(LinearLayout(this@MainActivity).apply {
-                            orientation=LinearLayout.HORIZONTAL
-                            gravity=android.view.Gravity.CENTER_VERTICAL
-                            addView(View(this@MainActivity).apply {
-                                background=GradientDrawable().apply { shape=GradientDrawable.OVAL;setColor(color) }
-                            },LinearLayout.LayoutParams(dp(6),dp(6)).apply { rightMargin=dp(4) })
-                            addView(TextView(this@MainActivity).apply {
-                                text=name+" "+fmtMin(minutes)
-                                textSize=9f
-                                setTextColor(secondary)
-                                setSingleLine(true)
-                            })
-                        },LinearLayout.LayoutParams(0,-2,1f))
-                    }
-                })
-            })
-        })
-
-        fun stageCard(label:String, minutes:Long, stageTone:Int) {
-            val intervals=s.stageSeries.filter{it.stageLabel==label}.sortedBy{it.startMs}
-            val pct=((minutes*100f)/s.totalMin.coerceAtLeast(1)).toInt()
-            val readableTone=if(light) Color.rgb((Color.red(stageTone)+255)/2,(Color.green(stageTone)+255)/2,(Color.blue(stageTone)+255)/2) else stageTone
-            sleepCard.addView((if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply {
-                background=LayerDrawable(arrayOf(
-                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(if(light) Color.argb(designGlassAlpha(),72,88,112) else Color.argb(190,9,15,31));setStroke(dp(4),Color.argb(42,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
-                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),Color.argb(255,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
-                    GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
-                        Color.argb(if(light) 64 else 25,255,255,255),
-                        Color.TRANSPARENT,
-                        Color.argb(if(light) 44 else 25,6,8,25)
-                    )).apply{cornerRadius=dp(22).toFloat()}
-                ))
-                if(light && this is eightbitlab.com.blurview.BlurView){outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true;settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}}
-                layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(12))}
-                addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(15),dp(18),dp(15))
-                    addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-                        addView(TextView(this@MainActivity).apply{text=label.uppercase();textSize=11f;letterSpacing=.08f;setTextColor(readableTone);setTypeface(typeface,Typeface.BOLD);setShadowLayer(dp(3).toFloat(),0f,0f,stageTone)},LinearLayout.LayoutParams(0,-2,1f))
-                        addView(TextView(this@MainActivity).apply{text=pct.toString()+" %";textSize=18f;setTextColor(readableTone);setTypeface(typeface,Typeface.BOLD);setShadowLayer(dp(3).toFloat(),0f,0f,stageTone)})
-                    })
-                    addView(TextView(this@MainActivity).apply{text=fmtMin(minutes);textSize=27f;setTextColor(primary);setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(3),0,dp(2))})
-                    addView(TextView(this@MainActivity).apply{text=intervals.size.toString()+" "+if(intervals.size==1)"Abschnitt" else "Abschnitte";textSize=10f;setTextColor(secondary);setPadding(0,0,0,dp(9))})
-                    addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL
-                        val duration=(s.endMs-s.startMs).coerceAtLeast(1);var cursor=s.startMs
-                        fun seg(ms:Long,active:Boolean)=View(this@MainActivity).apply{
-                            val segmentView=this
-                            if(active && android.animation.ValueAnimator.areAnimatorsEnabled()){
-                                val anim=android.animation.ValueAnimator.ofFloat(0f,1f).apply{
-                                    this.duration=5200L;repeatCount=android.animation.ValueAnimator.INFINITE
-                                    interpolator=android.view.animation.LinearInterpolator()
-                                    addUpdateListener{v->
-                                        val wave=(.5f+.5f*kotlin.math.sin(((v.animatedValue as Float)*2f*Math.PI).toFloat()))
-                                        segmentView.alpha=.58f+.42f*wave
-                                        segmentView.elevation=dp(2).toFloat()+dp(12)*wave
-                                        segmentView.scaleY=.94f+.06f*wave
-                                    }
-                                }
-                                addOnAttachStateChangeListener(object:android.view.View.OnAttachStateChangeListener{
-                                    override fun onViewAttachedToWindow(v:View){anim.start()}
-                                    override fun onViewDetachedFromWindow(v:View){anim.cancel()}
-                                })
-                            }
-                            if(active)background=LayerDrawable(arrayOf(
-                            GradientDrawable().apply{cornerRadius=dp(5).toFloat();setColor(Color.argb(68,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)))},
-                            GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
-                                Color.argb(235,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)),
-                                Color.argb(110,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone)),
-                                Color.argb(42,Color.red(stageTone),Color.green(stageTone),Color.blue(stageTone))
-                            )).apply{cornerRadius=dp(4).toFloat()},
-                            GradientDrawable().apply{cornerRadius=dp(4).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(1),Color.argb(125,255,255,255))}
-                        ));layoutParams=LinearLayout.LayoutParams(0,dp(if(active)44 else 1),(ms.toFloat()/duration).coerceAtLeast(.001f)).apply{gravity=android.view.Gravity.CENTER_VERTICAL;setMargins(if(active)dp(1) else 0,0,if(active)dp(1) else 0,0)}}
-                        intervals.forEach{st->if(st.startMs>cursor)addView(seg(st.startMs-cursor,false));addView(seg(st.endMs-st.startMs,true));cursor=st.endMs};if(cursor<s.endMs)addView(seg(s.endMs-cursor,false))
-                    })
-                    if(intervals.isEmpty()) addView(TextView(this@MainActivity).apply {
-                        text="Keine Wachphasen erkannt"
-                        textSize=12f;setTextColor(secondary);gravity=android.view.Gravity.CENTER
-                        setPadding(0,dp(12),0,dp(12))
-                    })
-                    addView(LinearLayout(this@MainActivity).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(7),0,0)
-                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs));textSize=10f;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
-                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.startMs+(s.endMs-s.startMs)/2));textSize=10f;gravity=android.view.Gravity.CENTER;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
-                        addView(TextView(this@MainActivity).apply{text=tf.format(Instant.ofEpochMilli(s.endMs));textSize=10f;gravity=android.view.Gravity.END;setTextColor(timeColor);layoutParams=LinearLayout.LayoutParams(0,-2,1f)})
-                    })
-                })
-            })
-        }
-        stageCard("Leicht",s.lightMin,stageLight)
-        stageCard("Tief",s.deepMin,stageDeep)
-        stageCard("REM",s.remMin,stageRem)
-        stageCard("Wach",s.awakeMin,stageAwake)
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                fun intervals(label: String) = s.stageSeries
+                    .filter { it.stageLabel.equals(label, ignoreCase = true) && it.endMs > it.startMs }
+                    .sortedBy { it.startMs }
+                    .map { de.ricci.garminsleep.ui.components.SleepPhaseInterval(it.startMs, it.endMs) }
+                de.ricci.garminsleep.ui.components.SleepStageDetailCards(
+                    startMs = s.startMs,
+                    endMs = s.endMs,
+                    lightMin = s.lightMin,
+                    deepMin = s.deepMin,
+                    remMin = s.remMin,
+                    awakeMin = s.awakeMin,
+                    light = intervals("Leicht"),
+                    deep = intervals("Tief"),
+                    rem = intervals("REM"),
+                    awake = intervals("Wach")
+                )
+            }
+        }, LinearLayout.LayoutParams(-1, -2))
     }
 
     private fun showMetricDetail(label: String, icon: String, tone: Int, s: SleepSummary) {
