@@ -68,6 +68,9 @@ fun FrostedGlassCard(
     val blurPower = StudioGlassTuning.blur.coerceIn(0, 100) / 100f
     val glassPower = StudioGlassTuning.glass.coerceIn(0, 100) / 100f
     val glowPower = StudioGlassTuning.glow.coerceIn(0, 100) / 100f
+    // Blur dissolves the crisp neon stroke into the soft halo. At 100% only light remains.
+    val sharpEdgeOpacity = (1f - blurPower).coerceIn(0f, 1f)
+    val haloIntensity = (glowPower * (.35f + .65f * blurPower) + neonPower * blurPower * .35f).coerceIn(0f, 1f)
     val shape = RoundedCornerShape(cornerRadius)
     val glowBrush = Brush.linearGradient(glowColors)
 
@@ -95,7 +98,7 @@ fun FrostedGlassCard(
                 onClick = { DreamscapeMotion.ripple(); onClick() }
             ) else Modifier)
             .drawBehind {
-                if (glowPower > 0f) {
+                if (haloIntensity > 0f) {
                     val inset = haloSpace.toPx()
                     val radius = cornerRadius.toPx()
                     val left = inset
@@ -108,7 +111,7 @@ fun FrostedGlassCard(
                         // draws a visible hard line.
                         val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                             style = Paint.Style.STROKE
-                            strokeWidth = (2.5f + glowPower * 4f).dp.toPx()
+                            strokeWidth = (2.5f + haloIntensity * 4f).dp.toPx()
                             shader = LinearGradient(
                                 left, top, right, bottom,
                                 intArrayOf(
@@ -117,7 +120,7 @@ fun FrostedGlassCard(
                                     0xFFFF008F.toInt()
                                 ), null, Shader.TileMode.CLAMP
                             )
-                            alpha = ((.22f + .78f * glowPower) * 255f).toInt().coerceIn(0,255)
+                            alpha = (haloIntensity * 255f).toInt().coerceIn(0,255)
                             maskFilter = BlurMaskFilter(
                                 (2f + blurPower * 13f).dp.toPx(),
                                 BlurMaskFilter.Blur.NORMAL
@@ -141,7 +144,7 @@ fun FrostedGlassCard(
                 .border(
                     width = (0.6f + neonPower * 1.25f).dp,
                     brush = Brush.linearGradient(glowColors.map {
-                        it.copy(alpha = (.05f + neonPower * .95f).coerceIn(0f,1f))
+                        it.copy(alpha = (neonPower * sharpEdgeOpacity).coerceIn(0f,1f))
                     }),
                     shape = shape
                 )
