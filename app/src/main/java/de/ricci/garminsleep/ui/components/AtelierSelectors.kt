@@ -56,6 +56,7 @@ fun AtelierColorPalette(selectedColor: Int, onSelect: (Int, Int) -> Unit) {
         Triple("Gelb", 0xFFFFFF00.toInt(), 0xFFFFFF00.toInt()),
         Triple("Rot", 0xFFFF1744.toInt(), 0xFFFF1744.toInt())
     )
+    val liveSelection = StudioGlassTuning.selectedNeon
     FrostedGlassCard {
         Text("✦  NEONFARBEN", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))
@@ -65,7 +66,7 @@ fun AtelierColorPalette(selectedColor: Int, onSelect: (Int, Int) -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(Modifier.size(44.dp).clip(CircleShape)
                         .background(if (primary == 0) Brush.linearGradient(listOf(Color(0xFF00F0FF),Color(0xFFAE48FF),Color(0xFFFF00B8))) else Brush.linearGradient(listOf(Color(primary),Color(primary))))
-                        .then(if (selectedColor == primary) Modifier.border(2.dp, Color.White, CircleShape) else Modifier))
+                        .then(if (liveSelection == primary) Modifier.border(2.dp, Color.White, CircleShape) else Modifier))
                     Spacer(Modifier.height(5.dp))
                     Text(name, color = Color.White, fontSize = 10.sp)
                 }
