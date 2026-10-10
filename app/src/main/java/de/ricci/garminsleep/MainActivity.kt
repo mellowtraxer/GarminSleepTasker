@@ -2026,55 +2026,31 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
         }
         fun cosmicArtwork(moon:Boolean):View = object:View(this@MainActivity) {
-            private val p=Paint(Paint.ANTI_ALIAS_FLAG)
-            private val random=java.util.Random(if(moon) 713L else 2084L)
-            private val stars=List(100) { Triple(random.nextFloat(),random.nextFloat(),random.nextFloat()) }
+            private val brush=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            private val bitmap=android.graphics.BitmapFactory.decodeResource(resources,
+                if(moon) R.drawable.cosmic_crescent else R.drawable.cosmic_planet)
             override fun onDraw(canvas:Canvas) {
                 val w=width.toFloat();val h=height.toFloat()
                 if(w<=0f||h<=0f)return
-                val cx=w*(if(moon) .76f else .78f)
-                val cy=h*(if(moon) .53f else .55f)
-                val radius=minOf(w,h)*(if(moon) .255f else .30f)
-                p.shader=android.graphics.RadialGradient(cx,cy,radius*2.05f,
-                    intArrayOf(Color.argb(160,96,42,198),Color.argb(100,28,100,181),Color.TRANSPARENT),
-                    floatArrayOf(0f,.49f,1f),Shader.TileMode.CLAMP)
-                canvas.drawCircle(cx,cy,radius*2.05f,p);p.shader=null
-                stars.forEach { (x,y,size) ->
-                    p.color=Color.argb((80+size*170).toInt(),175,215,255)
-                    canvas.drawCircle(w*x,h*y,dp(1).toFloat()*(.3f+size),p)
-                }
-                p.shader=android.graphics.RadialGradient(cx,cy,radius*1.28f,
-                    intArrayOf(Color.argb(110,112,214,255),Color.argb(60,196,73,246),Color.TRANSPARENT),
-                    null,Shader.TileMode.CLAMP)
-                canvas.drawCircle(cx,cy,radius*1.28f,p);p.shader=null
-                p.shader=android.graphics.LinearGradient(cx-radius,cy-radius,cx+radius,cy+radius,
-                    if(moon) 0xFFE7D6FF.toInt() else 0xFFB7EDFF.toInt(),
-                    if(moon) 0xFF9B53F5.toInt() else 0xFF7B4AE9.toInt(),Shader.TileMode.CLAMP)
-                canvas.drawCircle(cx,cy,radius,p);p.shader=null
-                p.color=Color.argb(100,26,32,93)
-                for(i in 0 until 22) {
-                    val a=i*2.39996
-                    val x=cx+Math.cos(a).toFloat()*radius*(.2f+(i%5)*.13f)
-                    val y=cy+Math.sin(a).toFloat()*radius*(.2f+(i%4)*.17f)
-                    canvas.drawCircle(x,y,radius*(.018f+(i%4)*.016f),p)
-                }
-                if(moon) {
-                    p.color=0xFF19123F.toInt()
-                    canvas.drawCircle(cx+radius*.43f,cy-radius*.16f,radius*.92f,p)
+                // Keep the artwork on the right, while preserving a quiet text area.
+                val dst=android.graphics.RectF(w*.39f,0f,w,h)
+                val srcAspect=bitmap.width.toFloat()/bitmap.height
+                val dstAspect=dst.width()/dst.height()
+                val src=if(srcAspect>dstAspect) {
+                    val crop=(bitmap.height*dstAspect).toInt()
+                    val left=(bitmap.width-crop)/2
+                    android.graphics.Rect(left,0,left+crop,bitmap.height)
                 } else {
-                    p.shader=android.graphics.RadialGradient(cx-radius*.3f,cy-radius*.36f,radius*1.65f,
-                        intArrayOf(Color.TRANSPARENT,Color.argb(120,5,10,41),Color.argb(245,5,10,34)),
-                        floatArrayOf(0f,.55f,1f),Shader.TileMode.CLAMP)
-                    canvas.drawCircle(cx,cy,radius,p);p.shader=null
+                    val crop=(bitmap.width/dstAspect).toInt()
+                    val top=(bitmap.height-crop)/2
+                    android.graphics.Rect(0,top,bitmap.width,top+crop)
                 }
-                p.style=Paint.Style.STROKE;p.strokeWidth=dp(1).toFloat()
-                p.color=Color.argb(110,162,182,255)
-                canvas.drawOval(cx-radius*1.22f,cy-radius*.93f,cx+radius*1.22f,cy+radius*.93f,p)
-                p.style=Paint.Style.FILL
-                p.shader=android.graphics.LinearGradient(0f,0f,w*.78f,0f,
-                    intArrayOf(0xFF111433.toInt(),0xF0141536.toInt(),Color.TRANSPARENT),
-                    floatArrayOf(0f,.45f,1f),Shader.TileMode.CLAMP)
-                canvas.drawRect(0f,0f,w,h,p);p.shader=null
+                canvas.drawBitmap(bitmap,src,dst,brush)
+                brush.shader=android.graphics.LinearGradient(0f,0f,w,0f,
+                    intArrayOf(0xFF10142F.toInt(),0xF5101432.toInt(),0x8A101431.toInt(),0x10101431),
+                    floatArrayOf(0f,.42f,.73f,1f),Shader.TileMode.CLAMP)
+                canvas.drawRect(0f,0f,w,h,brush)
+                brush.shader=null
             }
         }
         // Editorial masthead: the whole screen is a navigation dashboard, not a list of settings.
