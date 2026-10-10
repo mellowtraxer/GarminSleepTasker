@@ -16,6 +16,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import android.graphics.Paint
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -31,6 +36,7 @@ object StudioGlassTuning {
     var blur by mutableIntStateOf(20)
     var glass by mutableIntStateOf(34)
     var neon by mutableIntStateOf(35)
+    var glow by mutableIntStateOf(35)
 }
 
 @Composable
@@ -60,6 +66,7 @@ fun FrostedGlassCard(
     val neonPower = StudioGlassTuning.neon.coerceIn(0, 100) / 100f
     val blurPower = StudioGlassTuning.blur.coerceIn(0, 100) / 100f
     val glassPower = StudioGlassTuning.glass.coerceIn(0, 100) / 100f
+    val glowPower = StudioGlassTuning.glow.coerceIn(0, 100) / 100f
     val shape = RoundedCornerShape(cornerRadius)
     val glowBrush = Brush.linearGradient(glowColors)
 
@@ -82,35 +89,37 @@ fun FrostedGlassCard(
             onClick = { DreamscapeMotion.ripple(); onClick() }
         ) else Modifier)
     ) {
-        // One continuous gradient, with two very low-opacity soft contours.
-        // Keep every contour rounded and INSIDE the card bounds, avoiding
-        // both rectangular blur tiles and thick concentric neon tubing.
+        // Real, rounded soft-light shadow. Blur controls the shadow radius,
+        // Glow controls its intensity, Neon controls the crisp border.
+        // Draw INSIDE the allocated bounds to avoid clipped rectangular tiles.
         Box(Modifier.matchParentSize().drawBehind {
-            if (neonPower > 0f) {
-                val glow = Brush.linearGradient(glowColors.map {
-                    it.copy(alpha = (neonPower * (.14f + pressGlow * .08f)).coerceIn(0f, 1f))
-                })
-                val soft = Brush.linearGradient(glowColors.map {
-                    it.copy(alpha = (neonPower * (.055f + pressGlow * .035f)).coerceIn(0f, 1f))
-                })
-                val inner = (1.8f + blurPower * 2f).dp.toPx()
-                val outer = (3f + blurPower * 3.5f).dp.toPx()
-                drawRoundRect(
-                    brush = soft,
-                    topLeft = Offset(outer / 2f, outer / 2f),
-                    size = Size((size.width - outer).coerceAtLeast(0f),
-                        (size.height - outer).coerceAtLeast(0f)),
-                    cornerRadius = CornerRadius((cornerRadius.toPx() - outer / 2f).coerceAtLeast(0f)),
-                    style = Stroke(width = outer)
-                )
-                drawRoundRect(
-                    brush = glow,
-                    topLeft = Offset(inner / 2f, inner / 2f),
-                    size = Size((size.width - inner).coerceAtLeast(0f),
-                        (size.height - inner).coerceAtLeast(0f)),
-                    cornerRadius = CornerRadius((cornerRadius.toPx() - inner / 2f).coerceAtLeast(0f)),
-                    style = Stroke(width = inner)
-                )
+            if (glowPower > 0f && blurPower > 0f) {
+                val blurRadius = (2f + 14f * blurPower).dp.toPx()
+                val inset = blurRadius + 2.dp.toPx()
+                val left = inset
+                val top = inset
+                val right = size.width - inset
+                val bottom = size.height - inset
+                if (right > left && bottom > top) {
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        style = Paint.Style.STROKE
+                        strokeWidth = 1.5.dp.toPx()
+                        shader = LinearGradient(left, top, right, bottom,
+                            intArrayOf(0xFF00F0FF.toInt(), 0xFFA855F7.toInt(), 0xFFFF007F.toInt()),
+                            null, Shader.TileMode.CLAMP)
+                        setShadowLayer(blurRadius, 0f, 0f,
+                            android.graphics.Color.argb(
+                                (glowPower * 240f).toInt().coerceIn(0, 255), 168, 62, 245))
+                    }
+                    drawIntoCanvas { canvas ->
+                        canvas.nativeCanvas.drawRoundRect(
+                            left, top, right, bottom,
+                            (cornerRadius.toPx() - inset).coerceAtLeast(3.dp.toPx()),
+                            (cornerRadius.toPx() - inset).coerceAtLeast(3.dp.toPx()),
+                            paint
+                        )
+                    }
+                }
             }
         })
 
@@ -121,8 +130,8 @@ fun FrostedGlassCard(
                 .clip(shape)
                 .background(glassFill)
                 .border(
-                    width = (0.65f + neonPower * 0.9f).dp,
-                    brush = Brush.linearGradient(glowColors.map { it.copy(alpha = (.22f + neonPower * .78f).coerceIn(0f, 1f)) }),
+                    width = (0.65f + neonPower * 1.15f).dp,
+                    brush = Brush.linearGradient(glowColors.map { it.copy(alpha = (.06f + neonPower * .94f).coerceIn(0f, 1f)) }),
                     shape = shape
                 )
         )
