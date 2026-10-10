@@ -1087,10 +1087,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                         val next=if(dx<0) currentPageIndex+1 else currentPageIndex-1
                         if(next in 0..3) {
                             sleepCard.animate().cancel()
-                            sleepCard.animate().translationX(if(dx<0) -scroll.width*.16f else scroll.width*.16f).alpha(.55f)
-                                .setDuration(90).setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction {
-                                    sleepCard.translationX=0f; sleepCard.alpha=1f; swipeOpenPage(next)
-                                }.start()
+                            sleepCard.translationX=0f; sleepCard.alpha=1f
+                            swipeOpenPage(next)
                         } else {
                             sleepCard.animate().translationX(0f).alpha(1f).setDuration(180).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
                         }
