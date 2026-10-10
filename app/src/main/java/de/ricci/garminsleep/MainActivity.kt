@@ -872,8 +872,21 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         WorkManager.getInstance(this).enqueueUniquePeriodicWork("sleepsync_background",ExistingPeriodicWorkPolicy.UPDATE,request)
     }
 
+    private fun restoreStudioTheme() {
+        val p = getSharedPreferences("sleepsync_design", MODE_PRIVATE)
+        de.ricci.garminsleep.ui.components.StudioGlassTuning.apply {
+            blur = p.getInt("blur_strength", 20)
+            glass = p.getInt("glass_strength", 34)
+            neon = p.getInt("neon_strength", 35)
+            glow = p.getInt("glow_strength", 35)
+            selectedNeon = p.getInt("neon_palette", 0)
+            secondaryNeon = p.getInt("neon_palette_secondary", 0)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        restoreStudioTheme()
         if(savedInstanceState==null) handleSharedWallpaper(intent)
         scheduleBackgroundSleepSync()
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -2972,7 +2985,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         sleepCard.background = null
         // Organize the overview without discarding any of the existing interactive cards.
         fun collapseDashboardSection(start:Int,heading:String,summary:String,tone:Int) {
-            val details=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;visibility=View.GONE }
+            val sectionPrefs=getSharedPreferences("sleepsync_dashboard_sections",MODE_PRIVATE)
+            val sectionKey="section_" + heading
+            val initiallyOpen=sectionPrefs.getBoolean(sectionKey,false)
+            val details=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                visibility=if(initiallyOpen) View.VISIBLE else View.GONE
+            }
             while(sleepCard.childCount>start) {
                 val child=sleepCard.getChildAt(start)
                 sleepCard.removeViewAt(start)
@@ -3001,7 +3020,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     })
                 })
                 val arrow=TextView(this@MainActivity).apply {
-                    text="⌄";textSize=24f;setTextColor(tone)
+                    text=if(initiallyOpen)"⌃" else "⌄";textSize=24f;setTextColor(tone)
                     gravity=android.view.Gravity.CENTER
                     setPadding(dp(10),0,dp(3),0)
                 }
@@ -3012,6 +3031,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     val open=details.visibility!=View.VISIBLE
                     details.visibility=if(open)View.VISIBLE else View.GONE
                     arrow.text=if(open)"⌃" else "⌄"
+                    sectionPrefs.edit().putBoolean(sectionKey,open).apply()
                 }
             }
             sleepCard.addView(header,LinearLayout.LayoutParams(-1,-2).apply {
