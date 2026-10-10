@@ -17,24 +17,36 @@ fun FrostedGlassCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 24.dp,
     borderColors: List<Color> = listOf(
-        Color(0xFF00F0FF).copy(alpha = 0.9f),
-        Color(0xFFA855F7).copy(alpha = 0.7f),
-        Color(0xFFEC4899).copy(alpha = 0.4f),
-        Color(0x15FFFFFF)
+        Color(0xFF00F0FF).copy(alpha = 0.9f), // Leuchtendes Cyan oben links
+        Color(0xFFA855F7).copy(alpha = 0.7f), // Übergang zu Violett
+        Color(0xFFEC4899).copy(alpha = 0.4f), // Neon-Pink
+        Color(0x15FFFFFF)                     // Sanftes Ausklingen
     ),
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(cornerRadius)
+
+    // Subtiler Milchglas-Reflexions-Verlauf von oben nach unten
     val glassFill = Brush.verticalGradient(
-        listOf(Color(0x22FFFFFF), Color(0x0CFFFFFF))
+        listOf(
+            Color(0x22FFFFFF), // Hellerer Lichteinfall oben
+            Color(0x0CFFFFFF)  // Dunklerer, matterer Schimmer unten
+        )
     )
+
     Box(
         modifier = modifier
             .clip(shape)
             .background(glassFill)
-            .border(width = 1.2.dp, brush = Brush.linearGradient(borderColors), shape = shape)
+            .border(
+                width = 1.2.dp,
+                brush = Brush.linearGradient(borderColors),
+                shape = shape
+            )
             .padding(18.dp)
     ) {
-        Column { content() }
+        Column {
+            content()
+        }
     }
 }
