@@ -882,6 +882,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             selectedNeon = p.getInt("neon_palette", 0)
             secondaryNeon = p.getInt("neon_palette_secondary", 0)
         }
+        de.ricci.garminsleep.ui.components.WallpaperNeonTuning.apply {
+            primary = p.getInt("wallpaper_neon_primary", 0)
+            secondary = p.getInt("wallpaper_neon_secondary", 0)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -2395,6 +2399,16 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 )
             }
         }, LinearLayout.LayoutParams(-1,-2))
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.AtelierWallpaperColorPalette(
+                    onSelect = { primary, secondary ->
+                        p.edit().putInt("wallpaper_neon_primary", primary)
+                            .putInt("wallpaper_neon_secondary", secondary).apply()
+                    }
+                )
+            }
+        }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(14),0,dp(8)) })
         sleepCard.addView(TextView(this).apply {
             text="FARBSCHEMA";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(177,201,255))
