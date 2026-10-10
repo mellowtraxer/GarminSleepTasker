@@ -3447,15 +3447,19 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             }
             addView(phase("LEICHT",s.lightMin,stageLight)); addView(phase("TIEF",s.deepMin,stageDeep)); addView(phase("REM",s.remMin,stageRem)); addView(phase("WACH",s.awakeMin,stageAwake))
         })
-        val stages = GridLayout(this).apply {
-            columnCount = 2
-            setPadding(0, dp(6), 0, dp(8))
-            addView(metricCard("🌙","Leicht",fmt(s.lightMin), onClick={ showAllStageTimelines(s) }, sleep=s))
-            addView(metricCard("🌑","Tief",fmt(s.deepMin), onClick={ showAllStageTimelines(s) }, sleep=s))
-            addView(metricCard("🧠","REM",fmt(s.remMin), onClick={ showAllStageTimelines(s) }, sleep=s))
-            addView(metricCard("👀","Wach",fmt(s.awakeMin), onClick={ showAllStageTimelines(s) }, sleep=s))
-        }
-        sleepCard.addView(stages)
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.SleepPhaseGrid(
+                    lightMinutes = s.lightMin,
+                    deepMinutes = s.deepMin,
+                    remMinutes = s.remMin,
+                    awakeMinutes = s.awakeMin,
+                    onPhaseClick = { showAllStageTimelines(s) }
+                )
+            }
+        }, LinearLayout.LayoutParams(-1, -2).apply {
+            setMargins(0, dp(6), 0, dp(8))
+        })
         val healthSectionStart=sleepCard.childCount
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(8),dp(4),dp(4))
