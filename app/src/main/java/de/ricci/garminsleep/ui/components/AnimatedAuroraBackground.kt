@@ -103,8 +103,8 @@ fun AnimatedAuroraBackground(previewAurora: Boolean = false, previewDreamscape: 
                             size.height * (.46f + .05f * sin(phase + 1f)))
                         drawCircle(
                             Brush.radialGradient(
-                                listOf(Color(0xFF37E5FF).copy(alpha = .09f + .035f * sin(phase)),
-                                    Color(0xFFAD53FF).copy(alpha = .045f), Color.Transparent),
+                                listOf(StudioGlassTuning.palette()[0].copy(alpha = .09f + .035f * sin(phase)),
+                                    StudioGlassTuning.palette()[1].copy(alpha = .045f), Color.Transparent),
                                 center = center, radius = size.width * .95f
                             ),
                             radius = size.width * .95f, center = center
@@ -127,7 +127,7 @@ fun AnimatedAuroraBackground(previewAurora: Boolean = false, previewDreamscape: 
             // Silk ribbons: transparent Bezier surfaces with luminous edges.
             // All oscillations use integer harmonics of the same 2π phase, so
             // the loop is mathematically seamless.
-            val colors = listOf(Color(0xFF00F0FF), Color(0xFFB452FF), Color(0xFFFF1AC6))
+            val colors = StudioGlassTuning.palette(listOf(Color(0xFF00F0FF), Color(0xFFB452FF), Color(0xFFFF1AC6)))
             val shares = listOf(light, deep, rem)
             for (layer in 0..2) {
                 val t = layer.toFloat()
@@ -167,7 +167,7 @@ fun AnimatedAuroraBackground(previewAurora: Boolean = false, previewDreamscape: 
             if (ripple > .001f) {
                 val center = Offset(w * .5f, h * .52f)
                 val radius = w * (.15f + .9f * ripple)
-                drawCircle(Color(0xFF75E9FF).copy(alpha = (1f - ripple) * (.10f + energy * .12f)),
+                drawCircle(colors[0].copy(alpha = (1f - ripple) * (.10f + energy * .12f)),
                     radius = radius, center = center, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
             }
         }
