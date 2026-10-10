@@ -82,32 +82,37 @@ fun FrostedGlassCard(
             onClick = { DreamscapeMotion.ripple(); onClick() }
         ) else Modifier)
     ) {
-        // Rounded glow is drawn directly as concentric strokes. Unlike
-        // RenderEffect blur layers this never produces rectangular blur tiles.
-        val glowWidth = (2f + 16f * blurPower).dp
-        Box(
-            Modifier.matchParentSize().drawBehind {
-                if (neonPower > 0f) {
-                    val radius = cornerRadius.toPx()
-                    val maxInset = glowWidth.toPx() * .5f
-                    val colors = glowColors
-                    for (layer in 5 downTo 1) {
-                        val stroke = (1.5f + layer * 2.2f * blurPower).dp.toPx()
-                        val inset = maxInset + 1.dp.toPx()
-                        val tint = colors[(5 - layer).coerceIn(0, colors.lastIndex)]
-                        drawRoundRect(
-                            color = tint.copy(alpha = ((.035f + .018f * (6 - layer)) *
-                                neonPower * 2.3f + pressGlow * .025f).coerceIn(0f, 1f)),
-                            topLeft = Offset(inset, inset),
-                            size = Size((size.width - inset * 2).coerceAtLeast(0f),
-                                (size.height - inset * 2).coerceAtLeast(0f)),
-                            cornerRadius = CornerRadius(radius, radius),
-                            style = Stroke(width = stroke)
-                        )
-                    }
-                }
+        // One continuous gradient, with two very low-opacity soft contours.
+        // Keep every contour rounded and INSIDE the card bounds, avoiding
+        // both rectangular blur tiles and thick concentric neon tubing.
+        Box(Modifier.matchParentSize().drawBehind {
+            if (neonPower > 0f) {
+                val glow = Brush.linearGradient(glowColors.map {
+                    it.copy(alpha = (neonPower * (.14f + pressGlow * .08f)).coerceIn(0f, 1f))
+                })
+                val soft = Brush.linearGradient(glowColors.map {
+                    it.copy(alpha = (neonPower * (.055f + pressGlow * .035f)).coerceIn(0f, 1f))
+                })
+                val inner = (1.8f + blurPower * 2f).dp.toPx()
+                val outer = (3f + blurPower * 3.5f).dp.toPx()
+                drawRoundRect(
+                    brush = soft,
+                    topLeft = Offset(outer / 2f, outer / 2f),
+                    size = Size((size.width - outer).coerceAtLeast(0f),
+                        (size.height - outer).coerceAtLeast(0f)),
+                    cornerRadius = CornerRadius((cornerRadius.toPx() - outer / 2f).coerceAtLeast(0f)),
+                    style = Stroke(width = outer)
+                )
+                drawRoundRect(
+                    brush = glow,
+                    topLeft = Offset(inner / 2f, inner / 2f),
+                    size = Size((size.width - inner).coerceAtLeast(0f),
+                        (size.height - inner).coerceAtLeast(0f)),
+                    cornerRadius = CornerRadius((cornerRadius.toPx() - inner / 2f).coerceAtLeast(0f)),
+                    style = Stroke(width = inner)
+                )
             }
-        )
+        })
 
         // --- 3. SCHICHT: EIGENTLICHE GLASKARTE MIT FEINER KANTE ---
         Box(
@@ -116,8 +121,8 @@ fun FrostedGlassCard(
                 .clip(shape)
                 .background(glassFill)
                 .border(
-                    width = (0.4f + neonPower * 2.2f).dp,
-                    brush = Brush.linearGradient(glowColors.map { it.copy(alpha = neonPower) }),
+                    width = (0.65f + neonPower * 0.9f).dp,
+                    brush = Brush.linearGradient(glowColors.map { it.copy(alpha = (.22f + neonPower * .78f).coerceIn(0f, 1f)) }),
                     shape = shape
                 )
         )
