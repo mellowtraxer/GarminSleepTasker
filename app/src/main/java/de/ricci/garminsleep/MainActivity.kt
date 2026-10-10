@@ -2423,59 +2423,26 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(165,196,255))
             setPadding(dp(5),dp(4),0,dp(10))
         })
-        val wallpaperGallery=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        listOf(
-            Triple("Empfohlen","✦",Color.rgb(116,80,216)),
-            Triple("SleepSync","☾",Color.rgb(31,146,192)),
-            Triple("Eigenes","▧",Color.rgb(219,88,176)),
-            Triple("OLED","●",Color.rgb(39,47,76))
-        ).forEachIndexed{index,(name,symbol,tone)->
-            val selected=when(index){
-                0->activeWallpaper=="dreamscape" && p.getBoolean("wallpaper_enabled",true)
-                1->activeWallpaper=="builtin" && p.getBoolean("wallpaper_enabled",true)
-                2->activeWallpaper=="custom" && p.getBoolean("wallpaper_enabled",true)
-                else->!p.getBoolean("wallpaper_enabled",true)
-            }
-            val tile=LinearLayout(this).apply {
-                orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
-                setPadding(dp(4),dp(4),dp(4),dp(8))
-                background=GradientDrawable().apply {
-                    cornerRadius=dp(17).toFloat();setColor(Color.rgb(10,15,38))
-                    setStroke(dp(if(selected) 2 else 1),if(selected) Color.rgb(76,222,255) else Color.argb(160,115,122,195))
-                }
-                addView(android.widget.FrameLayout(this@MainActivity).apply {
-                    background=GradientDrawable().apply{cornerRadius=dp(12).toFloat();setColor(tone)}
-                    clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-                    if(index==0 || index==1) addView(android.widget.ImageView(this@MainActivity).apply {
-                        scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
-                        setImageResource(if(index==0) R.drawable.cosmic_crescent else R.drawable.cosmic_planet)
-                    },android.widget.FrameLayout.LayoutParams(-1,-1))
-                    else addView(TextView(this@MainActivity).apply{
-                        text=symbol;textSize=28f;gravity=android.view.Gravity.CENTER;setTextColor(Color.WHITE)
-                    },android.widget.FrameLayout.LayoutParams(-1,-1))
-                },LinearLayout.LayoutParams(-1,dp(76)))
-                addView(TextView(this@MainActivity).apply{
-                    text=name;textSize=11f;gravity=android.view.Gravity.CENTER
-                    setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
-                    setPadding(0,dp(8),0,0)
-                })
-                setOnClickListener {
-                    when(index) {
-                        0->if(File(filesDir,"sleepsync_dreamscape.png").exists()){
-                            p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","dreamscape").putBoolean("custom_enabled",true).apply();showDesignStudio()
-                        } else generateDreamScape()
-                        1->{p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();showDesignStudio()}
-                        2->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        3->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();showDesignStudio()}
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.AtelierWallpaperGallery(
+                    selected = if (!p.getBoolean("wallpaper_enabled",true)) 3 else when(activeWallpaper) {
+                        "dreamscape" -> 0; "custom" -> 2; else -> 1
+                    },
+                    onSelect = { index ->
+                        when(index) {
+                            0 -> if(File(filesDir,"sleepsync_dreamscape.png").exists()) {
+                                p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","dreamscape").putBoolean("custom_enabled",true).apply()
+                                showDesignStudio()
+                            } else generateDreamScape()
+                            1 -> { p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();showDesignStudio() }
+                            2 -> photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            3 -> { p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();showDesignStudio() }
+                        }
                     }
-                }
+                )
             }
-            wallpaperGallery.addView(tile,LinearLayout.LayoutParams(dp(118),dp(128)).apply{setMargins(dp(3),0,dp(8),dp(8))})
-        }
-        sleepCard.addView(android.widget.HorizontalScrollView(this).apply{
-            isHorizontalScrollBarEnabled=false
-            addView(wallpaperGallery)
-        })
+        }, LinearLayout.LayoutParams(-1,-2))
         sleepCard.addView(TextView(this).apply {
             text="FARBSCHEMA";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(177,201,255))
@@ -2536,29 +2503,18 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 )
             }
         }, LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(17),0,0) })
-        val colors=LinearLayout(this).apply{
-            orientation=LinearLayout.VERTICAL;setPadding(dp(11),dp(13),dp(11),dp(12));background=glassPanel(neonViolet)
-        }
-        colors.addView(studioLabel("◉  Farbschema"))
-        val paletteStrip=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
-        val currentAccent=p.getInt("accent",defs[0])
-        palettes.forEachIndexed{index,(name,primary,secondary)->
-            val selected=currentAccent==primary
-            val cell=LinearLayout(this).apply{
-                orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
-                addView(View(this@MainActivity).apply{
-                    background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(primary,secondary)).apply{
-                        shape=GradientDrawable.OVAL;setStroke(dp(if(selected)3 else 1),if(selected)Color.WHITE else 0xFF9A7BFF.toInt())
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.AtelierColorPalette(
+                    selectedColor = p.getInt("accent",defs[0]),
+                    onSelect = { primary, secondary ->
+                        p.edit().putInt("accent",primary).putInt("accent2",secondary)
+                            .putBoolean("custom_enabled",true).apply()
+                        showDesignStudio()
                     }
-                    elevation=dp(if(selected)9 else 3).toFloat()
-                },LinearLayout.LayoutParams(dp(40),dp(40)))
-                addView(studioSmall(name).apply{gravity=android.view.Gravity.CENTER;setPadding(0,dp(7),0,0)})
-                setOnClickListener{p.edit().putInt("accent",primary).putInt("accent2",secondary).putBoolean("custom_enabled",true).apply();showDesignStudio()}
+                )
             }
-            paletteStrip.addView(cell,LinearLayout.LayoutParams(dp(67),dp(73)))
-        }
-        colors.addView(android.widget.HorizontalScrollView(this).apply{isHorizontalScrollBarEnabled=false;addView(paletteStrip)},LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
-        sleepCard.addView(colors,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(15)})
+        }, LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(15) })
         val bottom=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
         fun optionPanel(title:String,items:List<Triple<String,String,String>>,current:String,onChoose:(String)->Unit):LinearLayout{
             val panel=LinearLayout(this).apply{
