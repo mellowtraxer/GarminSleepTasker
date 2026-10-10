@@ -67,7 +67,7 @@ fun FrostedGlassCard(
         .then(if (onClick != null) Modifier.clickable(
             interactionSource = interactionSource,
             indication = null,
-            onClick = onClick
+            onClick = { DreamscapeMotion.ripple(); onClick() }
         ) else Modifier)
     ) {
         // --- 1. SCHICHT: WEITER DIFFUSER HALO (AUSSEN) ---
