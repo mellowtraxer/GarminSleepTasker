@@ -73,7 +73,7 @@ fun SleepSyncLiveWallpaper(style: String, modifier: Modifier = Modifier) {
                 moveTo(x - width, -h * .12f)
                 cubicTo(x + amplitude, h * .24f, x - amplitude, h * .65f, x + width, h * 1.12f)
                 cubicTo(x + width * 2f, h * 1.12f, x - amplitude + width, h * .65f,
-                    x + amplitude + width, h * .24f, x, -h * .12f)
+                    x + amplitude + width, h * .24f)
                 close()
             }
             drawPath(p, Brush.horizontalGradient(listOf(Color.Transparent,
