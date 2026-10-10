@@ -2195,7 +2195,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
 
         launch(Dispatchers.IO) {
             val result=runCatching {
-                val connection=java.net.URL("https://api.github.com/repos/mellowtraxer/SleepSync-Updates/contents/latest.json?ref=main&t=${System.currentTimeMillis()}").openConnection() as java.net.HttpURLConnection
+                val connection=java.net.URL("https://api.github.com/repos/mellowtraxer/SleepSync-Updates/contents/compose-latest.json?ref=main&t=${System.currentTimeMillis()}").openConnection() as java.net.HttpURLConnection
                 connection.connectTimeout=8000
                 connection.readTimeout=8000
                 connection.useCaches=false
