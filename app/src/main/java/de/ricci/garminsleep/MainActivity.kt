@@ -1659,55 +1659,39 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         actionsTitle.visibility=View.GONE; actionsBox.visibility=View.GONE
         pageTitle.text="Kalender"; pageSubtitle.text="Deine Nächte · automatisch dort, wo du sie willst"
         sleepCard.removeAllViews(); sleepCard.background=null
+        // Compose glass shell for every calendar section; existing interactive calendar
+        // controls are retained inside until their separate Compose migration.
         fun card(title:String,sub:String,tone:Int,body:LinearLayout.()->Unit):View {
-            val fill=Color.argb(designGlassAlpha(if(light) 168 else 205),if(light) 72 else 12,if(light) 88 else 18,if(light) 112 else 40)
-            val cleanBottom=title.contains("LETZTE") || title.contains("STATUS")
-            val host=android.widget.FrameLayout(this).apply {
-                clipChildren=false;clipToPadding=false
-                layoutParams=LinearLayout.LayoutParams(-1,-2).apply{setMargins(dp(4),dp(9),dp(4),dp(9))}
-            }
-            if(light) host.addView(object:View(this){
-                private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply{style=Paint.Style.STROKE;strokeJoin=Paint.Join.ROUND}
-                init{setLayerType(View.LAYER_TYPE_SOFTWARE,null)}
-                override fun onDraw(c:Canvas){
-                    val q=dp(1).toFloat();p.strokeWidth=dp(3).toFloat();p.color=Color.argb(210,Color.red(tone),Color.green(tone),Color.blue(tone))
-                    p.maskFilter=android.graphics.BlurMaskFilter(dp(14).toFloat(),android.graphics.BlurMaskFilter.Blur.OUTER)
-                    c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p)
-                    p.maskFilter=null;p.strokeWidth=dp(2).toFloat();p.color=tone
-                    c.drawRoundRect(q,q,width-q,height-q,dp(22).toFloat(),dp(22).toFloat(),p)
-                }
-            },android.widget.FrameLayout.LayoutParams(-1,-1))
-            val glassCard=(if(light) eightbitlab.com.blurview.BlurView(this) else android.widget.FrameLayout(this)).apply{
-                background=if(light) LayerDrawable(arrayOf(
-                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(fill);setStroke(dp(4),Color.argb(42,Color.red(tone),Color.green(tone),Color.blue(tone)))},
-                    GradientDrawable().apply{cornerRadius=dp(22).toFloat();setColor(Color.TRANSPARENT);setStroke(dp(2),tone)}
-                )) else GradientDrawable(GradientDrawable.Orientation.TL_BR,if(cleanBottom) intArrayOf(
-                    Color.rgb(12,21,39),Color.rgb(20,23,48),Color.rgb(11,26,43)
-                ) else intArrayOf(
-                    Color.argb(244,17,26,59),
-                    Color.argb(237,28,21,66),
-                    Color.argb(242,10,35,55)
-                )).apply {
-                    cornerRadius=dp(22).toFloat()
-                    setStroke(dp(2),Color.argb(225,Color.red(tone),Color.green(tone),Color.blue(tone)))
-                }
-                layoutParams=android.widget.FrameLayout.LayoutParams(-1,-2)
-                if(light && this is eightbitlab.com.blurview.BlurView){
-                    outlineProvider=android.view.ViewOutlineProvider.BACKGROUND;clipToOutline=true
-                    settingsBlurTarget?.let{target->setupWith(target,4f,true).setBlurEnabled(true).setBlurAutoUpdate(true).setBlurRadius(effectiveBlurRadius()).setOverlayColor(Color.argb(designGlassOverlayAlpha(),72,88,112))}
-                }
-                addView(LinearLayout(this@MainActivity).apply{
-                    orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(16),dp(18),dp(16));background=null
-                    addView(TextView(this@MainActivity).apply{
-                        text=title;textSize=12f;letterSpacing=.08f
-                        setTextColor(tone);setTypeface(typeface,Typeface.BOLD)
-                    })
-                    addView(TextView(this@MainActivity).apply{text=sub;textSize=11f;setTextColor(if(light) Color.argb(215,245,248,255) else secondary);setPadding(0,dp(3),0,dp(12))})
-                    body()
+            val inner=LinearLayout(this).apply {
+                orientation=LinearLayout.VERTICAL
+                background=null
+                addView(TextView(this@MainActivity).apply {
+                    text=title;textSize=12f;letterSpacing=.08f
+                    setTextColor(tone);setTypeface(typeface,Typeface.BOLD)
                 })
+                addView(TextView(this@MainActivity).apply {
+                    text=sub;textSize=11f;setTextColor(secondary)
+                    setPadding(0,dp(3),0,dp(12))
+                })
+                body()
             }
-            host.addView(glassCard)
-            return host
+            return androidx.compose.ui.platform.ComposeView(this).apply {
+                setViewCompositionStrategy(
+                    androidx.compose.ui.platform.ViewCompositionStrategy.DisposeOnDetachedFromWindow
+                )
+                setContent {
+                    de.ricci.garminsleep.ui.components.FrostedGlassCard(
+                        modifier=androidx.compose.ui.Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal=androidx.compose.ui.unit.dp(4),vertical=androidx.compose.ui.unit.dp(9))
+                    ) {
+                        androidx.compose.ui.viewinterop.AndroidView(
+                            factory = { inner },
+                            modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
         }
         val s=lastSummary ?: sleepHistory.maxByOrNull{it.endMs}
         sleepCard.addView(card("✦  LETZTE ERFASSTE NACHT","Kompakte Vorschau für den Kalenderexport",accent2){
