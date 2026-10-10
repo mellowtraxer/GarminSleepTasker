@@ -2314,6 +2314,11 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         de.ricci.garminsleep.ui.components.StudioGlassTuning.glow=p.getInt("glow_strength",35)
         de.ricci.garminsleep.ui.components.StudioGlassTuning.selectedNeon=p.getInt("neon_palette",0)
         de.ricci.garminsleep.ui.components.StudioGlassTuning.secondaryNeon=p.getInt("neon_palette_secondary",0)
+        val chosenLive = p.getString("wallpaper_source","live_aurora_dream") ?: "live_aurora_dream"
+        if (chosenLive.startsWith("live_") && !WallpaperPremiumGate.isAllowed(this, chosenLive.removePrefix("live_"))) {
+            p.edit().putString("wallpaper_source","live_aurora_dream").apply()
+            de.ricci.garminsleep.ui.components.DreamscapeMotion.wallpaperSource = "live_aurora_dream"
+        }
         pageTitle.text="Design Studio";pageSubtitle.text="Gestalte deinen persönlichen Schlafkosmos"
         actionsTitle.visibility=View.GONE;actionsBox.visibility=View.GONE;sleepCard.removeAllViews()
         val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
@@ -2416,6 +2421,9 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 de.ricci.garminsleep.ui.components.AtelierWallpaperGallery(
                     selected = de.ricci.garminsleep.ui.components.sleepSyncLiveStyles
                         .indexOfFirst { "live_" + it.id == activeWallpaper }.coerceAtLeast(0),
+                    onPremium = {
+                        startActivity(android.content.Intent(this@MainActivity, WallpaperPremiumActivity::class.java))
+                    },
                     onSelect = { index ->
                         val source = "live_" + de.ricci.garminsleep.ui.components.sleepSyncLiveStyles[index].id
                         p.edit().putBoolean("wallpaper_enabled", true)
