@@ -10,6 +10,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -23,6 +25,12 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
+object StudioGlassTuning {
+    var blur by mutableIntStateOf(20)
+    var glass by mutableIntStateOf(34)
+    var neon by mutableIntStateOf(35)
+}
 
 @Composable
 fun FrostedGlassCard(
@@ -48,14 +56,17 @@ fun FrostedGlassCard(
         animationSpec = spring(dampingRatio = 0.85f, stiffness = 420f),
         label = "glassPressGlow"
     )
+    val neonPower = StudioGlassTuning.neon.coerceIn(0, 100) / 100f
+    val blurPower = StudioGlassTuning.blur.coerceIn(0, 100) / 100f
+    val glassPower = StudioGlassTuning.glass.coerceIn(0, 100) / 100f
     val shape = RoundedCornerShape(cornerRadius)
     val glowBrush = Brush.linearGradient(glowColors)
 
     // Subtiler Lichteinfall auf dem Milchglas
     val glassFill = Brush.verticalGradient(
         listOf(
-            Color(0x24FFFFFF), // Sanfter Glanz oben
-            Color(0x0AFFFFFF)  // Dunkler unten
+            Color.White.copy(alpha = .035f + glassPower * .25f), // Glasreflex
+            Color.White.copy(alpha = .008f + glassPower * .075f)  // Glasboden
         )
     )
 
@@ -71,17 +82,17 @@ fun FrostedGlassCard(
         ) else Modifier)
     ) {
         // --- 1. SCHICHT: WEITER DIFFUSER HALO (AUSSEN) ---
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && neonPower > 0f) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
                     .graphicsLayer {
                         renderEffect = RenderEffect
-                            .createBlurEffect(35f, 35f, Shader.TileMode.DECAL)
+                            .createBlurEffect(8f + 40f * blurPower, 8f + 40f * blurPower, Shader.TileMode.DECAL)
                             .asComposeRenderEffect()
-                        alpha = 0.55f + pressGlow * 0.25f // Intensität des Außenlichts
+                        alpha = (neonPower * 1.9f + pressGlow * 0.2f).coerceIn(0f, 1f) // Intensität des Außenlichts
                     }
-                    .border(width = 4.dp, brush = glowBrush, shape = shape)
+                    .border(width = (2f + neonPower * 8f).dp, brush = glowBrush, shape = shape)
             )
 
             // --- 2. SCHICHT: INTENSIVER KERN-GLOW ---
@@ -90,11 +101,11 @@ fun FrostedGlassCard(
                     .matchParentSize()
                     .graphicsLayer {
                         renderEffect = RenderEffect
-                            .createBlurEffect(12f, 12f, Shader.TileMode.DECAL)
+                            .createBlurEffect(3f + 18f * blurPower, 3f + 18f * blurPower, Shader.TileMode.DECAL)
                             .asComposeRenderEffect()
-                        alpha = 0.85f + pressGlow * 0.15f // Kräftiges Leuchten direkt am Rand
+                        alpha = (neonPower * 2.1f + pressGlow * .15f).coerceIn(0f, 1f) // Kräftiges Leuchten direkt am Rand
                     }
-                    .border(width = 2.5.dp, brush = glowBrush, shape = shape)
+                    .border(width = (1f + neonPower * 4f).dp, brush = glowBrush, shape = shape)
             )
         }
 
@@ -105,8 +116,8 @@ fun FrostedGlassCard(
                 .clip(shape)
                 .background(glassFill)
                 .border(
-                    width = 1.2.dp,
-                    brush = glowBrush,
+                    width = (0.4f + neonPower * 2.2f).dp,
+                    brush = Brush.linearGradient(glowColors.map { it.copy(alpha = neonPower) }),
                     shape = shape
                 )
         )
