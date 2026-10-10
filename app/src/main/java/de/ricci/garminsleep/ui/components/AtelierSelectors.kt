@@ -22,14 +22,14 @@ import de.ricci.garminsleep.R
 
 @Composable
 fun AtelierWallpaperGallery(selected: Int, onSelect: (Int) -> Unit) {
-    val names = listOf("Empfohlen", "SleepSync", "Eigenes", "OLED")
+    val names = listOf("LIVE AURORA", "SleepSync", "DreamScape", "Eigenes", "OLED")
     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
         itemsIndexed(names) { index, name ->
-            FrostedGlassCard(modifier = Modifier.width(130.dp).clickable { onSelect(index) }) {
+            FrostedGlassCard(modifier = Modifier.width(138.dp), onClick = { onSelect(index) }) {
                 Box(Modifier.fillMaxWidth().height(84.dp).clip(RoundedCornerShape(12.dp))
                     .background(Color(0xFF151A32)), contentAlignment = Alignment.Center) {
-                    if (index < 2) Image(
-                        painterResource(if (index == 0) R.drawable.cosmic_crescent else R.drawable.cosmic_planet),
+                    if (index == 1 || index == 2) Image(
+                        painterResource(if (index == 2) R.drawable.cosmic_crescent else R.drawable.cosmic_planet),
                         contentDescription = name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()
                     ) else Text(if (index == 2) "▧" else "●", color = Color.White, fontSize = 30.sp)
                     if (selected == index) Text("✓", color = Color.White, modifier = Modifier.align(Alignment.TopEnd)
