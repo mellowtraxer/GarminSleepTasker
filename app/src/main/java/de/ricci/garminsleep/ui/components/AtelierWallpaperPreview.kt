@@ -24,15 +24,18 @@ import de.ricci.garminsleep.R
 fun AtelierWallpaperPreview(
     title: String,
     imagePath: String?,
+    liveAurora: Boolean = false,
     onChange: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bitmap = remember(imagePath) {
         imagePath?.let { path -> runCatching { BitmapFactory.decodeFile(path)?.asImageBitmap() }.getOrNull() }
     }
-    FrostedGlassCard(modifier = modifier.fillMaxWidth().clickable(onClick = onChange)) {
+    FrostedGlassCard(modifier = modifier.fillMaxWidth(), onClick = onChange) {
         Box(Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(15.dp))) {
-            if (bitmap != null) {
+            if (liveAurora) {
+                AnimatedAuroraBackground(previewAurora = true) { }
+            } else if (bitmap != null) {
                 Image(bitmap = bitmap, contentDescription = title, contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize())
             } else {
