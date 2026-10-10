@@ -2679,40 +2679,20 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
             background=opticsGlassBackground(Color.rgb(99,213,255),27)
             clipToOutline=true
             outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
-            layoutParams=LinearLayout.LayoutParams(-1,dp(340)).apply{setMargins(0,0,0,dp(14))}
+            layoutParams=LinearLayout.LayoutParams(-1,dp(258)).apply{setMargins(0,0,0,dp(18))}
         }
         val previewImage=android.widget.ImageView(this).apply {
             scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
             if(p.getBoolean("wallpaper_enabled",true) && wallpaperFile?.exists()==true) {
                 setImageURI(Uri.fromFile(wallpaperFile))
             } else {
-                setImageDrawable(GradientDrawable(GradientDrawable.Orientation.BL_TR,intArrayOf(
-                    Color.rgb(12,8,37),Color.rgb(62,20,110),Color.rgb(15,62,114),Color.rgb(4,8,25)
-                )))
+                setImageResource(R.drawable.cosmic_crescent)
             }
         }
         previewFrame.addView(previewImage,android.widget.FrameLayout.LayoutParams(-1,-1))
-        if(wallpaperFile?.exists()!=true && p.getBoolean("wallpaper_enabled",true)) {
-            previewFrame.addView(object:View(this) {
-                private val brush=Paint(Paint.ANTI_ALIAS_FLAG)
-                override fun onDraw(canvas:Canvas) {
-                    super.onDraw(canvas)
-                    val cx=width*.70f;val cy=height*.39f;val radius=dp(73).toFloat()
-                    brush.shader=android.graphics.RadialGradient(cx,cy,radius*1.8f,
-                        intArrayOf(Color.argb(175,240,93,226),Color.argb(45,112,68,242),Color.TRANSPARENT),
-                        null,android.graphics.Shader.TileMode.CLAMP)
-                    canvas.drawCircle(cx,cy,radius*1.8f,brush)
-                    brush.shader=android.graphics.LinearGradient(cx-radius,cy-radius,cx+radius,cy+radius,
-                        Color.rgb(255,190,226),Color.rgb(146,57,224),android.graphics.Shader.TileMode.CLAMP)
-                    canvas.drawCircle(cx,cy,radius,brush)
-                    brush.shader=null;brush.color=Color.rgb(20,12,52)
-                    canvas.drawCircle(cx+radius*.35f,cy-radius*.16f,radius*.92f,brush)
-                }
-            },android.widget.FrameLayout.LayoutParams(-1,-1))
-        }
         previewFrame.addView(View(this).apply {
             background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(
-                Color.TRANSPARENT,Color.argb(140,4,8,29),Color.rgb(7,10,29)
+                Color.argb(55,4,8,29),Color.argb(125,4,8,29),Color.rgb(7,10,29)
             ))
         },android.widget.FrameLayout.LayoutParams(-1,-1))
         previewFrame.addView(LinearLayout(this).apply {
@@ -2746,13 +2726,13 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         },android.widget.FrameLayout.LayoutParams(-1,-1))
         sleepCard.addView(previewFrame)
         sleepCard.addView(TextView(this).apply {
-            text="WALLPAPER GALERIE";textSize=11f;letterSpacing=.16f
+            text="WALLPAPER AUSWÄHLEN";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(165,196,255))
             setPadding(dp(5),dp(4),0,dp(10))
         })
         val wallpaperGallery=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL}
         listOf(
-            Triple("DreamScape","✦",Color.rgb(116,80,216)),
+            Triple("Empfohlen","✦",Color.rgb(116,80,216)),
             Triple("SleepSync","☾",Color.rgb(31,146,192)),
             Triple("Eigenes","▧",Color.rgb(219,88,176)),
             Triple("OLED","●",Color.rgb(39,47,76))
@@ -2763,41 +2743,46 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 2->activeWallpaper=="custom" && p.getBoolean("wallpaper_enabled",true)
                 else->!p.getBoolean("wallpaper_enabled",true)
             }
-            wallpaperGallery.addView(LinearLayout(this).apply {
+            val tile=LinearLayout(this).apply {
                 orientation=LinearLayout.VERTICAL;gravity=android.view.Gravity.CENTER
-                setPadding(dp(3),dp(13),dp(3),dp(12))
-                background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
-                    tone,Color.rgb(11,14,35)
-                )).apply {
-                    cornerRadius=dp(16).toFloat()
-                    setStroke(dp(if(selected) 3 else 1),if(selected) Color.rgb(123,243,255) else tone)
+                setPadding(dp(4),dp(4),dp(4),dp(8))
+                background=GradientDrawable().apply {
+                    cornerRadius=dp(17).toFloat();setColor(Color.rgb(10,15,38))
+                    setStroke(dp(if(selected) 2 else 1),if(selected) Color.rgb(76,222,255) else Color.argb(160,115,122,195))
                 }
-                addView(TextView(this@MainActivity).apply {
-                    text=symbol;textSize=29f;gravity=android.view.Gravity.CENTER
-                    setTextColor(Color.WHITE)
-                    setShadowLayer(dp(9).toFloat(),0f,0f,tone)
-                })
-                addView(TextView(this@MainActivity).apply {
-                    text=name;textSize=10f;gravity=android.view.Gravity.CENTER
+                addView(android.widget.FrameLayout(this@MainActivity).apply {
+                    background=GradientDrawable().apply{cornerRadius=dp(12).toFloat();setColor(tone)}
+                    clipToOutline=true;outlineProvider=android.view.ViewOutlineProvider.BACKGROUND
+                    if(index==0 || index==1) addView(android.widget.ImageView(this@MainActivity).apply {
+                        scaleType=android.widget.ImageView.ScaleType.CENTER_CROP
+                        setImageResource(if(index==0) R.drawable.cosmic_crescent else R.drawable.cosmic_planet)
+                    },android.widget.FrameLayout.LayoutParams(-1,-1))
+                    else addView(TextView(this@MainActivity).apply{
+                        text=symbol;textSize=28f;gravity=android.view.Gravity.CENTER;setTextColor(Color.WHITE)
+                    },android.widget.FrameLayout.LayoutParams(-1,-1))
+                },LinearLayout.LayoutParams(-1,dp(76)))
+                addView(TextView(this@MainActivity).apply{
+                    text=name;textSize=11f;gravity=android.view.Gravity.CENTER
                     setTypeface(typeface,Typeface.BOLD);setTextColor(Color.WHITE)
                     setPadding(0,dp(8),0,0)
                 })
                 setOnClickListener {
                     when(index) {
-                        0->{
-                            if(File(filesDir,"sleepsync_dreamscape.png").exists()){
-                                p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","dreamscape").putBoolean("custom_enabled",true).apply()
-                                showDesignStudio()
-                            } else generateDreamScape()
-                        }
+                        0->if(File(filesDir,"sleepsync_dreamscape.png").exists()){
+                            p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","dreamscape").putBoolean("custom_enabled",true).apply();showDesignStudio()
+                        } else generateDreamScape()
                         1->{p.edit().putBoolean("wallpaper_enabled",true).putString("wallpaper_source","builtin").putBoolean("custom_enabled",true).apply();showDesignStudio()}
                         2->photoPickerWallpaperLauncher.launch(androidx.activity.result.PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         3->{p.edit().putBoolean("wallpaper_enabled",false).putBoolean("custom_enabled",true).apply();showDesignStudio()}
                     }
                 }
-            },LinearLayout.LayoutParams(0,dp(96),1f).apply{setMargins(dp(3),0,dp(3),dp(14))})
+            }
+            wallpaperGallery.addView(tile,LinearLayout.LayoutParams(dp(118),dp(128)).apply{setMargins(dp(3),0,dp(8),dp(8))})
         }
-        sleepCard.addView(wallpaperGallery)
+        sleepCard.addView(android.widget.HorizontalScrollView(this).apply{
+            isHorizontalScrollBarEnabled=false
+            addView(wallpaperGallery)
+        })
         sleepCard.addView(TextView(this).apply {
             text="FARBSCHEMA";textSize=11f;letterSpacing=.16f
             setTypeface(typeface,Typeface.BOLD);setTextColor(Color.rgb(177,201,255))
