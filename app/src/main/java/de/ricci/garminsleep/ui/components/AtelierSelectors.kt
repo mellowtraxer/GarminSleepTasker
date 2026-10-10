@@ -22,22 +22,22 @@ import de.ricci.garminsleep.R
 
 @Composable
 fun AtelierWallpaperGallery(selected: Int, onSelect: (Int) -> Unit) {
-    val names = listOf("LIVE AURORA", "SleepSync", "DreamScape", "Eigenes", "OLED")
     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
-        itemsIndexed(names) { index, name ->
-            FrostedGlassCard(modifier = Modifier.width(138.dp), onClick = { onSelect(index) }) {
-                Box(Modifier.fillMaxWidth().height(84.dp).clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF151A32)), contentAlignment = Alignment.Center) {
-                    if (index == 1 || index == 2) Image(
-                        painterResource(if (index == 2) R.drawable.cosmic_crescent else R.drawable.cosmic_planet),
-                        contentDescription = name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()
-                    ) else Text(if (index == 2) "▧" else "●", color = Color.White, fontSize = 30.sp)
-                    if (selected == index) Text("✓", color = Color.White, modifier = Modifier.align(Alignment.TopEnd)
-                        .background(Color(0xFFB44AFF), CircleShape).padding(horizontal = 6.dp))
+        itemsIndexed(sleepSyncLiveStyles) { index, style ->
+            FrostedGlassCard(modifier = Modifier.width(164.dp), onClick = { onSelect(index) }) {
+                Box(Modifier.fillMaxWidth().height(124.dp).clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF03030B))) {
+                    SleepSyncLiveWallpaper(style.id, Modifier.fillMaxSize())
+                    if (selected == index) Text("✓", color = Color.White,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                            .background(Color(0xFFB44AFF), CircleShape).padding(horizontal = 6.dp))
+                    Text("▶", color = Color.White.copy(alpha = .85f),
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(6.dp), fontSize = 13.sp)
                 }
-                Spacer(Modifier.height(6.dp))
-                Text(name, color = if (selected == index) Color(0xFF61E9FF) else Color.White,
-                    fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(5.dp))
+                Text(style.title, color = if (selected == index) Color(0xFF61E9FF) else Color.White,
+                    fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text(style.subtitle, color = Color(0xFFB8C7E0), fontSize = 9.sp)
             }
         }
     }
