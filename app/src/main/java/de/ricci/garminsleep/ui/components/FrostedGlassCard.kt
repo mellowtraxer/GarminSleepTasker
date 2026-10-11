@@ -35,10 +35,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-private object ChromaticCardSequence {
-    private var counter = 0
-    @Synchronized fun next(): Int = counter++
-}
 object StudioGlassTuning {
     var chromaticV3 by mutableStateOf(false)
     var chromaticStrength by mutableIntStateOf(45)
@@ -67,6 +63,7 @@ fun FrostedGlassCard(
         Color(0xFFFF007F)  // Neon Pink
     ),
     onClick: (() -> Unit)? = null,
+    chromaticKey: String = "",
     content: @Composable ColumnScope.() -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -89,25 +86,47 @@ fun FrostedGlassCard(
     val sharpEdgeOpacity = (1f - blurPower).coerceIn(0f, 1f)
     val haloIntensity = (glowPower * (.35f + .65f * blurPower) + neonPower * blurPower * .35f).coerceIn(0f, 1f)
     val chromatic = StudioGlassTuning.chromaticV3
-    val toneIndex = remember { ChromaticCardSequence.next() }
-    val chromaticColors = listOf(
-        listOf(Color(0xFF00D6F5), Color(0xFF8D40EF)),
-        listOf(Color(0xFF8A48F5), Color(0xFFEC35B9)),
-        listOf(Color(0xFF00A9E9), Color(0xFF4B41EC)),
-        listOf(Color(0xFFEA3B95), Color(0xFFFF9651)),
-        listOf(Color(0xFF00D3B0), Color(0xFF2888F5)),
-        listOf(Color(0xFFFF9B48), Color(0xFFEB439A))
-    )[toneIndex % 6]
+    // Stable semantic palettes: never depend on composition order or scrolling.
+    val chromaticColors = when {
+        chromaticKey.contains("GESAMTSCHLAF", true) || chromaticKey.contains("SCHLAFDAUER", true) ->
+            listOf(Color(0xFF00D6F5), Color(0xFF8D40EF))
+        chromaticKey.contains("LEICHT", true) || chromaticKey.contains("ATMUNG", true) ->
+            listOf(Color(0xFF00CFF5), Color(0xFF3979FF))
+        chromaticKey.contains("TIEF", true) || chromaticKey.contains("HRV", true) ->
+            listOf(Color(0xFF7455FF), Color(0xFFBF4DFF))
+        chromaticKey.contains("REM", true) || chromaticKey.contains("PULS", true) ->
+            listOf(Color(0xFFFF399C), Color(0xFFE951B9))
+        chromaticKey.contains("WACH", true) ->
+            listOf(Color(0xFFFFA23B), Color(0xFFFF5D83))
+        chromaticKey.contains("SPO", true) || chromaticKey.contains("SAUERSTOFF", true) ->
+            listOf(Color(0xFF00D6C2), Color(0xFF00A9F3))
+        chromaticKey.contains("INSIGHT", true) ->
+            listOf(Color(0xFF3DD4E7), Color(0xFFB344ED))
+        chromaticKey.contains("FINGERPRINT", true) ->
+            listOf(Color(0xFFFF9B48), Color(0xFFEB439A))
+        chromaticKey.contains("DNA", true) ->
+            listOf(Color(0xFF00D6F5), Color(0xFFAA44ED))
+        else -> listOf(glowColors.firstOrNull() ?: Color(0xFF00F0FF),
+            glowColors.lastOrNull() ?: Color(0xFFA855F7))
+    }
     val selected = StudioGlassTuning.selectedNeon
     val activeColors = if (chromatic) chromaticColors else StudioGlassTuning.palette(glowColors)
     val shape = RoundedCornerShape(cornerRadius)
     val glowBrush = Brush.linearGradient(glowColors)
 
     // Subtiler Lichteinfall auf dem Milchglas
-    val glassFill = if (chromatic) Brush.linearGradient(listOf(chromaticColors[0].copy(alpha = StudioGlassTuning.chromaticStrength / 250f), chromaticColors[1].copy(alpha = StudioGlassTuning.chromaticStrength / 320f), Color(0xCC050814))) else Brush.verticalGradient(
+    // Opaque OLED base first, low-alpha chromatic tint second:
+    // wallpaper motion remains atmospheric rather than competing with data.
+    val chromaticTint = Brush.linearGradient(
         listOf(
-            Color.White.copy(alpha = .035f + glassPower * .82f), // Glasreflex: 30% ~ previous 100%
-            Color.White.copy(alpha = .008f + glassPower * .25f)  // Glasboden: stronger depth
+            chromaticColors[0].copy(alpha = StudioGlassTuning.chromaticStrength.coerceIn(0,100) / 100f * .24f),
+            chromaticColors[1].copy(alpha = StudioGlassTuning.chromaticStrength.coerceIn(0,100) / 100f * .18f)
+        )
+    )
+    val glassFill = Brush.verticalGradient(
+        listOf(
+            Color.White.copy(alpha = .035f + glassPower * .82f),
+            Color.White.copy(alpha = .008f + glassPower * .25f)
         )
     )
 
@@ -161,7 +180,8 @@ fun FrostedGlassCard(
                 .fillMaxWidth()
                 .padding(haloSpace)
                 .clip(shape)
-                .background(glassFill)
+                .background(if (chromatic) Color(0xF2050711) else Color.Transparent)
+                .background(if (chromatic) chromaticTint else glassFill)
 
         ) {
             Column(
