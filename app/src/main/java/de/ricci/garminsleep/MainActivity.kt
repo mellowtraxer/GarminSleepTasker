@@ -896,6 +896,10 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         restoreStudioTheme()
+        val chromaPrefs = getSharedPreferences("sleepsync_design", MODE_PRIVATE)
+        de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticV3 = chromaPrefs.getBoolean("chromatic_v3", false)
+        de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticStrength = chromaPrefs.getInt("chromatic_strength",45)
+        de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticGlow = chromaPrefs.getInt("chromatic_glow",65)
         if(savedInstanceState==null) handleSharedWallpaper(intent)
         scheduleBackgroundSleepSync()
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -2321,6 +2325,35 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }
         pageTitle.text="Design Studio";pageSubtitle.text="Gestalte deinen persönlichen Schlafkosmos"
         actionsTitle.visibility=View.GONE;actionsBox.visibility=View.GONE;sleepCard.removeAllViews()
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                androidx.compose.foundation.layout.Column {
+                    androidx.compose.material3.Text("✦ CHROMATIC GLASS V3 · DESIGNSTUDIE",color=androidx.compose.ui.graphics.Color.White)
+                    androidx.compose.material3.Switch(
+                        checked=de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticV3,
+                        onCheckedChange={ enabled ->
+                            de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticV3=enabled
+                            p.edit().putBoolean("chromatic_v3",enabled).apply()
+                        })
+                    androidx.compose.material3.Text("Karten-Farbintensität",color=androidx.compose.ui.graphics.Color.White)
+                    androidx.compose.material3.Slider(
+                        value=de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticStrength.toFloat(),
+                        onValueChange={ v ->
+                            val n=v.toInt()
+                            de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticStrength=n
+                            p.edit().putInt("chromatic_strength",n).apply()
+                        },valueRange=0f..100f)
+                    androidx.compose.material3.Text("Chromatic Glow",color=androidx.compose.ui.graphics.Color.White)
+                    androidx.compose.material3.Slider(
+                        value=de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticGlow.toFloat(),
+                        onValueChange={ v ->
+                            val n=v.toInt()
+                            de.ricci.garminsleep.ui.components.StudioGlassTuning.chromaticGlow=n
+                            p.edit().putInt("chromatic_glow",n).apply()
+                        },valueRange=0f..100f)
+                }
+            }
+        })
         val names=arrayOf("Hauptakzent","Sekundärakzent","Leichtschlaf","Tiefschlaf","REM","Wach","Puls","SpO₂","Atmung","HRV")
         val keys=arrayOf("accent","accent2","stage_light","stage_deep","stage_rem","stage_awake","heart","spo2","resp","hrv")
         val defs=intArrayOf(Color.rgb(139,92,246),Color.rgb(34,211,238),Color.rgb(99,190,255),Color.rgb(95,75,220),Color.rgb(183,99,255),Color.rgb(255,164,91),Color.rgb(255,82,126),Color.rgb(44,205,255),Color.rgb(80,225,184),Color.rgb(213,96,255))
