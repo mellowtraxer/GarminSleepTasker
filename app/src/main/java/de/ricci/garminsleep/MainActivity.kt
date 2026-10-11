@@ -1606,7 +1606,8 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                     de.ricci.garminsleep.ui.components.FrostedGlassCard(
                         modifier=androidx.compose.ui.Modifier
                             .fillMaxWidth()
-                            .padding(horizontal=4.dp,vertical=9.dp)
+                            .padding(horizontal=4.dp,vertical=9.dp),
+                        chromaticKey=title
                     ) {
                         androidx.compose.ui.viewinterop.AndroidView(
                             factory = { inner },
