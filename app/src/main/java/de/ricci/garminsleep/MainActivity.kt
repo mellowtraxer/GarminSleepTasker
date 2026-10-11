@@ -3248,14 +3248,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         }, LinearLayout.LayoutParams(-1, -2).apply {
             setMargins(0, dp(8), 0, dp(8))
         })
-        sleepCard.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else stageLight); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); setPadding(dp(4),dp(18),0,dp(8)) })
-        sleepCard.addView(sleepStageStrip(s))
-        sleepCard.addView(LinearLayout(this).apply {
+        val overview = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        overview.addView(TextView(this).apply { text="SCHLAFVERLAUF"; textSize=11f; letterSpacing=.14f; setTextColor(if(light) Color.WHITE else stageLight); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(3).toFloat(),0f,dp(1).toFloat(),Color.BLACK); setPadding(dp(4),dp(18),0,dp(8)) })
+        overview.addView(sleepStageStrip(s))
+        overview.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; setPadding(dp(2),dp(5),dp(2),0)
             addView(TextView(this@MainActivity).apply { text="☾  "+tf.format(java.time.Instant.ofEpochMilli(s.startMs)); textSize=10f; setTextColor(if(light) Color.rgb(245,248,255) else Color.rgb(118,128,161)); if(light) setShadowLayer(dp(2).toFloat(),0f,0f,Color.argb(190,0,0,0)); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
             addView(TextView(this@MainActivity).apply { text=tf.format(java.time.Instant.ofEpochMilli(s.endMs))+"  ☀"; textSize=10f; setTextColor(if(light) Color.rgb(245,248,255) else Color.rgb(118,128,161)); if(light) setShadowLayer(dp(2).toFloat(),0f,0f,Color.argb(190,0,0,0)) })
         })
-        sleepCard.addView(LinearLayout(this).apply {
+        overview.addView(LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(0,dp(9),0,dp(4))
             fun legend(name: String, tone: Int) = LinearLayout(this@MainActivity).apply {
                 orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL
@@ -3271,7 +3272,7 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
         val sleepOnly = (s.lightMin + s.deepMin + s.remMin).coerceAtLeast(1)
         val deepPct = (s.deepMin * 100 / sleepOnly).toInt()
         val remPct = (s.remMin * 100 / sleepOnly).toInt()
-        sleepCard.addView(MaterialCardView(this).apply {
+        overview.addView(MaterialCardView(this).apply {
             radius=dp(20).toFloat(); strokeWidth=if(light) dp(2) else dp(1); strokeColor=if(light) stageRem else Color.rgb(116,91,207); setCardBackgroundColor(Color.TRANSPARENT); if(light){ background=GradientDrawable().apply { cornerRadius=dp(20).toFloat(); setColor(Color.argb(designGlassAlpha(),72,88,112)); setStroke(dp(2),stageLight) }; cardElevation=dp(7).toFloat(); outlineAmbientShadowColor=stageLight; outlineSpotShadowColor=stageLight; addBlurLayer(this,20,::dp) } else setCardBackgroundColor(Color.rgb(19,15,39))
             addView(LinearLayout(this@MainActivity).apply {
                 orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(14),dp(12),dp(14),dp(12))
@@ -3281,6 +3282,15 @@ class MainActivity : ComponentActivity(), CoroutineScope by MainScope() {
                 addView(TextView(this@MainActivity).apply { text="$remPct%\nREM"; gravity=android.view.Gravity.CENTER; textSize=13f; setTextColor(if(light) Color.WHITE else stageRem); setTypeface(typeface,Typeface.BOLD); if(light) setShadowLayer(dp(2).toFloat(),0f,0f,stageRem); layoutParams=LinearLayout.LayoutParams(dp(62),-2) })
             })
             layoutParams=LinearLayout.LayoutParams(-1,-2).apply { setMargins(0,dp(7),0,dp(7)) }
+        })
+        sleepCard.addView(androidx.compose.ui.platform.ComposeView(this).apply {
+            setContent {
+                de.ricci.garminsleep.ui.components.FrostedGlassCard(
+                    chromaticKey = "SCHLAFVERLAUF"
+                ) {
+                    androidx.compose.ui.viewinterop.AndroidView(factory = { overview })
+                }
+            }
         })
         sleepCard.addView(LinearLayout(this).apply {
             orientation=LinearLayout.HORIZONTAL; gravity=android.view.Gravity.CENTER_VERTICAL; setPadding(dp(4),dp(10),0,dp(2))
