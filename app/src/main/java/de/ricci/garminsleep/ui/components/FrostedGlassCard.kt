@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,7 +35,14 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+private object ChromaticCardSequence {
+    private var counter = 0
+    @Synchronized fun next(): Int = counter++
+}
 object StudioGlassTuning {
+    var chromaticV3 by mutableStateOf(false)
+    var chromaticStrength by mutableIntStateOf(45)
+    var chromaticGlow by mutableIntStateOf(65)
     var blur by mutableIntStateOf(20)
     var glass by mutableIntStateOf(34)
     var neon by mutableIntStateOf(35)
@@ -76,17 +84,27 @@ fun FrostedGlassCard(
     val neonPower = StudioGlassTuning.neon.coerceIn(0, 100) / 100f
     val blurPower = StudioGlassTuning.blur.coerceIn(0, 100) / 100f
     val glassPower = StudioGlassTuning.glass.coerceIn(0, 100) / 100f
-    val glowPower = StudioGlassTuning.glow.coerceIn(0, 100) / 100f
+    val glowPower = (if (StudioGlassTuning.chromaticV3) StudioGlassTuning.chromaticGlow else StudioGlassTuning.glow).coerceIn(0, 100) / 100f
     // Blur dissolves the crisp neon stroke into the soft halo. At 100% only light remains.
     val sharpEdgeOpacity = (1f - blurPower).coerceIn(0f, 1f)
     val haloIntensity = (glowPower * (.35f + .65f * blurPower) + neonPower * blurPower * .35f).coerceIn(0f, 1f)
+    val chromatic = StudioGlassTuning.chromaticV3
+    val toneIndex = remember { ChromaticCardSequence.next() }
+    val chromaticColors = listOf(
+        listOf(Color(0xFF00D6F5), Color(0xFF8D40EF)),
+        listOf(Color(0xFF8A48F5), Color(0xFFEC35B9)),
+        listOf(Color(0xFF00A9E9), Color(0xFF4B41EC)),
+        listOf(Color(0xFFEA3B95), Color(0xFFFF9651)),
+        listOf(Color(0xFF00D3B0), Color(0xFF2888F5)),
+        listOf(Color(0xFFFF9B48), Color(0xFFEB439A))
+    )[toneIndex % 6]
     val selected = StudioGlassTuning.selectedNeon
-    val activeColors = StudioGlassTuning.palette(glowColors)
+    val activeColors = if (chromatic) chromaticColors else StudioGlassTuning.palette(glowColors)
     val shape = RoundedCornerShape(cornerRadius)
     val glowBrush = Brush.linearGradient(glowColors)
 
     // Subtiler Lichteinfall auf dem Milchglas
-    val glassFill = Brush.verticalGradient(
+    val glassFill = if (chromatic) Brush.linearGradient(listOf(chromaticColors[0].copy(alpha = StudioGlassTuning.chromaticStrength / 250f), chromaticColors[1].copy(alpha = StudioGlassTuning.chromaticStrength / 320f), Color(0xCC050814))) else Brush.verticalGradient(
         listOf(
             Color.White.copy(alpha = .035f + glassPower * .82f), // Glasreflex: 30% ~ previous 100%
             Color.White.copy(alpha = .008f + glassPower * .25f)  // Glasboden: stronger depth
